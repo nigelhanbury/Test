@@ -344,6 +344,53 @@ input[type=range]:disabled { opacity:0.4; }
 .graphs-type-btn.active {
   background: rgba(52,211,153,0.22); color: #34d399; border-color: rgba(52,211,153,0.6);
 }
+/* Per-tab help button (small round ?) + help modal, matching the Wave Motion
+   suite. Plus a smaller inline variant for the per-control help icons next to
+   the data-logger and phase-explorer toggles. */
+.tab-help-btn {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(52,211,153,0.18); border: 1px solid rgba(52,211,153,0.4);
+  color: #34d399; font-size: 14px; font-weight: bold; cursor: pointer;
+  margin-left: 8px; align-self: center; transition: all 0.2s;
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle;
+}
+.tab-help-btn:hover {
+  background: rgba(52,211,153,0.4); color: #fff; box-shadow: 0 0 10px rgba(52,211,153,0.4);
+}
+.chk-help-btn {
+  width: 17px; height: 17px; border-radius: 50%; padding: 0; line-height: 1;
+  background: rgba(52,211,153,0.16); border: 1px solid rgba(52,211,153,0.4);
+  color: #34d399; font-size: 11px; font-weight: bold; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 6px; transition: all 0.2s; flex-shrink: 0;
+}
+.chk-help-btn:hover {
+  background: rgba(52,211,153,0.4); color: #fff; box-shadow: 0 0 8px rgba(52,211,153,0.35);
+}
+.help-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 2000;
+  justify-content: center; align-items: center; backdrop-filter: blur(3px);
+}
+.help-modal {
+  background: linear-gradient(135deg, #1a2540 0%, #0f1525 100%);
+  border: 1px solid rgba(52,211,153,0.3); border-radius: 12px;
+  max-width: 560px; max-height: 80vh; overflow-y: auto;
+  padding: 20px 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.help-modal h2 {
+  color: #34d399; margin: 0 0 15px 0; font-size: 1.3em;
+  border-bottom: 1px solid rgba(52,211,153,0.2); padding-bottom: 10px;
+}
+.help-modal h3 { color: #80c0a0; margin: 15px 0 8px 0; font-size: 1em; }
+.help-modal p { color: #b0c0d0; margin: 6px 0; font-size: 0.9em; line-height: 1.5; }
+.help-modal .key { color: #facc15; font-weight: 600; }
+.help-modal .close-btn {
+  float: right; background: none; border: none; color: #ff6666;
+  font-size: 20px; cursor: pointer; padding: 0 5px;
+}
+.help-modal .close-btn:hover { color: #ff9999; }
 </style>
 </head>
 <body>
@@ -375,6 +422,7 @@ input[type=range]:disabled { opacity:0.4; }
     <div class="canvas-ui">
       <button id="shmPlayBtn"  class="cbtn play">&#9654; Play</button>
       <button id="shmResetBtn" class="cbtn reset">&#8635; Reset</button>
+      <button class="tab-help-btn" onclick="showHelpModal('shm')" title="Help">?</button>
     </div>
   </div>
 
@@ -490,10 +538,12 @@ input[type=range]:disabled { opacity:0.4; }
       <div class="checkbox-row">
         <input type="checkbox" id="shmClockChk">
         <label for="shmClockChk">Set clock start (data logger)</label>
+        <button class="chk-help-btn" onclick="showHelpModal('logger')" title="Data logger help">?</button>
       </div>
       <div class="checkbox-row">
         <input type="checkbox" id="shmExplorerChk">
         <label for="shmExplorerChk">Phase explorer</label>
+        <button class="chk-help-btn" onclick="showHelpModal('explorer')" title="Phase explorer help">?</button>
       </div>
       <!-- The four individual graph toggles below are superseded by the single
            "Graphs" window. They are hidden (display:none) rather than deleted so
@@ -651,6 +701,15 @@ input[type=range]:disabled { opacity:0.4; }
   <div class="popout-resize-grip" id="shmGraphsResizeGrip" title="Drag to resize"></div>
 </div>
 
+<!-- Shared help modal (content swapped per topic). Operational guidance only,
+     matching the Wave Motion suite. -->
+<div id="helpModalOverlay" class="help-modal-overlay" onclick="if(event.target===this)closeHelpModal()">
+  <div class="help-modal">
+    <button class="close-btn" onclick="closeHelpModal()">&times;</button>
+    <div id="helpModalContent"></div>
+  </div>
+</div>
+
 <script>
 /* ============================================================= *
  * SHARED CORE SCRIPT  (CHANGE-CONTROLLED)                       *
@@ -711,6 +770,9 @@ function switchTab(tab) {
 
   currentTab = tab;
 
+  // Dismiss any open help modal when switching tabs.
+  if (typeof closeHelpModal === 'function') closeHelpModal();
+
   // Enter the incoming tab.
   if (tabHooks[tab] && tabHooks[tab].onEnter) {
     tabHooks[tab].onEnter();
@@ -719,6 +781,70 @@ function switchTab(tab) {
 
 // Expose for inline onclick handlers.
 window.switchTab = switchTab;
+
+/* ---- Help modal (operational guidance only, Wave Motion suite style). ----
+   Content is swapped by topic: the whole-tab overview ('shm'), and focused
+   help for the data logger and the phase explorer (reached from the small ?
+   icons beside those toggles). */
+function showHelpModal(topic) {
+  var c = document.getElementById('helpModalContent');
+  if (!c) return;
+  if (topic === 'logger') {
+    c.innerHTML =
+      '<h2>Data logger \u2014 Help</h2>' +
+      '<h3>What it does</h3>' +
+      '<p>Lets you start the clock at a chosen point in the cycle, as a real data logger would when triggered. The captured motion then has a phase constant <span class="key">\u03b5</span> set by where you started.</p>' +
+      '<h3>How to use</h3>' +
+      '<p><span class="key">1.</span> Tick <span class="key">Set clock start (data logger)</span>.</p>' +
+      '<p><span class="key">2.</span> Drag the trigger marker (left of the mass) to choose the displacement at which timing begins.</p>' +
+      '<p><span class="key">3.</span> Ask students to predict the shape (cos, sin, \u2212cos, \u2212sin\u2026).</p>' +
+      '<p><span class="key">4.</span> Press <span class="key">Play</span> to confirm the captured waveform.</p>' +
+      '<h3>Then</h3>' +
+      '<p>Use the <span class="key">Phase explorer</span> to work out the value of \u03b5 that produces the captured shape.</p>' +
+      '<p>The data logger and Phase explorer are mutually exclusive \u2014 turning one on disables the other.</p>';
+  } else if (topic === 'explorer') {
+    c.innerHTML =
+      '<h2>Phase explorer \u2014 Help</h2>' +
+      '<h3>What it does</h3>' +
+      '<p>A focused view for finding the phase constant <span class="key">\u03b5</span>. The spring and phasor are hidden and all other controls are locked, leaving a single draggable cosine over a fixed two-cycle grid.</p>' +
+      '<h3>How to use</h3>' +
+      '<p><span class="key">Drag the green curve</span> left or right. It moves smoothly and clicks gently onto key angles (multiples of \u03c0/4).</p>' +
+      '<p>The faint <span class="key">amber dashed curve</span> is the un-shifted reference cos(\u03c9t), so the shift is always visible.</p>' +
+      '<p>The readout shows the shift, the resulting <span class="key">\u03b5</span>, and \u2014 at the key angles \u2014 the recognised form (cos, \u00b1sin, \u2212cos).</p>' +
+      '<h3>Sign convention</h3>' +
+      '<p>x = A cos(\u03c9t + \u03b5). Dragging <span class="key">right</span> shifts the curve later in time, so \u03b5 <span class="key">decreases</span> (e.g. right by \u03c0/2 gives \u03b5 = \u2212\u03c0/2 = sin). \u03b5 is unbounded and not wrapped, so students can see that values differing by 2\u03c0 describe the same wave.</p>' +
+      '<h3>Tip</h3>' +
+      '<p>If the phasor was visible before entering, its arrow tracks \u03b5 as a cross-check (WJEC: v = \u2212A\u03c9 sin(\u03c9t + \u03b5)).</p>';
+  } else {
+    c.innerHTML =
+      '<h2>Simple Harmonic Motion \u2014 Help</h2>' +
+      '<h3>What you see</h3>' +
+      '<p>A mass on a spring, the rotating <span class="key">phasor</span> whose vertical projection gives the displacement, and the <span class="key">displacement\u2013time graph</span>. All three move from one clock, so they always agree.</p>' +
+      '<h3>Controls</h3>' +
+      '<p><span class="key">Spring constant k</span> and <span class="key">Mass m</span> \u2014 set \u03c9 = \u221a(k/m); period T = 2\u03c0\u221a(m/k).</p>' +
+      '<p><span class="key">Amplitude A</span> \u2014 the maximum displacement.</p>' +
+      '<p><span class="key">Time</span> \u2014 scrub through the motion by hand; <span class="key">Play / Reset</span> animate or restore the opening setup.</p>' +
+      '<p><span class="key">Drag the mass or phasor</span> (when paused at t = 0) to set the start.</p>' +
+      '<h3>Display</h3>' +
+      '<p><span class="key">Show phasor / projection lines / period</span> \u2014 reveal the rotating arrow, the link lines, and a one-period marker on the graph.</p>' +
+      '<h3>Vectors</h3>' +
+      '<p><span class="key">Displacement, velocity, acceleration, force</span> \u2014 draw the chosen vectors on the mass, each labelled. Velocity, acceleration and force are scaled to their own peaks (different units), as in a textbook diagram; displacement is shown at true scale.</p>' +
+      '<h3>Angular values</h3>' +
+      '<p>Show \u03c9t, \u03b5 and \u03c9t + \u03b5 on the phasor, and the equation x = A cos(\u03c9t + \u03b5).</p>' +
+      '<h3>Analysis</h3>' +
+      '<p><span class="key">Graphs</span> \u2014 one window with presets: x, v, a vs t; energy vs t; a vs x; energy vs x.</p>' +
+      '<p><span class="key">Data logger</span> and <span class="key">Phase explorer</span> \u2014 see their own help (the ? beside each).</p>' +
+      '<h3>Touch</h3>' +
+      '<p>Drag with a finger or Apple Pencil exactly as with a mouse.</p>';
+  }
+  document.getElementById('helpModalOverlay').style.display = 'flex';
+}
+function closeHelpModal() {
+  var ov = document.getElementById('helpModalOverlay');
+  if (ov) ov.style.display = 'none';
+}
+window.showHelpModal = showHelpModal;
+window.closeHelpModal = closeHelpModal;
 
 /* ============================================================= *
  * SHARED: phasor renderer + pop-up window factory               *
