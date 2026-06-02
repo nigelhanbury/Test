@@ -1,0 +1,3999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Simple Harmonic Motion &amp; Resonance</title>
+<style>
+/* ============================================================= *
+ * SHARED CORE STYLES  (CHANGE-CONTROLLED)                       *
+ * Suite visual language (matches Wave Motion & Superposition):  *
+ * black background, single bordered container, green (#34d399)  *
+ * accent, dark-glass control cards, white-glow slider thumbs.   *
+ * Anything here can ripple across all tabs -- flag a diff first.*
+ * ============================================================= */
+:root {
+  --accent:#34d399;          /* suite green */
+  --accent-amber:#f59e0b;    /* reset / warning */
+  --spring:#ff6b6b; --wave:#4ade80; --phasor:#00d4ff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { -webkit-text-size-adjust:100%; }
+
+body {
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#000; color:#fff;
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:8px 20px 20px;
+}
+
+/* Single centred container holding the whole app (suite pattern). */
+.container {
+  background:#000;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:20px;
+  padding:16px 30px 30px;
+  max-width:1300px; width:100%;
+}
+
+.app-header { text-align:center; margin-bottom:16px; }
+.app-header h1 {
+  font-size:2.3em; font-weight:300; letter-spacing:1px; margin-bottom:6px;
+}
+.app-header .subtitle { font-size:1.05em; opacity:0.9; font-weight:300; }
+
+/* ---- Tab bar (shared router UI; Wave-app style) ---- */
+.tab-bar {
+  display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
+  padding:6px; margin-bottom:20px;
+}
+.main-tab {
+  position:relative; padding:12px 26px; border:none;
+  background:linear-gradient(145deg,#2a2a4a,#1e1e36);
+  color:#8a8aaa; border-radius:14px; cursor:pointer;
+  font-size:0.9em; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;
+  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
+  box-shadow:0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  -webkit-tap-highlight-color:transparent;
+}
+.main-tab:hover {
+  background:linear-gradient(145deg,#35355a,#252545); color:#bbb; transform:translateY(-2px);
+}
+.main-tab.active {
+  background:linear-gradient(145deg,#0c3a3a,#062525); color:var(--accent);
+  transform:translateY(-2px); border:1px solid rgba(52,211,153,0.4);
+  box-shadow:0 8px 30px rgba(52,211,153,0.2), 0 0 40px rgba(52,211,153,0.12),
+             inset 0 1px 0 rgba(120,255,200,0.15);
+}
+
+/* ---- Tab content visibility (shared router behaviour) ---- */
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ---- Shared canvas chrome ---- */
+.canvas-wrap {
+  position:relative; display:block; width:100%; margin:0 auto 18px;
+}
+canvas {
+  display:block; width:100%; height:auto; border-radius:10px;
+  background:#000;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.08) inset;
+  touch-action:none;            /* required for canvas pointer/touch dragging */
+}
+
+/* ---- Shared control panel: row of dark-glass cards ---- */
+.controls {
+  display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:12px;
+}
+.control-group {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:8px 14px;
+  background:linear-gradient(135deg,rgba(40,40,70,0.55),rgba(20,20,38,0.7));
+  border:1px solid rgba(255,255,255,0.1); border-radius:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.controls label {
+  font-weight:600; font-size:0.74em; text-transform:uppercase;
+  letter-spacing:1.1px; color:#b8b8d8;
+}
+.slider-row { display:flex; align-items:center; gap:12px; }
+.value-display {
+  font-size:0.92em; font-weight:600; font-variant-numeric:tabular-nums;
+  color:#fff; background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.08);
+  padding:4px 14px; border-radius:999px; min-width:64px; text-align:center;
+}
+input[type=range] {
+  width:140px; height:6px; -webkit-appearance:none; appearance:none;
+  background:rgba(255,255,255,0.18); border-radius:999px; outline:none;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);
+  touch-action:none;            /* sliders need none, not manipulation */
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%;
+  background:linear-gradient(135deg,#ffffff,#d8d8ee); cursor:pointer;
+  border:1px solid rgba(0,0,0,0.15);
+  box-shadow:0 2px 6px rgba(0,0,0,0.4), 0 0 8px rgba(120,160,255,0.4);
+  transition:transform 0.12s ease;
+}
+input[type=range]::-webkit-slider-thumb:active { transform:scale(1.15); }
+input[type=range]::-moz-range-thumb {
+  width:18px; height:18px; border-radius:50%;
+  background:linear-gradient(135deg,#ffffff,#d8d8ee); cursor:pointer;
+  border:1px solid rgba(0,0,0,0.15);
+  box-shadow:0 2px 6px rgba(0,0,0,0.4), 0 0 8px rgba(120,160,255,0.4);
+}
+input[type=range]:disabled { opacity:0.4; }
+
+/* ---- Shared on-canvas button cluster (dark-glass pills) ---- */
+.canvas-ui {
+  position:absolute; top:12px; right:12px;
+  display:flex; gap:10px; z-index:5;
+}
+.cbtn {
+  color:#fff; background:linear-gradient(135deg,rgba(60,60,100,0.7),rgba(35,35,60,0.8));
+  border:1px solid rgba(255,255,255,0.15);
+  padding:9px 18px; border-radius:999px;
+  font-size:0.9em; font-weight:700; letter-spacing:0.5px; cursor:pointer;
+  transition:transform 0.12s ease, box-shadow 0.2s, border-color 0.2s;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3); -webkit-tap-highlight-color:transparent;
+}
+.cbtn:hover { transform:translateY(-1px); }
+.cbtn:active { transform:translateY(0); }
+.cbtn.play.playing { border-color:var(--accent); box-shadow:0 0 14px rgba(52,211,153,0.4); }
+.cbtn.reset { border-color:var(--accent-amber); }
+
+/* ---- Shared legend ---- */
+.legend {
+  display:flex; gap:26px; margin-top:14px; flex-wrap:wrap;
+  font-size:0.85em; color:#cfe6ff; justify-content:center;
+}
+.legend-item { display:flex; align-items:center; gap:8px; }
+.legend-color { width:24px; height:4px; border-radius:2px; box-shadow:0 0 8px currentColor; }
+
+/* ---- Shared tick-box row beneath controls (DC-style) ---- */
+.checkbox-bar {
+  display:flex; justify-content:center; flex-wrap:wrap; gap:10px 22px; margin-top:14px;
+}
+.checkbox-row { display:flex; align-items:center; gap:8px; cursor:pointer; }
+.checkbox-row input[type=checkbox] {
+  width:18px; height:18px; accent-color:var(--accent); cursor:pointer;
+}
+.checkbox-row label { color:#c8c8e0; font-size:0.9em; cursor:pointer; user-select:none; }
+.checkbox-row input[type=checkbox]:disabled + label { opacity:0.35; cursor:not-allowed; }
+.checkbox-row input[type=checkbox]:disabled { cursor:not-allowed; opacity:0.35; }
+
+/* Nested angular-values group: parent on top, children stacked beneath it
+   with a connecting vertical line (Wave Motion pattern). */
+.checkbox-bar { align-items: flex-start; }
+.ang-nest { display: flex; flex-direction: column; gap: 7px; }
+.ang-children {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-left: 9px; padding-left: 13px;
+  border-left: 2px solid rgba(52,211,153,0.35);
+}
+.ang-children .checkbox-row label { font-size:0.85em; }
+
+/* Grouped checkbox sections: each group is a labelled column; the bar lays the
+   groups out in a centred row that wraps. A faint divider + heading keeps the
+   controls organised rather than one long list. */
+.chk-group {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 0 20px; align-self: stretch;
+  border-left: 1px solid rgba(255,255,255,0.10);
+}
+.chk-group:first-child { border-left: none; }
+.chk-group-title {
+  font-size: 0.7em; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(200,200,224,0.55);
+  margin-bottom: 2px;
+}
+
+/* ---- Placeholder note for unbuilt tabs (temporary scaffold) ---- */
+.placeholder {
+  padding:60px 30px; text-align:center; color:rgba(255,255,255,0.5);
+  font-size:1em; font-weight:300; letter-spacing:0.5px;
+}
+
+/* ============================================================= *
+ * TAB 1 STYLES  (namespace: #shmTab only -- cannot leak)        *
+ * ============================================================= */
+#shmTab .shm-derived-readout {
+  font-size:0.9em; line-height:1.7;
+  display:flex; flex-wrap:wrap; gap:8px 12px; justify-content:center;
+}
+#shmTab .shm-derived-readout .pill {
+  padding:4px 12px; border-radius:999px; font-weight:600;
+  font-variant-numeric:tabular-nums;
+  background:rgba(52,211,153,0.12); color:var(--accent);
+  border:1px solid rgba(52,211,153,0.3);
+}
+#shmTab .shm-checkbox-row { display:flex; align-items:center; gap:8px; cursor:pointer; }
+#shmTab .shm-inline-label {
+  font-size:0.9em; color:#c8c8e0; font-weight:500; text-transform:none;
+  letter-spacing:0; cursor:pointer; user-select:none;
+}
+
+/* ---- Analysis popup window: floating, draggable, resizable. Matches the
+   Wave Motion suite's popup pattern (same colours, header style, grip). ---- */
+.popout-window {
+  position: fixed;
+  top: 90px;
+  left: calc(50% - 260px);
+  width: 520px;
+  height: 420px;
+  min-width: 360px;
+  min-height: 260px;
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 20px);
+  background: linear-gradient(145deg, #12122a, #0c1426);
+  border: 1px solid rgba(52,211,153,0.5);
+  border-radius: 14px;
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.65);
+  z-index: 950;
+  -webkit-user-select: none; user-select: none;
+}
+.popout-window.open { display: flex; }
+.popout-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; padding: 9px 12px; cursor: move;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.popout-title {
+  font-size: 0.72em; text-transform: uppercase; letter-spacing: 1px;
+  color: #34d399; font-weight: 700;
+}
+/* Override uppercase for titles that contain variable names (x, v, a) so the
+   maths identity of those letters is preserved. */
+.popout-title.no-upper { text-transform: none; letter-spacing: 0.5px; font-size: 0.82em; }
+.popout-body { flex: 1; min-height: 0; padding: 6px; position: relative; }
+#shmAnalysisCanvas, #shmEnergyCanvas, #shmAvsXCanvas, #shmEnergyXCanvas, #shmGraphsCanvas { width: 100%; height: 100%; display: block; }
+.graphs-window .popout-body { overflow: hidden; }
+
+/* Energy popup default position: offset to the right and slightly lower than
+   the analysis popup so both can be open without overlapping completely. */
+.energy-window {
+  top: 420px;
+  left: calc(50% - 320px);
+  width: 640px;
+  height: 320px;
+}
+
+/* a vs x popup: near-square (the plot is a single straight line in phase
+   space, symmetric in both axes). Positioned to the right of energy. */
+.avsx-window {
+  top: 420px;
+  left: calc(50% + 340px);
+  width: 380px;
+  height: 380px;
+}
+
+/* Popup header tools (Pause/Play + close). */
+.popout-header-tools { display: flex; align-items: center; gap: 4px; }
+.popout-playbtn {
+  background: none; border: 1px solid rgba(52,211,153,0.5); color: #34d399;
+  font-size: 11px; padding: 3px 9px; border-radius: 6px;
+  cursor: pointer; line-height: 1; transition: all 0.15s;
+}
+.popout-playbtn:hover { background: rgba(52,211,153,0.15); }
+.popout-playbtn.playing { background: rgba(52,211,153,0.2); color: #fff; }
+
+/* Strip below the header for popup-specific options (tangent toggles + hint). */
+.popout-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  padding: 6px 12px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.85em;
+}
+.popout-controls .checkbox-row { gap: 6px; }
+.popout-controls .checkbox-row input[type=checkbox] { width: 15px; height: 15px; }
+.popout-controls .checkbox-row label { font-size: 0.95em; }
+.popout-hint {
+  color: rgba(255,255,255,0.4); font-style: italic; font-size: 0.85em;
+  margin-left: auto;
+}
+.popout-hint.hidden { display: none; }
+.work-close {
+  background: none; border: none; color: #aaa; font-size: 16px;
+  cursor: pointer; padding: 2px 6px; border-radius: 6px; line-height: 1;
+}
+.work-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.popout-resize-grip {
+  position: absolute; right: 0; bottom: 0; width: 22px; height: 22px;
+  cursor: nwse-resize; touch-action: none;
+  background: linear-gradient(135deg, transparent 0 6px, rgba(52,211,153,0.55) 6px 7.5px, transparent 7.5px 11px, rgba(52,211,153,0.55) 11px 12.5px, transparent 12.5px 16px, rgba(52,211,153,0.55) 16px 17.5px, transparent 17.5px);
+  border-bottom-right-radius: 14px; opacity: 0.7; transition: opacity 0.15s;
+}
+.popout-resize-grip:hover { opacity: 1; }
+
+/* Energy vs x popup: near-square centred-origin plot, like the a-vs-x popup.
+   Positioned below/right so it can sit alongside the others. */
+.energyx-window {
+  top: 470px;
+  left: calc(50% + 340px);
+  width: 420px;
+  height: 380px;
+}
+
+/* ---- Graphs window: one popup, preset buttons swap the graph shown. ---- */
+.graphs-window {
+  top: 100px; left: calc(50% - 320px); width: 640px; height: 460px;
+  /* The preset-button row + tangent strip take vertical space on top of the
+     header, so the canvas needs a higher floor than the base popup to keep
+     the 3-panel analysis view usable. These override the base popup mins. */
+  min-width: 460px; min-height: 400px;
+}
+.graphs-type-selector {
+  display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+  padding: 8px 12px 6px; border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.graphs-window .popout-controls { flex-shrink: 0; }
+.graphs-type-btn {
+  padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04); color: #bbb; font-size: 0.74em;
+  font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  touch-action: manipulation;
+}
+.graphs-type-btn:hover {
+  background: rgba(52,211,153,0.12); color: #34d399; border-color: rgba(52,211,153,0.35);
+}
+.graphs-type-btn.active {
+  background: rgba(52,211,153,0.22); color: #34d399; border-color: rgba(52,211,153,0.6);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="app-header">
+  <h1>Simple Harmonic Motion &amp; Resonance</h1>
+</div>
+
+<!-- ============================================================= -->
+<!-- TAB BAR  (shared router UI)                                   -->
+<!-- ============================================================= -->
+<div class="tab-bar">
+  <button class="main-tab active" id="tabBtn-shm"  onclick="switchTab('shm')">Simple Harmonic Motion</button>
+  <button class="main-tab"        id="tabBtn-damp" onclick="switchTab('damp')">Damped SHM</button>
+  <button class="main-tab"        id="tabBtn-res"  onclick="switchTab('res')">Forced &amp; Resonance</button>
+</div>
+
+<!-- ============================================================= -->
+<!-- TAB 1: SIMPLE HARMONIC MOTION   (namespace: shm)              -->
+<!-- Self-contained. Do not let other tabs touch anything here.   -->
+<!-- ============================================================= -->
+<section class="tab-content active" id="shmTab">
+
+  <div class="canvas-wrap">
+    <canvas id="shmCanvas" width="1100" height="370"></canvas>
+
+    <div class="canvas-ui">
+      <button id="shmPlayBtn"  class="cbtn play">&#9654; Play</button>
+      <button id="shmResetBtn" class="cbtn reset">&#8635; Reset</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label for="shmK">Spring constant (k)</label>
+      <div class="slider-row">
+        <input id="shmK" type="range" min="1" max="10" step="0.1" value="4">
+        <span class="value-display" id="shmKv">4.0 N/m</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label for="shmM">Mass (m)</label>
+      <div class="slider-row">
+        <input id="shmM" type="range" min="0.5" max="2" step="0.1" value="1.0">
+        <span class="value-display" id="shmMv">1.0 kg</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label for="shmA">Amplitude, A</label>
+      <div class="slider-row">
+        <input id="shmA" type="range" min="0.5" max="12" step="0.1" value="5">
+        <span class="value-display" id="shmAv">5.0 cm</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label for="shmTime">Time</label>
+      <div class="slider-row">
+        <input id="shmTime" type="range" min="0" max="20" step="0.01" value="0">
+        <span class="value-display" id="shmTimev">0.00 s</span>
+      </div>
+    </div>
+
+    <!-- The derived ω/f/T readout is hidden: students are meant to work these
+         out themselves. Kept in the DOM (display:none) so updateReadout, which
+         still writes into it, keeps working without changes. -->
+    <div class="control-group" id="shmDerived" style="display:none">
+      <label>Derived (from k and m)</label>
+      <div class="shm-derived-readout" id="shmReadout"></div>
+    </div>
+  </div>
+
+  <div class="checkbox-bar">
+    <div class="chk-group">
+      <div class="chk-group-title">Display</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmPhasorChk" checked>
+        <label for="shmPhasorChk">Show phasor</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmProjChk" checked>
+        <label for="shmProjChk">Show projection lines</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmPeriodChk">
+        <label for="shmPeriodChk">Show period</label>
+      </div>
+    </div>
+
+    <div class="chk-group">
+      <div class="chk-group-title">Vectors</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmDispChk">
+        <label for="shmDispChk">Show displacement</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmVelChk">
+        <label for="shmVelChk">Show velocity</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmAccelChk">
+        <label for="shmAccelChk">Show acceleration</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmForceChk">
+        <label for="shmForceChk">Show force</label>
+      </div>
+    </div>
+
+    <div class="chk-group">
+      <div class="chk-group-title">Angular values</div>
+      <div class="ang-nest">
+        <div class="checkbox-row">
+          <input type="checkbox" id="shmAngChk">
+          <label for="shmAngChk">Show angular values</label>
+        </div>
+        <div class="ang-children" id="shmAngChildren">
+          <div class="checkbox-row">
+            <input type="checkbox" id="shmAngWtChk" checked disabled>
+            <label for="shmAngWtChk">&omega;t</label>
+          </div>
+          <div class="checkbox-row" id="shmAngEpsRow">
+            <input type="checkbox" id="shmAngEpsChk" disabled>
+            <label for="shmAngEpsChk">&epsilon;</label>
+          </div>
+          <div class="checkbox-row" id="shmAngTotRow">
+            <input type="checkbox" id="shmAngTotChk" disabled>
+            <label for="shmAngTotChk">&omega;t + &epsilon;</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chk-group">
+      <div class="chk-group-title">Analysis</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmGraphsChk">
+        <label for="shmGraphsChk">Graphs</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmClockChk">
+        <label for="shmClockChk">Set clock start (data logger)</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shmExplorerChk">
+        <label for="shmExplorerChk">Phase explorer</label>
+      </div>
+      <!-- The four individual graph toggles below are superseded by the single
+           "Graphs" window. They are hidden (display:none) rather than deleted so
+           that all JS that references them (mutex, open/close, reset) and the
+           draw functions the Graphs window reuses keep working untouched. -->
+      <div class="checkbox-row" style="display:none">
+        <input type="checkbox" id="shmAnalysisChk">
+        <label for="shmAnalysisChk">Show analysis graphs (x, v, a)</label>
+      </div>
+      <div class="checkbox-row" style="display:none">
+        <input type="checkbox" id="shmEnergyChk">
+        <label for="shmEnergyChk">Show energy graph</label>
+      </div>
+      <div class="checkbox-row" style="display:none">
+        <input type="checkbox" id="shmAvsXChk">
+        <label for="shmAvsXChk">Show <i>a</i> vs <i>x</i> graph</label>
+      </div>
+      <div class="checkbox-row" style="display:none">
+        <input type="checkbox" id="shmEnergyXChk">
+        <label for="shmEnergyXChk">Show energy vs <i>x</i> graph</label>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================================================= -->
+<!-- TAB 2: DAMPED SHM   (namespace: damp)                         -->
+<!-- Self-contained. Do not let other tabs touch anything here.   -->
+<!-- ============================================================= -->
+<section class="tab-content" id="dampTab">
+  <div class="placeholder">Tab&nbsp;2 &mdash; Damped SHM (scaffold)</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- TAB 3: FORCED OSCILLATIONS & RESONANCE   (namespace: res)     -->
+<!-- Self-contained. Do not let other tabs touch anything here.   -->
+<!-- ============================================================= -->
+<section class="tab-content" id="resTab">
+  <div class="placeholder">Tab&nbsp;3 &mdash; Forced Oscillations &amp; Resonance (scaffold)</div>
+</section>
+
+</div><!-- /container -->
+
+<!-- Analysis popup (Tab 1): three stacked graphs x(t), v(t), a(t). Toggled by
+     the "Show analysis graphs" checkbox; draggable by header, resizable from
+     the bottom-right grip. -->
+<div id="shmAnalysisWindow" class="popout-window">
+  <div class="popout-header" id="shmAnalysisHeader">
+    <span class="popout-title no-upper">Analysis &mdash; x, v, a vs time</span>
+    <div class="popout-header-tools">
+      <button class="popout-playbtn" id="shmAnalysisPlayBtn" title="Play / Pause">&#9654;</button>
+      <button class="work-close" id="shmAnalysisClose" title="Close">&times;</button>
+    </div>
+  </div>
+  <div class="popout-controls">
+    <div class="checkbox-row">
+      <input type="checkbox" id="shmTangXChk" disabled>
+      <label for="shmTangXChk">Show tangent on <i>x</i></label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="shmTangVChk" disabled>
+      <label for="shmTangVChk">Show tangent on <i>v</i></label>
+    </div>
+    <span class="popout-hint" id="shmPausedHint">Pause to enable tangents and dot scrubbing</span>
+  </div>
+  <div class="popout-body">
+    <canvas id="shmAnalysisCanvas"></canvas>
+  </div>
+  <div class="popout-resize-grip" id="shmAnalysisResizeGrip" title="Drag to resize"></div>
+</div>
+
+<!-- Energy popup (Tab 1): KE, EPE, Total vs time on a single panel. Independent
+     of the analysis popup; can be open alongside any other state. -->
+<div id="shmEnergyWindow" class="popout-window energy-window">
+  <div class="popout-header" id="shmEnergyHeader">
+    <span class="popout-title no-upper">Energy &mdash; KE, EPE, Total vs time</span>
+    <div class="popout-header-tools">
+      <button class="popout-playbtn" id="shmEnergyPlayBtn" title="Play / Pause">&#9654;</button>
+      <button class="work-close" id="shmEnergyClose" title="Close">&times;</button>
+    </div>
+  </div>
+  <div class="popout-body">
+    <canvas id="shmEnergyCanvas"></canvas>
+  </div>
+  <div class="popout-resize-grip" id="shmEnergyResizeGrip" title="Drag to resize"></div>
+</div>
+
+<!-- a vs x popup (Tab 1): straight-line plot demonstrating a = -omega^2 x. -->
+<div id="shmAvsXWindow" class="popout-window avsx-window">
+  <div class="popout-header" id="shmAvsXHeader">
+    <span class="popout-title no-upper">Acceleration vs Displacement &mdash; <i>a</i> vs <i>x</i></span>
+    <div class="popout-header-tools">
+      <button class="popout-playbtn" id="shmAvsXPlayBtn" title="Play / Pause">&#9654;</button>
+      <button class="work-close" id="shmAvsXClose" title="Close">&times;</button>
+    </div>
+  </div>
+  <div class="popout-body">
+    <canvas id="shmAvsXCanvas"></canvas>
+  </div>
+  <div class="popout-resize-grip" id="shmAvsXResizeGrip" title="Drag to resize"></div>
+</div>
+
+<!-- Energy vs x popup (Tab 1): KE, EPE, Total vs displacement on a centred-
+     origin plot, same style as the a-vs-x popup. Scrubber/play-driven dots,
+     no dragging. Independent of all other state. -->
+<div id="shmEnergyXWindow" class="popout-window energyx-window">
+  <div class="popout-header" id="shmEnergyXHeader">
+    <span class="popout-title no-upper">Energy &mdash; KE, EPE, Total vs <i>x</i></span>
+    <div class="popout-header-tools">
+      <button class="popout-playbtn" id="shmEnergyXPlayBtn" title="Play / Pause">&#9654;</button>
+      <button class="work-close" id="shmEnergyXClose" title="Close">&times;</button>
+    </div>
+  </div>
+  <div class="popout-body">
+    <canvas id="shmEnergyXCanvas"></canvas>
+  </div>
+  <div class="popout-resize-grip" id="shmEnergyXResizeGrip" title="Drag to resize"></div>
+</div>
+
+<!-- Graphs window (Tab 1): ONE popup with preset buttons. Selecting a preset
+     renders the corresponding existing graph (with its full functionality:
+     tangents + draggable dots for the analysis view, draggable dots for the
+     energy view, scrubber dots for the x-axis views) into this single window.
+     Implemented by retargeting the existing draw functions at this window's
+     canvas -- no existing code is modified. -->
+<div id="shmGraphsWindow" class="popout-window graphs-window">
+  <div class="popout-header" id="shmGraphsHeader">
+    <span class="popout-title no-upper">Graphs</span>
+    <div class="popout-header-tools">
+      <button class="popout-playbtn" id="shmGraphsPlayBtn" title="Play / Pause">&#9654;</button>
+      <button class="work-close" id="shmGraphsClose" title="Close">&times;</button>
+    </div>
+  </div>
+  <div class="graphs-type-selector" id="shmGraphsTypeSelector">
+    <button class="graphs-type-btn active" data-gtype="analysis" id="shmGtBtn_analysis">x, v, a vs t</button>
+    <button class="graphs-type-btn"        data-gtype="energy"   id="shmGtBtn_energy">Energy vs t</button>
+    <button class="graphs-type-btn"        data-gtype="avsx"     id="shmGtBtn_avsx"><i>a</i> vs <i>x</i></button>
+    <button class="graphs-type-btn"        data-gtype="energyx"  id="shmGtBtn_energyx">Energy vs <i>x</i></button>
+  </div>
+  <div class="popout-controls" id="shmGraphsControls">
+    <div class="checkbox-row">
+      <input type="checkbox" id="shmGTangXChk" disabled>
+      <label for="shmGTangXChk">Show tangent on <i>x</i></label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="shmGTangVChk" disabled>
+      <label for="shmGTangVChk">Show tangent on <i>v</i></label>
+    </div>
+    <span class="popout-hint" id="shmGPausedHint">Pause to enable tangents and dot scrubbing</span>
+  </div>
+  <div class="popout-body">
+    <canvas id="shmGraphsCanvas"></canvas>
+  </div>
+  <div class="popout-resize-grip" id="shmGraphsResizeGrip" title="Drag to resize"></div>
+</div>
+
+<script>
+/* ============================================================= *
+ * SHARED CORE SCRIPT  (CHANGE-CONTROLLED)                       *
+ * Tab router + shared helpers. Per-tab logic lives in its own   *
+ * clearly-marked block and is reached only through the          *
+ * onEnter / onLeave hooks registered below. The router never    *
+ * reaches into a tab's internals directly.                      *
+ * ============================================================= */
+
+/* ---- Shared util: canvas coordinate scaling (DC Circuit Builder
+   pattern). Converts a clientX/clientY (mouse or touch) into the
+   canvas's internal pixel coordinates, accounting for CSS scaling. ---- */
+function canvasPoint(canvas, clientX, clientY) {
+  var rect = canvas.getBoundingClientRect();
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+
+/* ---- Tab lifecycle registry ----
+   Each tab registers an onEnter()/onLeave() pair under its key.
+   Tabs that aren't built yet simply have no entry (or no-ops). The
+   router calls leave on the outgoing tab and enter on the incoming
+   one, and otherwise only toggles CSS classes. This is the single
+   point of contact between the shared core and each tab. */
+var tabHooks = {
+  shm:  { onEnter: function(){}, onLeave: function(){} },
+  damp: { onEnter: function(){}, onLeave: function(){} },
+  res:  { onEnter: function(){}, onLeave: function(){} }
+};
+
+var TAB_ORDER = ['shm', 'damp', 'res'];
+var currentTab = 'shm';
+
+function switchTab(tab) {
+  if (TAB_ORDER.indexOf(tab) < 0) return;
+  if (tab === currentTab) return;
+
+  // Leave the outgoing tab (stops its animation, dismisses its windows).
+  if (tabHooks[currentTab] && tabHooks[currentTab].onLeave) {
+    tabHooks[currentTab].onLeave();
+  }
+
+  // Toggle button + content active classes.
+  var i, btn, content;
+  for (i = 0; i < TAB_ORDER.length; i++) {
+    btn = document.getElementById('tabBtn-' + TAB_ORDER[i]);
+    if (btn) btn.classList.toggle('active', TAB_ORDER[i] === tab);
+  }
+  var ids = { shm:'shmTab', damp:'dampTab', res:'resTab' };
+  for (i = 0; i < TAB_ORDER.length; i++) {
+    content = document.getElementById(ids[TAB_ORDER[i]]);
+    if (content) content.classList.toggle('active', TAB_ORDER[i] === tab);
+  }
+
+  currentTab = tab;
+
+  // Enter the incoming tab.
+  if (tabHooks[tab] && tabHooks[tab].onEnter) {
+    tabHooks[tab].onEnter();
+  }
+}
+
+// Expose for inline onclick handlers.
+window.switchTab = switchTab;
+
+/* ============================================================= *
+ * SHARED: phasor renderer + pop-up window factory               *
+ * (to be added in later steps; placeholder region)              *
+ * ============================================================= */
+
+
+/* ============================================================= *
+ * TAB 1 LOGIC  (namespace: shm)                                  *
+ * Spring-mass <-> rotating phasor <-> displacement-time trace,   *
+ * all driven by k and m (omega = sqrt(k/m)). Frequency, f and    *
+ * period T are derived and shown read-only. Re-architected from  *
+ * SHMphasor.html. All state and helpers live under the shm_      *
+ * prefix / this IIFE so nothing leaks to other tabs.             *
+ * ============================================================= */
+(function () {
+  var canvas = document.getElementById('shmCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+
+  /* ---- State (Tab-1 only) ---- */
+  var shm_k = 4.0;        // N/m
+  var shm_m = 1.0;        // kg
+  var shm_x0 = 5.0;       // cm (amplitude A, always > 0; the mass releases from +A)
+  var shm_t = 0;          // seconds (simulation time)
+  var shm_running = false;
+  var shm_showProj = true;
+  var shm_showPeriod = false;   // mark one period T on the wave (Wave Motion style)
+  var shm_showVel = false;      // velocity vector + value on the mass
+  var shm_showAccel = false;    // acceleration vector + value on the mass
+  var shm_showForce = false;    // restoring-force vector + value on the mass
+  var shm_showDisp = false;     // displacement vector (base at x=0, tip at mass)
+  // Phase explorer: teacher-led tool. When on, the wave becomes a draggable
+  // cosine x = A cos(omega t + eps); dragging changes eps (snapped to pi/4) so
+  // students see how a horizontal shift of cos maps to the phase constant.
+  // Mutually exclusive with the data logger.
+  var shm_showExplorer = false;
+  var shm_explorerEps = 0;      // current phase constant set by dragging (rad)
+  var shm_explorerSnapped = true;  // true when eps sits exactly on a key angle
+  var shm_showPhasor = true;   // master: show/hide the phasor (arrow, circle, headline, arcs)
+  var shm_showAng = false;     // master: show angular values (off by default - focus on visuals first)
+  var shm_showWt = true;       // sub: omega*t
+  var shm_showEps = false;     // sub: phase constant epsilon
+  var shm_showTot = false;     // sub: omega*t + epsilon (the total)
+  var shm_raf = null;     // animation handle (so we can stop on leave)
+  var shm_lastFrame = 0;  // performance.now() of previous frame, for dt
+
+  /* ---- Clock-start (data-logger) mode ----
+     When on, the waveform is hidden and a horizontal trigger pointer appears
+     left of the mass. On Play the mass oscillates but the graph waits; it
+     begins plotting the first time the mass passes the trigger height in the
+     chosen direction. triggerCm is the pointer height (clamped to +/-|x0|);
+     triggerDir is +1 (moving up) or -1 (moving down); armed/fired track the
+     logger state; tFire is the sim time at which it triggered. */
+  var shm_clockMode = false;
+  var shm_triggerCm = 0;       // pointer height in cm
+  var shm_triggerDir = 1;      // +1 up, -1 down (only meaningful between extremes)
+  var shm_fired = false;       // has the logger triggered yet?
+  var shm_tFire = 0;           // sim time at trigger (trace t=0 maps here)
+  var shm_clockDragging = false;
+  var shm_hoverArrow = 0;      // 0 none, +1 up arrow hovered, -1 down arrow hovered
+  // Set true the moment Play is pressed in clock mode (the "experiment is
+  // armed"). Locks k, m, A and mass-drag until clock mode is unticked, so the
+  // captured eps stays meaningful for the parameters that produced it.
+  var shm_clockArmed = false;
+
+  // Analysis popup state. The popup shows three stacked graphs (x, v, a) vs
+  // time, on the same time scale as the main wave graph. It's mutually
+  // exclusive with clock mode (only one can be active at a time).
+  var shm_showAnalysis = false;
+  // Tangent toggles: mutually exclusive. Show tangent on x (its slope = v) or
+  // on v (its slope = a). Only meaningful when the simulation is paused -- a
+  // moving tangent isn't useful pedagogically.
+  var shm_tangentX = false;
+  var shm_tangentV = false;
+
+  // Energy popup state. Single-panel graph of KE, EPE and Total vs time.
+  // Independent of clock mode and the analysis popup -- no mutex.
+  var shm_showEnergy = false;
+  // a vs x popup state. Independent of all others -- no mutex.
+  var shm_showAvsX = false;
+  // Energy vs x popup state. Independent of all others -- no mutex.
+  var shm_showEnergyX = false;
+  // Graphs window state. One popup, preset selects which graph is shown.
+  var shm_showGraphs = false;
+
+  /* ---- Layout (three columns: spring | phasor | graph) on 1100x460.
+     The vertical centre is shared by the spring equilibrium, the phasor
+     centre and the graph's displacement zero, so the horizontal connector
+     is one straight line across all three. ---- */
+  var centreY = 230;                // shared zero/equilibrium height
+
+  var springX = 90;                 // spring column
+  var anchorY = 60;                 // fixed top of spring
+  var equilibriumY = centreY;       // mass centre when x=0
+
+  var phasorX = 300, phasorY = centreY;   // phasor centre
+
+  // Graph occupies the right ~half of the canvas. waveStartX is the
+  // vertical (displacement) axis; waveEndX is the right end of the time axis.
+  var waveStartX = 470, waveEndX = 1040, waveY = centreY;
+  // Normal-mode left edge of the graph, remembered so the phase explorer can
+  // temporarily widen the graph (using the space freed by hiding the spring and
+  // phasor) and restore it exactly on exit.
+  var WAVE_START_X_NORMAL = 470;
+  var WAVE_START_X_EXPLORER = 90;   // stretch left into the freed space
+
+  /* ---- Scales ----
+     cmToPx locks the phasor radius, spring stretch and graph height together.
+     The graph's vertical axis spans +/- MAX_CM with a tick every TICK_CM.
+     Amplitude A ranges 0.5..12 cm, so the displacement axis runs to +/-12. ---- */
+  var cmToPx = 8;                   // 8 cm -> 64 px; +/-12 cm -> +/-96 px
+  var MAX_CM = 12;                  // vertical axis runs -12..+12 cm
+  var TICK_CM = 2;                  // a numbered tick every 2 cm
+
+  /* ---- Derived physics ---- */
+  function omega() { return Math.sqrt(shm_k / shm_m); }   // rad/s
+  function freq()  { return omega() / (2 * Math.PI); }    // Hz
+  function period(){ return 2 * Math.PI * Math.sqrt(shm_m / shm_k); } // s
+
+  /* The displacement-time axis is FIXED at 0..20 s (like the Wave Motion
+     app's fixed window). The waveform's cycle count changes with k/m
+     instead of the axis rescaling: cycles shown = TIME_AXIS / T. The mass
+     slider is capped at 2 kg so at least ~2 full cycles always fit. */
+  var TIME_AXIS = 20;               // seconds, fixed
+  function timeWindow() { return TIME_AXIS; }
+
+  /* x(t) = x0 cos(omega t): released from rest at the signed initial
+     displacement x0 at t=0. The amplitude of the resulting motion is |x0|.
+     Screen y uses the Wave-app convention y = centreY - displacement*cmToPx,
+     so +displacement is UP and the phasor tip, wave dot and mass marker all
+     share one height. */
+  function disp(t) {
+    // Normal mode: x(t) = x0 cos(omega t). Phase-explorer mode: the wave gains
+    // the dragged phase constant, x(t) = x0 cos(omega t + eps), so the wave,
+    // mass and phasor tip all reflect the same eps consistently.
+    var phase = omega() * t;
+    if (shm_showExplorer) phase += shm_explorerEps;
+    return shm_x0 * Math.cos(phase);
+  }                                                              // cm
+  function yForDisp(centreY, dCm) { return centreY - dCm * cmToPx; }
+
+  /* Phase constant epsilon for display. Normal mode: 0 for +x0, +/-pi for -x0
+     (the release-from-rest decomposition). Clock mode: undefined until the
+     logger fires (so the angular values stay hidden, since there's no captured
+     phase yet); after firing, the captured value = (omega*tFire) folded to
+     (-pi, pi]. Returns null when there is no defined epsilon to show. */
+  function currentEps() {
+    if (shm_clockMode) {
+      if (!shm_fired) return null;
+      var e = (omega() * shm_tFire) % (2 * Math.PI);
+      if (e > Math.PI) e -= 2 * Math.PI;
+      if (e <= -Math.PI) e += 2 * Math.PI;
+      return e;
+    }
+    // Normal mode: the mass releases from rest at +A (positive amplitude), so
+    // x(t) = A cos(omega*t) -- epsilon is always 0. (The epsilon != 0 cases
+    // are now explored via the data logger.)
+    return 0;
+  }
+
+  /* Symbolic form of epsilon for the four special cases the data logger can
+     produce: top extreme -> 0, bottom -> +/-pi, centre going down -> +pi/2,
+     centre going up -> -pi/2. Returns null if eps isn't one of these (caller
+     falls back to a numeric form). The tolerance is generous (~3e-3) so this
+     also catches near-snap values from slightly-imprecise tFire detection. */
+  function formatEpsSymbolic(eps) {
+    var TOL = 3e-3;
+    if (Math.abs(eps) < TOL) return '0';
+    if (Math.abs(Math.abs(eps) - Math.PI) < TOL) return '\u00b1\u03c0';
+    if (Math.abs(eps - Math.PI / 2) < TOL) return '+\u03c0/2';
+    if (Math.abs(eps + Math.PI / 2) < TOL) return '\u2212\u03c0/2';
+    return null;
+  }
+
+  /* Effective time used for the on-screen mass + phasor. Normally this is the
+     master clock shm_t. In clock mode AFTER the logger fires, it wraps with the
+     graph's now-dot: t = tFire + ((shm_t - tFire) mod window). This keeps the
+     phasor, mass and now-dot showing the SAME instant, so when the dot loops
+     back to the start the phasor loops with it (no desync). Before firing in
+     clock mode the mass free-runs on shm_t (it is genuinely oscillating). */
+  function displayTime() {
+    if (shm_clockMode && shm_fired) {
+      var tau = shm_t - shm_tFire;
+      if (tau < 0) tau = 0;
+      return shm_tFire + (tau % timeWindow());
+    }
+    return shm_t;
+  }
+
+  /* Time used to compute the omega*t arc and label. Normally the same as
+     displayTime(). In clock mode after firing, the recorded motion is
+     x = x0 cos(omega*tau + eps_captured), where tau = time since trigger; so
+     the omega*t arc/label should represent omega*tau (rotation since the
+     trigger), not omega*displayTime. This keeps the decomposition consistent:
+     omega*t (rotation since trigger) + eps_captured = total phase. */
+  function arcTime() {
+    if (shm_clockMode && shm_fired) return displayTime() - shm_tFire;
+    return displayTime();
+  }
+
+  /* ---- DOM ---- */
+  var kSlider = document.getElementById('shmK');
+  var mSlider = document.getElementById('shmM');
+  var aSlider = document.getElementById('shmA');
+  var timeSlider = document.getElementById('shmTime');
+  var kVal = document.getElementById('shmKv');
+  var mVal = document.getElementById('shmMv');
+  var aVal = document.getElementById('shmAv');
+  var timeVal = document.getElementById('shmTimev');
+  var readout = document.getElementById('shmReadout');
+  var playBtn = document.getElementById('shmPlayBtn');
+  var resetBtn = document.getElementById('shmResetBtn');
+  var projChk = document.getElementById('shmProjChk');
+  var periodChk = document.getElementById('shmPeriodChk');
+  var velChk = document.getElementById('shmVelChk');
+  var accelChk = document.getElementById('shmAccelChk');
+  var forceChk = document.getElementById('shmForceChk');
+  var dispChk = document.getElementById('shmDispChk');
+  var clockChk = document.getElementById('shmClockChk');
+  var explorerChk = document.getElementById('shmExplorerChk');
+  var phasorChk = document.getElementById('shmPhasorChk');
+  var angChk   = document.getElementById('shmAngChk');
+  var angWtChk  = document.getElementById('shmAngWtChk');
+  var angEpsChk = document.getElementById('shmAngEpsChk');
+  var angTotChk = document.getElementById('shmAngTotChk');
+  var analysisChk = document.getElementById('shmAnalysisChk');
+  var analysisWindow = document.getElementById('shmAnalysisWindow');
+  var analysisHeader = document.getElementById('shmAnalysisHeader');
+  var analysisClose = document.getElementById('shmAnalysisClose');
+  var analysisResizeGrip = document.getElementById('shmAnalysisResizeGrip');
+  var analysisCanvas = document.getElementById('shmAnalysisCanvas');
+  var analysisCtx = analysisCanvas.getContext('2d');
+  var analysisPlayBtn = document.getElementById('shmAnalysisPlayBtn');
+  var tangXChk = document.getElementById('shmTangXChk');
+  var tangVChk = document.getElementById('shmTangVChk');
+  var pausedHint = document.getElementById('shmPausedHint');
+  var energyChk = document.getElementById('shmEnergyChk');
+  var energyWindow = document.getElementById('shmEnergyWindow');
+  var energyHeader = document.getElementById('shmEnergyHeader');
+  var energyClose = document.getElementById('shmEnergyClose');
+  var energyResizeGrip = document.getElementById('shmEnergyResizeGrip');
+  var energyCanvas = document.getElementById('shmEnergyCanvas');
+  var energyCtx = energyCanvas.getContext('2d');
+  var energyPlayBtn = document.getElementById('shmEnergyPlayBtn');
+  var avsxChk = document.getElementById('shmAvsXChk');
+  var avsxWindow = document.getElementById('shmAvsXWindow');
+  var avsxHeader = document.getElementById('shmAvsXHeader');
+  var avsxClose = document.getElementById('shmAvsXClose');
+  var avsxResizeGrip = document.getElementById('shmAvsXResizeGrip');
+  var avsxCanvas = document.getElementById('shmAvsXCanvas');
+  var avsxCtx = avsxCanvas.getContext('2d');
+  var avsxPlayBtn = document.getElementById('shmAvsXPlayBtn');
+
+  // Energy vs x popup DOM.
+  var energyXChk = document.getElementById('shmEnergyXChk');
+  var energyXWindow = document.getElementById('shmEnergyXWindow');
+  var energyXHeader = document.getElementById('shmEnergyXHeader');
+  var energyXClose = document.getElementById('shmEnergyXClose');
+  var energyXResizeGrip = document.getElementById('shmEnergyXResizeGrip');
+  var energyXCanvas = document.getElementById('shmEnergyXCanvas');
+  var energyXCtx = energyXCanvas.getContext('2d');
+  var energyXPlayBtn = document.getElementById('shmEnergyXPlayBtn');
+
+  // Graphs window DOM.
+  var graphsChk = document.getElementById('shmGraphsChk');
+  var graphsWindow = document.getElementById('shmGraphsWindow');
+  var graphsHeader = document.getElementById('shmGraphsHeader');
+  var graphsClose = document.getElementById('shmGraphsClose');
+  var graphsResizeGrip = document.getElementById('shmGraphsResizeGrip');
+  var graphsPlayBtn = document.getElementById('shmGraphsPlayBtn');
+  var graphsTypeSelector = document.getElementById('shmGraphsTypeSelector');
+  var graphsCanvas = document.getElementById('shmGraphsCanvas');
+  var graphsCtx = graphsCanvas.getContext('2d');
+  var gTangXChk = document.getElementById('shmGTangXChk');
+  var gTangVChk = document.getElementById('shmGTangVChk');
+  var gPausedHint = document.getElementById('shmGPausedHint');
+
+  // Keep the Time slider + its readout in step with shm_t (called every frame
+  // while playing, and after reset, so the thumb tracks the animation).
+  // Keep the Time slider + readout in step with the on-screen time. In normal
+  // mode that is shm_t; in clock mode after firing it is tau (time since the
+  // trigger), wrapped to the window, which is what the graph's axis shows.
+  function syncTimeSlider() {
+    var shown;
+    if (shm_clockMode && shm_fired) {
+      var tau = shm_t - shm_tFire; if (tau < 0) tau = 0;
+      shown = tau % timeWindow();
+    } else {
+      shown = shm_t;
+    }
+    timeSlider.value = shown;
+    timeVal.textContent = shown.toFixed(2) + ' s';
+  }
+
+  function updateReadout() {
+    var w = omega(), f = freq(), T = period();
+    readout.innerHTML =
+      '<span class="pill">&omega; = &radic;(k/m) = ' + w.toFixed(2) + ' rad/s</span>' +
+      '<span class="pill">f = ' + f.toFixed(2) + ' Hz</span>' +
+      '<span class="pill">T = 2&pi;&radic;(m/k) = ' + T.toFixed(2) + ' s</span>';
+  }
+
+  /* ---- Slider wiring (redraw immediately when paused) ---- */
+  kSlider.addEventListener('input', function (e) {
+    shm_k = parseFloat(e.target.value); kVal.textContent = shm_k.toFixed(1) + ' N/m';
+    updateReadout(); if (!shm_running) drawFrame();
+  });
+  mSlider.addEventListener('input', function (e) {
+    shm_m = parseFloat(e.target.value); mVal.textContent = shm_m.toFixed(1) + ' kg';
+    updateReadout(); if (!shm_running) drawFrame();
+  });
+  aSlider.addEventListener('input', function (e) {
+    shm_x0 = parseFloat(e.target.value);
+    aVal.textContent = shm_x0.toFixed(1) + ' cm';
+    if (!shm_running) drawFrame();
+  });
+  // Gates the controls whose values shouldn't change mid-experiment:
+  //   - Amplitude (A): normal mode rule (paused AND t=0) so changes happen only
+  //     between cycles. PLUS: locked once clock-mode Play has been pressed
+  //     (shm_clockArmed) -- A defines the trigger physics so the captured eps
+  //     would become inconsistent if A changed under it.
+  //   - Spring constant (k) and Mass (m): no normal-mode lock (changing omega
+  //     mid-cycle is instructive). Locked once clock-armed for the same
+  //     reason as A.
+  //   - Time scrubber: in clock mode, disabled until the logger has fired.
+  function syncDispEnabled() {
+    var ampLocked = shm_clockArmed || !(!shm_running && shm_t === 0);
+    aSlider.disabled = ampLocked;
+    kSlider.disabled = shm_clockArmed;
+    mSlider.disabled = shm_clockArmed;
+    timeSlider.disabled = (shm_clockMode && !shm_fired);
+  }
+
+  // Clock-mode and analysis-graphs are mutually exclusive: each disables the
+  // other's checkbox while it's on. Both can be off at once (that's the default
+  // simple-view state).
+  function syncMutex() {
+    // Data logger (clock mode) is mutually exclusive with the analysis popup
+    // AND the Graphs window: the clock checkbox is disabled while either is
+    // open, and both graph toggles are disabled while clock mode is active.
+    // The Phase explorer is also mutually exclusive with the data logger:
+    // turning one on disables the other.
+    clockChk.disabled    = shm_showAnalysis || shm_showGraphs || shm_showExplorer;
+    analysisChk.disabled = shm_clockMode;
+    if (graphsChk) graphsChk.disabled = shm_clockMode;
+    if (explorerChk) explorerChk.disabled = shm_clockMode;
+  }
+
+  // Phase-explorer lock: when the explorer is on, the activity is purely about
+  // dragging the cosine, so every other control is greyed out (kept visible but
+  // disabled). Only the explorer tick and Reset stay live. When the explorer is
+  // off this re-runs the normal sync logic so the usual enabled/disabled state
+  // is restored.
+  function syncExplorerLock() {
+    var lock = shm_showExplorer;
+    var others = [
+      kSlider, mSlider, aSlider, timeSlider, playBtn,
+      phasorChk, projChk, periodChk, dispChk, velChk, accelChk, forceChk,
+      angChk, angWtChk, angEpsChk, angTotChk,
+      clockChk, graphsChk,
+      analysisChk, energyChk, avsxChk, energyXChk,
+      tangXChk, tangVChk, gTangXChk, gTangVChk
+    ];
+    if (lock) {
+      for (var i = 0; i < others.length; i++) if (others[i]) others[i].disabled = true;
+    } else {
+      // Restore: clear the blanket disable, then let the normal sync helpers
+      // set the correct states for the current (non-explorer) configuration.
+      for (var j = 0; j < others.length; j++) if (others[j]) others[j].disabled = false;
+      syncMutex();
+      syncAngEnabled();
+      syncTimeSlider();
+      syncDispEnabled();
+      syncPopupRunState();
+    }
+  }
+
+  // Time scrubber: grabbing it takes manual control (pauses playback) and sets
+  // the time directly. Normal mode: sets shm_t. Clock mode after firing: sets
+  // tau (time since trigger) -> shm_t = shm_tFire + value, scrubbing the
+  // recorded trace, phasor and mass together.
+  timeSlider.addEventListener('input', function (e) {
+    if (shm_running) {
+      shm_running = false;
+      playBtn.innerHTML = '&#9654; Play';
+      playBtn.classList.remove('playing');
+      syncPopupRunState();
+    }
+    var v = parseFloat(e.target.value);
+    if (shm_clockMode && shm_fired) {
+      shm_t = shm_tFire + v;
+    } else {
+      shm_t = v;
+    }
+    timeVal.textContent = v.toFixed(2) + ' s';
+    syncDispEnabled();
+    drawFrame();
+  });
+  projChk.addEventListener('change', function (e) {
+    shm_showProj = e.target.checked; if (!shm_running) drawFrame();
+  });
+  periodChk.addEventListener('change', function (e) {
+    shm_showPeriod = e.target.checked; if (!shm_running) drawFrame();
+  });
+  velChk.addEventListener('change', function (e) {
+    shm_showVel = e.target.checked; if (!shm_running) drawFrame();
+  });
+  accelChk.addEventListener('change', function (e) {
+    shm_showAccel = e.target.checked; if (!shm_running) drawFrame();
+  });
+  forceChk.addEventListener('change', function (e) {
+    shm_showForce = e.target.checked; if (!shm_running) drawFrame();
+  });
+  dispChk.addEventListener('change', function (e) {
+    shm_showDisp = e.target.checked; if (!shm_running) drawFrame();
+  });
+
+  // Show/hide the phasor entirely (arrow, circle, headline, arcs). When the
+  // phasor is hidden the angular-value toggles are moot and so disabled.
+  function syncAngEnabled() {
+    var angAllowed = shm_showPhasor;
+    angChk.disabled = !angAllowed;
+    var subsActive = angAllowed && shm_showAng;
+    angWtChk.disabled = !subsActive;
+    angEpsChk.disabled = !subsActive;
+    angTotChk.disabled = !subsActive;
+  }
+  phasorChk.addEventListener('change', function (e) {
+    shm_showPhasor = e.target.checked;
+    syncAngEnabled();
+    if (!shm_running) drawFrame();
+  });
+  // Master "Show angular values": when first ticked on, default to ONLY omega*t
+  // (matches the pedagogy: introduce the rotating quantity, add epsilon later).
+  // When ticked off, all three subs go inactive (state preserved but hidden).
+  angChk.addEventListener('change', function (e) {
+    shm_showAng = e.target.checked;
+    if (shm_showAng) {
+      // Default sub state on first turn-on: only omega*t showing.
+      shm_showWt = true; shm_showEps = false; shm_showTot = false;
+      angWtChk.checked = true; angEpsChk.checked = false; angTotChk.checked = false;
+    }
+    syncAngEnabled();
+    if (!shm_running) drawFrame();
+  });
+  angWtChk.addEventListener('change', function (e) {
+    shm_showWt = e.target.checked; if (!shm_running) drawFrame();
+  });
+  angEpsChk.addEventListener('change', function (e) {
+    shm_showEps = e.target.checked; if (!shm_running) drawFrame();
+  });
+  angTotChk.addEventListener('change', function (e) {
+    shm_showTot = e.target.checked; if (!shm_running) drawFrame();
+  });
+
+  // Set clock start (data-logger) mode toggle. Turning it on stops playback,
+  // returns to t=0, clamps the trigger pointer into the current amplitude, and
+  // re-arms the logger. Turning it off restores normal (immediate-trace) mode.
+  clockChk.addEventListener('change', function (e) {
+    shm_clockMode = e.target.checked;
+    shm_running = false;
+    playBtn.innerHTML = '&#9654; Play';
+    playBtn.classList.remove('playing');
+    shm_t = 0;
+    shm_fired = false;
+    shm_clockArmed = false;       // disarm (re-enables k, m, A if untoggling)
+    var amp = Math.abs(shm_x0);
+    if (shm_triggerCm > amp) shm_triggerCm = amp;
+    if (shm_triggerCm < -amp) shm_triggerCm = -amp;
+    syncAngEnabled();             // master/subs may depend on phasor + clock
+    syncTimeSlider();
+    syncDispEnabled();
+    syncMutex();
+    syncPopupRunState();
+    drawFrame();
+  });
+
+  // Phase explorer: enter a teacher-led mode where the wave is a draggable
+  // cosine. Turning it on pauses, resets to t=0 and eps=0 so the curve starts
+  // as a clean cos(omega t); dragging the wave then changes eps. Mutually
+  // exclusive with the data logger (handled by syncMutex).
+  explorerChk.addEventListener('change', function (e) {
+    shm_showExplorer = e.target.checked;
+    // Stretch the graph left into the freed space while exploring; restore on
+    // exit. Scale (cmToPx) and the 2-cycle layout are unchanged -- only the
+    // horizontal extent widens.
+    waveStartX = shm_showExplorer ? WAVE_START_X_EXPLORER : WAVE_START_X_NORMAL;
+    shm_running = false;
+    playBtn.innerHTML = '&#9654; Play';
+    playBtn.classList.remove('playing');
+    shm_t = 0;
+    shm_explorerEps = 0;          // always start from cos (eps = 0)
+    syncAngEnabled();
+    syncTimeSlider();
+    syncDispEnabled();
+    syncMutex();
+    syncExplorerLock();
+    syncPopupRunState();
+    drawFrame();
+  });
+
+  // Show/hide the analysis popup. Opening it raises it to the top of the
+  // floating-window stack and triggers an initial render; closing also
+  // dismisses any in-progress drag/resize state cleanly.
+  function setAnalysisOpen(open) {
+    shm_showAnalysis = open;
+    analysisChk.checked = open;
+    if (open) {
+      analysisWindow.classList.add('open');
+      raiseWindow(analysisWindow);
+      // Layout settles a frame later; render then.
+      requestAnimationFrame(drawAnalysis);
+    } else {
+      analysisWindow.classList.remove('open');
+    }
+    syncMutex();
+  }
+  analysisChk.addEventListener('change', function (e) {
+    setAnalysisOpen(e.target.checked);
+  });
+  analysisClose.addEventListener('click', function () {
+    setAnalysisOpen(false);
+  });
+
+  // Energy popup open/close. Independent of all other state.
+  function setEnergyOpen(open) {
+    shm_showEnergy = open;
+    energyChk.checked = open;
+    if (open) {
+      energyWindow.classList.add('open');
+      raiseWindow(energyWindow);
+      requestAnimationFrame(drawEnergy);
+    } else {
+      energyWindow.classList.remove('open');
+    }
+  }
+  energyChk.addEventListener('change', function (e) { setEnergyOpen(e.target.checked); });
+  energyClose.addEventListener('click', function () { setEnergyOpen(false); });
+  energyPlayBtn.addEventListener('click', function () { playBtn.click(); });
+
+  // a vs x popup open/close. Independent of all other state.
+  function setAvsXOpen(open) {
+    shm_showAvsX = open;
+    avsxChk.checked = open;
+    if (open) {
+      avsxWindow.classList.add('open');
+      raiseWindow(avsxWindow);
+      requestAnimationFrame(drawAvsX);
+    } else {
+      avsxWindow.classList.remove('open');
+    }
+  }
+  avsxChk.addEventListener('change', function (e) { setAvsXOpen(e.target.checked); });
+  avsxClose.addEventListener('click', function () { setAvsXOpen(false); });
+  avsxPlayBtn.addEventListener('click', function () { playBtn.click(); });
+
+  // ---- Energy vs x popup open/close. Independent of all other state.
+  function setEnergyXOpen(open) {
+    shm_showEnergyX = open;
+    energyXChk.checked = open;
+    if (open) {
+      energyXWindow.classList.add('open');
+      raiseWindow(energyXWindow);
+      requestAnimationFrame(drawEnergyX);
+    } else {
+      energyXWindow.classList.remove('open');
+    }
+  }
+  energyXChk.addEventListener('change', function (e) { setEnergyXOpen(e.target.checked); });
+  energyXClose.addEventListener('click', function () { setEnergyXOpen(false); });
+  energyXPlayBtn.addEventListener('click', function () { playBtn.click(); });
+
+  // Popup Play/Pause button: mirrors the main Play button so the user can
+  // toggle playback without leaving the popup.
+  analysisPlayBtn.addEventListener('click', function () { playBtn.click(); });
+
+  // Tangent toggles: mutually exclusive (only one tangent at a time, keeps
+  // the picture readable). Each is only meaningful when paused -- they're
+  // disabled (along with their checkbox) while the sim is running.
+  tangXChk.addEventListener('change', function (e) {
+    shm_tangentX = e.target.checked;
+    if (shm_tangentX) { shm_tangentV = false; tangVChk.checked = false; }
+    if (!shm_running) drawFrame();
+  });
+  tangVChk.addEventListener('change', function (e) {
+    shm_tangentV = e.target.checked;
+    if (shm_tangentV) { shm_tangentX = false; tangXChk.checked = false; }
+    if (!shm_running) drawFrame();
+  });
+
+  // Reflect the running-state into the popup's controls: when playing, the
+  // tangent toggles are disabled and the "pause to enable" hint shows; the
+  // popup Play button updates its icon. Called whenever shm_running changes.
+  function syncPopupRunState() {
+    var playing = shm_running;
+    tangXChk.disabled = playing;
+    tangVChk.disabled = playing;
+    pausedHint.classList.toggle('hidden', !playing);
+    analysisPlayBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    analysisPlayBtn.classList.toggle('playing', playing);
+    energyPlayBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    energyPlayBtn.classList.toggle('playing', playing);
+    avsxPlayBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    avsxPlayBtn.classList.toggle('playing', playing);
+    energyXPlayBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    energyXPlayBtn.classList.toggle('playing', playing);
+    graphsPlayBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    graphsPlayBtn.classList.toggle('playing', playing);
+    gTangXChk.disabled = playing;
+    gTangVChk.disabled = playing;
+    gPausedHint.classList.toggle('hidden', !playing);
+  }
+
+  // Z-index management: most recently touched window comes to the top. (We
+  // only have one floating window for now, but the helper is generic for
+  // future popups -- e.g. an energy graph.)
+  var _shmWinZ = 1000;
+  function raiseWindow(win) { _shmWinZ += 1; win.style.zIndex = _shmWinZ; }
+  analysisWindow.addEventListener('mousedown', function () { raiseWindow(analysisWindow); });
+  analysisWindow.addEventListener('touchstart', function () { raiseWindow(analysisWindow); }, { passive: true });
+  energyWindow.addEventListener('mousedown', function () { raiseWindow(energyWindow); });
+  energyWindow.addEventListener('touchstart', function () { raiseWindow(energyWindow); }, { passive: true });
+  avsxWindow.addEventListener('mousedown', function () { raiseWindow(avsxWindow); });
+  avsxWindow.addEventListener('touchstart', function () { raiseWindow(avsxWindow); }, { passive: true });
+  energyXWindow.addEventListener('mousedown', function () { raiseWindow(energyXWindow); });
+  energyXWindow.addEventListener('touchstart', function () { raiseWindow(energyXWindow); }, { passive: true });
+
+  // Re-render on window resize (the popups use CSS-sized canvases).
+  window.addEventListener('resize', function () {
+    if (shm_showAnalysis) drawAnalysis();
+    if (shm_showEnergy) drawEnergy();
+    if (shm_showAvsX) drawAvsX();
+    if (shm_showEnergyX) drawEnergyX();
+    if (shm_showGraphs) drawGraphsWindow();
+  });
+
+  // Drag-by-header + resize-from-grip (mouse + touch). Same Wave Motion
+  // suite pattern, factored so it works for any popup window.
+  function attachPopupDragResize(win, header, grip, onResize) {
+    var st = { drag: false, rz: false, sx: 0, sy: 0, wl: 0, wt: 0, rw: 0, rh: 0 };
+    function startDrag(cx, cy) {
+      var r = win.getBoundingClientRect();
+      st.drag = true; st.sx = cx; st.sy = cy; st.wl = r.left; st.wt = r.top;
+    }
+    function moveDrag(cx, cy) {
+      if (!st.drag) return;
+      var nl = st.wl + (cx - st.sx), nt = st.wt + (cy - st.sy);
+      var minL = -(win.offsetWidth - 80), maxL = window.innerWidth - 80;
+      if (nl < minL) nl = minL; if (nl > maxL) nl = maxL;
+      if (nt < 0) nt = 0; if (nt > window.innerHeight - 36) nt = window.innerHeight - 36;
+      win.style.left = nl + 'px'; win.style.top = nt + 'px';
+    }
+    function startResize(cx, cy) {
+      var r = win.getBoundingClientRect();
+      st.rz = true; st.sx = cx; st.sy = cy; st.rw = r.width; st.rh = r.height;
+    }
+    function moveResize(cx, cy) {
+      if (!st.rz) return;
+      var nw = st.rw + (cx - st.sx), nh = st.rh + (cy - st.sy);
+      if (nw < 360) nw = 360; if (nw > window.innerWidth - 20) nw = window.innerWidth - 20;
+      if (nh < 220) nh = 220; if (nh > window.innerHeight - 20) nh = window.innerHeight - 20;
+      win.style.width = nw + 'px'; win.style.height = nh + 'px';
+      if (onResize) onResize();
+    }
+    function endAll() { st.drag = false; st.rz = false; }
+
+    header.addEventListener('mousedown', function (e) {
+      if (e.target.tagName === 'BUTTON') return;       // don't drag when a header button is clicked
+      startDrag(e.clientX, e.clientY); e.preventDefault();
+    });
+    grip.addEventListener('mousedown', function (e) {
+      startResize(e.clientX, e.clientY); e.preventDefault();
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (st.drag) moveDrag(e.clientX, e.clientY);
+      else if (st.rz) moveResize(e.clientX, e.clientY);
+    });
+    document.addEventListener('mouseup', endAll);
+
+    header.addEventListener('touchstart', function (e) {
+      if (e.target.tagName === 'BUTTON') return;
+      var t = e.touches[0]; startDrag(t.clientX, t.clientY); e.preventDefault();
+    }, { passive: false });
+    grip.addEventListener('touchstart', function (e) {
+      var t = e.touches[0]; startResize(t.clientX, t.clientY); e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', function (e) {
+      if (st.drag) { var t = e.touches[0]; moveDrag(t.clientX, t.clientY); e.preventDefault(); }
+      else if (st.rz) { var t2 = e.touches[0]; moveResize(t2.clientX, t2.clientY); e.preventDefault(); }
+    }, { passive: false });
+    document.addEventListener('touchend', endAll);
+    document.addEventListener('touchcancel', endAll);
+  }
+  attachPopupDragResize(analysisWindow, analysisHeader, analysisResizeGrip, drawAnalysis);
+  attachPopupDragResize(energyWindow, energyHeader, energyResizeGrip, drawEnergy);
+  attachPopupDragResize(avsxWindow, avsxHeader, avsxResizeGrip, drawAvsX);
+  attachPopupDragResize(energyXWindow, energyXHeader, energyXResizeGrip, drawEnergyX);
+
+  // Dot-scrubbing: when paused, grabbing any now-dot on a popup canvas and
+  // dragging horizontally sets shm_t (so the main canvas, phasor, and all
+  // popup dots all move together). Vertical drag does nothing (values at a
+  // given t are fixed by physics). Locked while playing.
+  var _analysisDotPositions = [];     // populated each frame by drawAnalysis
+  function attachDotScrub(canvas, dotPositionsGetter) {
+    var st = { drag: false, idx: -1 };
+    function localPos(clientX, clientY) {
+      var r = canvas.getBoundingClientRect();
+      return { x: clientX - r.left, y: clientY - r.top };
+    }
+    function hitTest(cx, cy) {
+      var R = 16;
+      var dots = dotPositionsGetter();
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        var dx = cx - d.x, dy = cy - d.y;
+        if (dx * dx + dy * dy <= R * R) return i;
+      }
+      return -1;
+    }
+    function setTimeFromX(cx, idx) {
+      var dots = dotPositionsGetter();
+      var d = dots[idx];
+      if (!d) return;
+      var frac = (cx - d.plotL) / d.plotW;
+      if (frac < 0) frac = 0; if (frac > 1) frac = 1;
+      shm_t = frac * TIME_AXIS;
+      syncTimeSlider();
+      drawFrame();
+    }
+    function down(cx, cy) {
+      if (shm_running) return false;
+      var i = hitTest(cx, cy);
+      if (i < 0) return false;
+      st.drag = true; st.idx = i;
+      setTimeFromX(cx, i);
+      return true;
+    }
+    function move(cx, cy) { if (st.drag) setTimeFromX(cx, st.idx); }
+    function up() { st.drag = false; st.idx = -1; }
+
+    canvas.addEventListener('mousedown', function (e) {
+      var p = localPos(e.clientX, e.clientY);
+      if (down(p.x, p.y)) e.preventDefault();
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (!st.drag) return;
+      var p = localPos(e.clientX, e.clientY);
+      move(p.x, p.y);
+    });
+    document.addEventListener('mouseup', up);
+
+    canvas.addEventListener('touchstart', function (e) {
+      var t = e.touches[0];
+      var p = localPos(t.clientX, t.clientY);
+      if (down(p.x, p.y)) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', function (e) {
+      if (!st.drag) return;
+      var t = e.touches[0];
+      var p = localPos(t.clientX, t.clientY);
+      move(p.x, p.y);
+      e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchend', up);
+    document.addEventListener('touchcancel', up);
+
+    canvas.addEventListener('mousemove', function (e) {
+      if (st.drag) { canvas.style.cursor = 'ew-resize'; return; }
+      if (shm_running) { canvas.style.cursor = 'default'; return; }
+      var p = localPos(e.clientX, e.clientY);
+      canvas.style.cursor = (hitTest(p.x, p.y) >= 0) ? 'ew-resize' : 'default';
+    });
+  }
+  attachDotScrub(analysisCanvas, function () { return _analysisDotPositions; });
+  attachDotScrub(energyCanvas,   function () { return _energyDotPositions; });
+
+  // The a vs x popup is a phase-space plot, so its dot is NOT directly
+  // draggable (unlike the time-domain popups). Time isn't an axis here and
+  // each point on the line maps to two times per period, making a drag gesture
+  // ambiguous and the stop/wrap behaviour unintuitive. The now-dot is instead
+  // driven by Play and by the main time scrubber via drawAvsX(), which keeps
+  // it consistent with the other graphs in the way that matters: it always
+  // reflects the current time.
+
+  playBtn.addEventListener('click', function () {
+    shm_running = !shm_running;
+    playBtn.innerHTML = shm_running ? '&#10074;&#10074; Pause' : '&#9654; Play';
+    playBtn.classList.toggle('playing', shm_running);
+    if (shm_running) {
+      shm_lastFrame = performance.now();
+      // First Play in clock mode locks the parameters that define the trigger
+      // physics, so the captured eps remains valid for the run.
+      if (shm_clockMode) shm_clockArmed = true;
+    }
+    syncDispEnabled();
+    syncPopupRunState();
+  });
+  resetBtn.addEventListener('click', function () {
+    // Hard reset: everything back to the configuration on first load. Used to
+    // start over from a clean state. (Use the time scrubber, not Reset, to
+    // rewind within an experiment.)
+    shm_running = false;
+    playBtn.innerHTML = '&#9654; Play';
+    playBtn.classList.remove('playing');
+
+    // Parameters back to defaults
+    shm_k = 4; shm_m = 1; shm_x0 = 5;
+    kSlider.value = shm_k; kVal.textContent = shm_k.toFixed(1) + ' N/m';
+    mSlider.value = shm_m; mVal.textContent = shm_m.toFixed(1) + ' kg';
+    aSlider.value = shm_x0; aVal.textContent = shm_x0.toFixed(1) + ' cm';
+
+    // Time + trigger state
+    shm_t = 0;
+    shm_triggerCm = 0;
+    shm_triggerDir = 1;
+    shm_fired = false;
+    shm_clockArmed = false;
+    shm_hoverArrow = 0;
+
+    // Clock mode off
+    shm_clockMode = false;
+    clockChk.checked = false;
+
+    // Visibility toggles back to defaults: phasor on, projections on, angular
+    // master OFF (subs default to wt-on / eps-off / total-off), so the next
+    // session opens on the "phasor relationship first, maths later" view.
+    shm_showPhasor = true;  phasorChk.checked = true;
+    shm_showProj = true;    projChk.checked = true;
+    shm_showPeriod = false; periodChk.checked = false;
+    shm_showVel = false;    velChk.checked = false;
+    shm_showAccel = false;  accelChk.checked = false;
+    shm_showForce = false;  forceChk.checked = false;
+    shm_showDisp = false;   dispChk.checked = false;
+    shm_showExplorer = false; explorerChk.checked = false; shm_explorerEps = 0;
+    waveStartX = WAVE_START_X_NORMAL;
+    shm_showAng = false;    angChk.checked = false;
+    shm_showWt = true;      angWtChk.checked = true;
+    shm_showEps = false;    angEpsChk.checked = false;
+    shm_showTot = false;    angTotChk.checked = false;
+
+    // Analysis popup closed as part of factory reset.
+    setAnalysisOpen(false);
+    setEnergyOpen(false);
+    setAvsXOpen(false);
+    setEnergyXOpen(false);
+    setGraphsOpen(false);
+    setGraphsPreset('analysis');
+
+    updateReadout();
+    syncAngEnabled();
+    syncTimeSlider();
+    syncDispEnabled();
+    syncMutex();
+    syncExplorerLock();
+    // Clear tangent toggles too (part of factory reset).
+    shm_tangentX = false; tangXChk.checked = false; gTangXChk.checked = false;
+    shm_tangentV = false; tangVChk.checked = false; gTangVChk.checked = false;
+    syncPopupRunState();
+    drawFrame();
+  });
+
+  /* ---- Drag the mass to set the initial displacement (paused only) ----
+     The mass block is drawn at springX +/- 20 wide and massCentreY -12..+13
+     tall, with the marker dot at massCentreY. Dragging sets x0 from the
+     pointer's y (clamped to the slider range) and keeps the slider, value
+     readout, equation and graph in sync. Disabled while playing. Full mouse
+     + touch support via the shared canvasPoint() coordinate-scaling helper. */
+  var shm_dragging = false;
+  var shm_explorerDragging = false;
+  var shm_explorerDragX0 = 0;     // pointer x at drag start
+  var shm_explorerEps0 = 0;       // eps at drag start
+
+  // Phase-explorer fixed display geometry (independent of k/m/A).
+  var EXPLORER_A = 12;          // cm, fixed amplitude
+  var EXPLORER_CYCLES = 2;      // exactly two full cycles across the graph width
+
+  // y of the explorer curve at canvas x for a given phase constant. Phase runs
+  // 0 -> EXPLORER_CYCLES*2*pi across waveStartX..waveEndX.
+  function explorerYAt(cx, eps) {
+    var f = (cx - waveStartX) / (waveEndX - waveStartX);   // 0..1 across width
+    var phase = f * EXPLORER_CYCLES * 2 * Math.PI + eps;
+    return yForDisp(waveY, EXPLORER_A * Math.cos(phase));
+  }
+
+  // Hit-test the displacement curve in explorer mode: a horizontal band around
+  // the (fixed) curve at the current pointer x. Generous vertical halo so it's
+  // easy to grab.
+  function overWave(cx, cy) {
+    if (!shm_showExplorer) return false;
+    if (cx < waveStartX - 6 || cx > waveEndX + 6) return false;
+    var yCurve = explorerYAt(cx, shm_explorerEps);
+    return Math.abs(cy - yCurve) < 26;     // 26px grab halo
+  }
+
+  // Convert a horizontal drag into a phase constant. The curve follows the
+  // pointer SMOOTHLY and continuously, and eps is the TRUE accumulated phase --
+  // unbounded and never wrapped -- so dragging right keeps decreasing eps
+  // (... -pi/2, -pi, -3pi/2, -2pi ...) and dragging left keeps increasing it.
+  // This lets students see that many eps values (differing by 2*pi) describe the
+  // same wave. A gentle magnet clicks onto a key angle (multiple of pi/4) only
+  // when very close. Dragging RIGHT shifts cos later, so eps DECREASES.
+  function setEpsFromX(cx) {
+    var waveWidth = waveEndX - waveStartX;
+    var dxPix = cx - shm_explorerDragX0;
+    var dPhase = (dxPix / waveWidth) * EXPLORER_CYCLES * 2 * Math.PI;
+    var eps = shm_explorerEps0 - dPhase;             // free, continuous, unwrapped
+
+    // Soft magnet: only snap when very close to a key angle (~2 degrees).
+    var step = Math.PI / 4;
+    var SNAP_TOL = 0.035;                             // rad (~2 degrees)
+    var nearest = Math.round(eps / step) * step;
+    if (Math.abs(eps - nearest) < SNAP_TOL) {
+      eps = nearest;
+      shm_explorerSnapped = true;
+    } else {
+      shm_explorerSnapped = false;
+    }
+
+    shm_explorerEps = eps;                            // no wrapping -- unbounded
+    drawFrame();
+  }
+
+  function massCentreYNow() { return yForDisp(equilibriumY, disp(shm_t)); }
+
+  function overMass(cx, cy) {
+    var my = massCentreYNow();
+    return (cx >= springX - 28 && cx <= springX + 28 &&
+            cy >= my - 20 && cy <= my + 22);
+  }
+
+  function setX0FromY(cy) {
+    // Mass drag sets the amplitude A. Only upward drags are meaningful (the
+    // mass releases from +A); dragging below the rest position clamps to the
+    // slider minimum.
+    var A = (equilibriumY - cy) / cmToPx;        // upward distance from rest, in cm
+    if (A > 12) A = 12;
+    if (A < 0.5) A = 0.5;                        // matches slider min
+    shm_x0 = Math.round(A * 10) / 10;            // 0.1 cm resolution (matches slider)
+    aSlider.value = shm_x0;
+    aVal.textContent = shm_x0.toFixed(1) + ' cm';
+    // keep the trigger inside the (possibly new) amplitude
+    var amp = shm_x0;
+    if (shm_triggerCm > amp) shm_triggerCm = amp;
+    if (shm_triggerCm < -amp) shm_triggerCm = -amp;
+    drawFrame();
+  }
+
+  // Trigger-pointer hit test: covers the whole horizontal line plus a little
+  // slack around the left knob, at the trigger height.
+  function overTrigger(cx, cy) {
+    if (!shm_clockMode) return false;
+    var py = yForDisp(equilibriumY, shm_triggerCm);
+    return (cx >= trigLineX1 - 10 && cx <= trigLineX2 + 6 &&
+            cy >= py - 10 && cy <= py + 10);
+  }
+
+  function setTriggerFromY(cy) {
+    var v = (equilibriumY - cy) / cmToPx;        // invert yForDisp
+    var amp = Math.abs(shm_x0);
+    if (v > amp) v = amp; if (v < -amp) v = -amp; // clamp to +/- amplitude
+    // Snap to special positions when close. The extremes use a wider snap zone
+    // (1.0 cm) because they're easy to undershoot when dragging to the limit;
+    // the centre uses 0.5 cm so it doesn't catch intermediate drags.
+    var snapEx = 1.0, snapMid = 0.5;
+    if (amp - v < snapEx) v = amp;          // near top
+    else if (v - (-amp) < snapEx) v = -amp; // near bottom
+    else if (Math.abs(v) < snapMid) v = 0;  // near centre
+    shm_triggerCm = Math.round(v * 10) / 10;
+    drawFrame();
+  }
+
+  function dragStart(cx, cy) {
+    // Phase-explorer mode: grab the displacement curve to drag its phase. Only
+    // when paused (the curve must be static to drag it). Independent of the
+    // mass/trigger drags below.
+    if (shm_showExplorer && !shm_running && overWave(cx, cy)) {
+      shm_explorerDragging = true;
+      shm_explorerDragX0 = cx;
+      shm_explorerEps0 = shm_explorerEps;
+      return true;
+    }
+    // Only when paused AND at t=0, so dragging unambiguously sets the START
+    // state. Mid-cycle dragging would redefine things at a non-zero time.
+    // To re-enable, Reset (or scrub Time back to 0). Once the clock-mode
+    // experiment has been armed (Play pressed), the mass + trigger setup is
+    // locked too, so the captured eps stays meaningful.
+    if (shm_running || shm_t !== 0 || shm_clockArmed) return false;
+    // Clicking a direction arrow selects the trigger direction (no drag).
+    if (shm_clockMode) {
+      var boxes = triggerArrowBoxes();
+      if (boxes) {
+        if (inBox(cx, cy, boxes.up))   { shm_triggerDir = 1;  drawFrame(); return true; }
+        if (inBox(cx, cy, boxes.down)) { shm_triggerDir = -1; drawFrame(); return true; }
+      }
+    }
+    // In clock mode the trigger pointer takes priority if grabbed.
+    if (overTrigger(cx, cy)) { shm_clockDragging = true; setTriggerFromY(cy); return true; }
+    if (!overMass(cx, cy)) return false;
+    shm_dragging = true;
+    setX0FromY(cy);
+    return true;
+  }
+  function inBox(cx, cy, b) {
+    return (cx >= b.cx - b.s - 3 && cx <= b.cx + b.s + 3 &&
+            cy >= b.cy - b.s - 3 && cy <= b.cy + b.s + 3);
+  }
+  function dragMove(cx, cy) {
+    if (shm_explorerDragging) { setEpsFromX(cx); return; }
+    if (shm_clockDragging) { setTriggerFromY(cy); return; }
+    if (!shm_dragging) return;
+    setX0FromY(cy);
+  }
+  function dragEnd() { shm_dragging = false; shm_clockDragging = false; shm_explorerDragging = false; }
+
+  // Mouse
+  canvas.addEventListener('mousedown', function (e) {
+    var p = canvasPoint(canvas, e.clientX, e.clientY);
+    if (dragStart(p.x, p.y)) e.preventDefault();
+  });
+  document.addEventListener('mousemove', function (e) {
+    if (shm_dragging || shm_clockDragging || shm_explorerDragging) {
+      var p = canvasPoint(canvas, e.clientX, e.clientY);
+      dragMove(p.x, p.y);
+    }
+  });
+  document.addEventListener('mouseup', dragEnd);
+
+  // Hover cursor + arrow hover highlight. Grab over the mass/pointer (when
+  // draggable); pointer cursor over a direction arrow; the hovered arrow is
+  // highlighted (Wave-app style) by re-drawing when the hover state changes.
+  canvas.addEventListener('mousemove', function (e) {
+    if (shm_dragging || shm_clockDragging || shm_explorerDragging) { canvas.style.cursor = 'grabbing'; return; }
+    var p = canvasPoint(canvas, e.clientX, e.clientY);
+
+    // Phase-explorer: show a grab cursor over the draggable curve.
+    if (shm_showExplorer && !shm_running && overWave(p.x, p.y)) {
+      canvas.style.cursor = 'grab'; return;
+    }
+
+    // arrow hover (only when arrows are showing and we're paused at t=0)
+    var newHover = 0;
+    if (shm_clockMode && !shm_running && shm_t === 0) {
+      var boxes = triggerArrowBoxes();
+      if (boxes) {
+        if (inBox(p.x, p.y, boxes.up)) newHover = 1;
+        else if (inBox(p.x, p.y, boxes.down)) newHover = -1;
+      }
+    }
+    if (newHover !== shm_hoverArrow) { shm_hoverArrow = newHover; drawFrame(); }
+
+    if (newHover !== 0) { canvas.style.cursor = 'pointer'; return; }
+    var canDrag = (!shm_running && shm_t === 0 && (overMass(p.x, p.y) || overTrigger(p.x, p.y)));
+    canvas.style.cursor = canDrag ? 'grab' : 'default';
+  });
+
+  // Touch (passive:false so we can preventDefault and own the gesture)
+  canvas.addEventListener('touchstart', function (e) {
+    var t = e.touches[0];
+    var p = canvasPoint(canvas, t.clientX, t.clientY);
+    if (dragStart(p.x, p.y)) e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function (e) {
+    if (!shm_dragging && !shm_clockDragging && !shm_explorerDragging) return;
+    var t = e.touches[0];
+    var p = canvasPoint(canvas, t.clientX, t.clientY);
+    dragMove(p.x, p.y);
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', dragEnd);
+  canvas.addEventListener('touchcancel', dragEnd);
+  canvas.addEventListener('mouseleave', function () {
+    if (shm_hoverArrow !== 0) { shm_hoverArrow = 0; drawFrame(); }
+  });
+
+  /* ---- Drawing helpers ---- */
+
+  // Spring hangs from anchorY. Mass centre sits at equilibriumY - x*cmToPx
+  // (Wave-app convention: +displacement is UP on screen). At t=0,
+  // x = +A so the mass is at its highest point. Returns the mass-centre y
+  // so the connector can be drawn at exactly that height.
+  function drawSpring(dCm) {
+    var massCentreY = yForDisp(equilibriumY, dCm);
+    var currentLen = massCentreY - anchorY;       // top of mass block region
+    var coils = 12, sw = 25;
+    var spacing = currentLen / coils;
+    var grad = ctx.createLinearGradient(springX - sw / 2, 0, springX + sw / 2, 0);
+    grad.addColorStop(0, '#ff9999'); grad.addColorStop(0.5, '#ff6b6b'); grad.addColorStop(1, '#ff4444');
+
+    // anchor plate
+    ctx.fillStyle = '#4a5568'; ctx.fillRect(springX - 30, anchorY - 8, 60, 8);
+
+    ctx.strokeStyle = grad; ctx.lineWidth = 3; ctx.beginPath();
+    ctx.moveTo(springX, anchorY);
+    for (var i = 0; i < coils; i++) {
+      var cY = anchorY + i * spacing, nY = cY + spacing;
+      if (i % 2 === 0) ctx.quadraticCurveTo(springX - sw, cY + spacing / 2, springX - sw / 2, nY);
+      else             ctx.quadraticCurveTo(springX + sw, cY + spacing / 2, springX + sw / 2, nY);
+    }
+    ctx.lineTo(springX, anchorY + currentLen); ctx.stroke();
+
+    // mass block centred on massCentreY
+    var mg = ctx.createLinearGradient(springX - 20, massCentreY - 12, springX + 20, massCentreY + 13);
+    mg.addColorStop(0, '#4a5568'); mg.addColorStop(0.5, '#2d3748'); mg.addColorStop(1, '#1a202c');
+    ctx.fillStyle = mg; ctx.fillRect(springX - 20, massCentreY - 12, 40, 25);
+
+    // marker dot at mass centre
+    ctx.fillStyle = '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(springX, massCentreY, 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+
+    // equilibrium line
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(springX - 40, equilibriumY); ctx.lineTo(springX + 40, equilibriumY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '10px -apple-system';
+    ctx.fillText('x=0', springX + 45, equilibriumY + 3);
+
+    return massCentreY;
+  }
+
+  // Velocity / acceleration / restoring-force vectors drawn on the mass, each
+  // independently toggled. All three act along the line of motion (vertical),
+  // so they are drawn as vertical arrows fanned horizontally to the RIGHT of
+  // the mass (there is little room to the left at springX). Each quantity is
+  // scaled to its OWN peak (a full-length arrow = that quantity's maximum),
+  // since v (cm/s), a (cm/s^2) and F (N) have different units and cannot share
+  // a scale -- exactly as in a textbook vector diagram. A numeric value sits
+  // beside each arrow. At an instant where a quantity is zero, only the label
+  // is shown (no degenerate zero-length arrow).
+  //
+  // Sign -> screen: displacement/velocity positive = UP = decreasing screen y.
+  //   x(t) = A cos(wt)         [cm]
+  //   v(t) = -A w sin(wt)      [cm/s]   (peak A*w)
+  //   a(t) = -A w^2 cos(wt)    [cm/s^2] (peak A*w^2)
+  //   F(t) = -k x              [N]      (x in metres; peak k*A/100)
+  function drawMassVectors(massCentreY) {
+    if (!shm_showVel && !shm_showAccel && !shm_showForce) return;
+    var w = omega();
+    var A = Math.abs(shm_x0);
+    var t = displayTime();
+    var MAXLEN = 70;                 // pixels for a peak-magnitude arrow
+
+    var COL_V = '#60a5fa';           // blue  (matches analysis v panel)
+    var COL_A = '#f472b6';           // pink  (matches analysis a panel)
+    var COL_F = '#ef4444';           // red (force; distinct from the others)
+
+    // Each entry: value, peak, colour, label text, and a horizontal fan offset
+    // from the mass centre so multiple arrows don't overlap.
+    var v  = -A * w * Math.sin(w * t);
+    var a  = -A * w * w * Math.cos(w * t);
+    var F  = -shm_k * (shm_x0 * Math.cos(w * t) / 100);   // N (signed by x)
+    var vPeak = A * w, aPeak = A * w * w, FPeak = shm_k * A / 100;
+
+    var items = [];
+    if (shm_showVel)   items.push({ val: v, peak: vPeak, col: COL_V, dx: 30, lenScale: 1.0, unit: ' cm/s',   sym: 'v', dec: 1 });
+    if (shm_showAccel) items.push({ val: a, peak: aPeak, col: COL_A, dx: 58, lenScale: 1.0, unit: ' cm/s\u00b2', sym: 'a', dec: 1 });
+    if (shm_showForce) items.push({ val: F, peak: FPeak, col: COL_F, dx: 86, lenScale: 1.35, unit: ' N',      sym: 'F', dec: 2 });
+
+    // Arrows first (vertical, fanned out so multiple don't overlap). The value
+    // labels are drawn afterward in the clear band above the spring.
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var baseX = springX + it.dx;
+      ctx.save();
+      ctx.strokeStyle = it.col; ctx.fillStyle = it.col;
+
+      // Draw an arrow only when the magnitude is a meaningful fraction of the
+      // peak; below that (e.g. at a turning point or the centre) the value is
+      // effectively zero and a floored stub arrow would mislead, so show the
+      // numeric label alone. The arrowhead is ~9px, so the minimum drawn shaft
+      // is kept just above that to still read as an arrow.
+      var frac = (it.peak > 1e-9) ? Math.abs(it.val) / it.peak : 0;
+      var hasArrow = frac > 0.03;
+      if (hasArrow) {
+        var len = frac * MAXLEN * (it.lenScale || 1);
+        if (len < 14) len = 14;
+        var dir = (it.val > 0) ? -1 : 1;    // +val = up = -y on screen
+        var y1 = massCentreY + dir * len;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = it.col; ctx.shadowBlur = 4;
+        ctx.beginPath(); ctx.moveTo(baseX, massCentreY); ctx.lineTo(baseX, y1); ctx.stroke();
+        ctx.shadowBlur = 0;
+        var ah = 9, aw = 5;
+        ctx.beginPath();
+        ctx.moveTo(baseX, y1);
+        ctx.lineTo(baseX - aw, y1 - dir * ah);
+        ctx.lineTo(baseX + aw, y1 - dir * ah);
+        ctx.closePath(); ctx.fill();
+
+        // Bare symbol (v / a / F) at the tip, offset to the right of the arrow
+        // so it clears the x=0 equilibrium label and neighbouring arrows.
+        ctx.font = 'italic bold 14px "Cambria Math","Times New Roman",serif';
+        ctx.fillStyle = it.col;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(it.sym, baseX + 7, y1 + dir * 9);
+      }
+      ctx.restore();
+    }
+
+    // Stacked value labels in the clear black band above the spring/phasor
+    // (out of the way of the phasor circle and the arrows). Colour-matched.
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    var lx = springX + 70;
+    var ly0 = 52;
+    for (var j = 0; j < items.length; j++) {
+      var itj = items[j];
+      ctx.fillStyle = itj.col;
+      var valTxt = (itj.peak <= 1e-9 || Math.abs(itj.val) < 1e-9)
+        ? itj.sym + ' = 0' + itj.unit
+        : itj.sym + ' = ' + itj.val.toFixed(itj.dec) + itj.unit;
+      ctx.fillText(valTxt, lx, ly0 + j * 18);
+    }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+
+  // Displacement vector: drawn to the LEFT of the mass, base fixed on the x=0
+  // equilibrium line, tip at the mass's current height -- so it literally shows
+  // the displacement from equilibrium at TRUE cm scale (unlike v/a/F, which are
+  // scaled to their own peaks). Points up when the mass is above equilibrium,
+  // down when below. The "x = _._ cm" value sits just to its left at 1 dp. At
+  // equilibrium (x = 0) only the label is shown (no zero-length arrow).
+  function drawDisplacementVector(massCentreY) {
+    if (!shm_showDisp) return;
+    var COL_X = '#4ade80';                 // green, tying it to the displacement
+    var baseX = springX - 28;              // left of the mass block
+    var y0 = equilibriumY;                 // base on x = 0
+    var y1 = massCentreY;                  // tip at the mass
+    var dCm = disp(displayTime());         // signed displacement, cm
+
+    ctx.save();
+    ctx.strokeStyle = COL_X; ctx.fillStyle = COL_X;
+
+    var hasArrow = Math.abs(y1 - y0) > 2;  // skip the degenerate zero arrow
+    if (hasArrow) {
+      var dir = (y1 < y0) ? -1 : 1;        // up if mass above equilibrium
+      ctx.lineWidth = 3;
+      ctx.shadowColor = COL_X; ctx.shadowBlur = 4;
+      ctx.beginPath(); ctx.moveTo(baseX, y0); ctx.lineTo(baseX, y1); ctx.stroke();
+      ctx.shadowBlur = 0;
+      var ah = 9, aw = 5;
+      ctx.beginPath();
+      ctx.moveTo(baseX, y1);
+      ctx.lineTo(baseX - aw, y1 - dir * ah);
+      ctx.lineTo(baseX + aw, y1 - dir * ah);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // "x = _._ cm" to the left of the vector. Rotated vertical (like an axis
+    // label) because the spring sits near the canvas edge and there isn't room
+    // for horizontal text; this keeps it clearly left of the arrow and unclipped.
+    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.fillStyle = COL_X;
+    var midY = hasArrow ? (y0 + y1) / 2 : y0;
+    ctx.save();
+    ctx.translate(baseX - 12, midY);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('x = ' + dCm.toFixed(2) + ' cm', 0, 0);
+    ctx.restore();
+    ctx.restore();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+
+  // Phasor in the Wave Motion app's style: faint grey circle, grey dashed
+  // cross-hairs, clean blue arrow, green tip dot. The tip's VERTICAL offset
+  // always equals the displacement x(t)=x0 cos(omega t), so the tip, the mass
+  // and the wave dot share one height for any signed x0. Radius = |x0| on the
+  // cm scale. With x0>0 the arrow starts UP; with x0<0 it starts DOWN.
+  function drawPhasor() {
+    var r = Math.abs(shm_x0) * cmToPx;
+    var wt = omega() * displayTime();
+
+    // Single screen-angle parametrisation. Canvas angles are measured
+    // clockwise from +x (because screen y points down), so a screen angle
+    // that DECREASES over time is a visual ANTICLOCKWISE rotation.
+    //   start: tip on the vertical axis. +x0 -> top (-pi/2); -x0 -> bottom (+pi/2).
+    //   so aStart = -sign(x0) * pi/2  (treat x0>=0 as +).
+    //   current: aNow = aStart - wt   (anticlockwise).
+    // The vertical projection sin(aNow)*r then equals -x0*cos(wt)/... let's just
+    // use aNow directly for the tip, which guarantees a true circle, and it
+    // also reproduces x(t)=x0 cos(wt) vertically (verified for both signs).
+    var sign = (shm_x0 < 0) ? -1 : 1;
+    var aStart = -sign * Math.PI / 2;     // top for +, bottom for -
+    // In phase-explorer mode the wave is cos(omega t + eps); advance the phasor
+    // start by eps so the arrow tip stays locked to the dragged wave (the tip
+    // height continues to equal x(t)). Other modes are unaffected.
+    var phaseExtra = shm_showExplorer ? shm_explorerEps : 0;
+    var aNow = aStart - wt - phaseExtra;  // anticlockwise (screen angle decreasing)
+    var tipX = phasorX + r * Math.cos(aNow);
+    var tipY = phasorY + r * Math.sin(aNow);
+
+    // faint circle
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(phasorX, phasorY, r, 0, Math.PI * 2); ctx.stroke();
+
+    // grey dashed cross-hairs
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(phasorX - r - 20, phasorY); ctx.lineTo(phasorX + r + 20, phasorY);
+    ctx.moveTo(phasorX, phasorY - r - 20); ctx.lineTo(phasorX, phasorY + r + 20);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Visibility of arcs: the master is on AND that sub is ticked. When eps=0
+    // the single arc represents BOTH omega*t and total, so either toggle reveals it.
+    var arcsOn = shm_showAng;
+    var showWtArc = arcsOn && shm_showWt;
+    var showEpsArc = arcsOn && shm_showEps;
+    var showTotArc = arcsOn && shm_showTot;
+
+    var eps = currentEps();
+    if (eps === null) {
+      // No defined epsilon (clock mode, not yet fired): suppress all angular
+      // decoration. The phasor frame + arrow + tip still render above.
+      arcsOn = showWtArc = showEpsArc = showTotArc = false;
+    }
+    // All angular quantities are SIGNED and wrapped to (-pi, pi], so the arcs
+    // act like vectors that compose tip-to-tail:
+    //   omega*t  (signed)  +  epsilon (signed)  =  total (signed, wrapped)
+    // Positive => anticlockwise on screen; negative => clockwise. A negative
+    // epsilon shows as the pink arc visibly sweeping the other way, and the
+    // violet total can swing either side of 12 o'clock depending on the sum.
+    // Wrapping conventions:
+    //   omega*t : always non-negative (time can never run backward), wrapped
+    //             to [0, 2pi) so the arc is readable. Drawn anticlockwise.
+    //   epsilon : signed in (-pi, pi] (a fixed offset; the sign tells you
+    //             which way the captured phase was offset).
+    //   omega*t + epsilon : the SIGNED angular position of the arrow relative
+    //             to 12 o'clock, wrapped to (-pi, pi] so the violet arc takes
+    //             the SHORT way (positive = anticlockwise, negative = clockwise).
+    function wrapPi(x) {
+      var y = x % (2 * Math.PI);
+      if (y > Math.PI) y -= 2 * Math.PI;
+      if (y <= -Math.PI) y += 2 * Math.PI;
+      return y;
+    }
+    function wrapPos(x) {
+      var y = x % (2 * Math.PI);
+      if (y < 0) y += 2 * Math.PI;
+      return y;
+    }
+    var wtPos = wrapPos(omega() * arcTime());            // always >= 0, in [0, 2pi)
+    var epsSigned = (eps === null) ? 0 : wrapPi(eps);    // signed in (-pi, pi]
+    // omega*t + epsilon is the literal sum; in (-pi, 3pi). The violet arc
+    // sweeps that many radians from 12 o'clock (positive = anticlockwise,
+    // negative = clockwise) and may visibly wind past one full turn in the
+    // upper part of the range -- which honestly shows the arrow's accumulated
+    // angle is more than one rotation.
+    var totalSum = wtPos + epsSigned;
+    var arcRef = -Math.PI / 2;            // 12 o'clock, fixed
+    var arcR = 0.55 * r; if (arcR < 16) arcR = 16; if (arcR > 50) arcR = 50;
+    var ORANGE = 'rgba(255,206,84,0.95)';
+    var VIOLET = 'rgba(167,139,250,0.95)';
+    var PINK = 'rgba(244,114,182,0.95)';
+
+    // Generic signed-sweep arc + arrowhead from a starting angle on the unit
+    // circle, sweeping by 'sweep' radians (positive => anticlockwise, i.e.
+    // visually CCW on screen; negative => clockwise). The arrowhead is drawn
+    // at the end, pointing in the sweep direction.
+    function drawSignedArc(cx, cy, R, startAng, sweep, color) {
+      if (Math.abs(sweep) < 1e-9) return;
+      // canvas arc: screen-CCW means the canvas angle DECREASES (because screen
+      // y points down). So a "positive sweep" (visually CCW) corresponds to
+      // canvas anticlockwise=true with end = startAng - sweep.
+      var endAng = startAng - sweep;
+      ctx.strokeStyle = color; ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, startAng, endAng, sweep > 0);  // sweep>0 => screen-CCW
+      ctx.stroke();
+      // arrowhead at endAng, tangent direction = endAng - pi/2 for positive
+      // sweep, endAng + pi/2 for negative sweep
+      if (Math.abs(sweep) > 0.12) {
+        var ex = cx + R * Math.cos(endAng);
+        var ey = cy + R * Math.sin(endAng);
+        var tang = endAng - Math.PI / 2 * (sweep > 0 ? 1 : -1);
+        var ah = 8, spread = 0.5;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(ex, ey);
+        ctx.lineTo(ex - ah * Math.cos(tang - spread), ey - ah * Math.sin(tang - spread));
+        ctx.lineTo(ex - ah * Math.cos(tang + spread), ey - ah * Math.sin(tang + spread));
+        ctx.closePath(); ctx.fill();
+      }
+    }
+
+    var epsZero = (eps !== null && Math.abs(eps) < 1e-9);
+    // When eps is exactly 0 the TOTAL is just omega*t, so the single arc is
+    // drawn orange and gated by either toggle. Otherwise the violet total-phase
+    // arc is gated by the total toggle only.
+    var drawFirstArc = epsZero ? (showWtArc || showTotArc) : showTotArc;
+    if (drawFirstArc) {
+      // eps=0: single arc IS omega*t (non-negative, anticlockwise).
+      // eps!=0: violet total-phase arc, signed/short way.
+      var firstSweep = epsZero ? wtPos : totalSum;
+      drawSignedArc(phasorX, phasorY, arcR, arcRef, firstSweep,
+                    epsZero ? ORANGE : VIOLET);
+    }
+
+    // When epsilon is non-zero we additionally have the separate omega-t and
+    // epsilon arcs, each gated by its own toggle, plus a dashed orange
+    // reference line marking where the omega-t arc ends.
+    if (eps !== null && !epsZero) {
+      var wtArcR = arcR - 9; if (wtArcR < 10) wtArcR = 10;
+
+      // The dashed orange reference line points to the end of the omega-t arc.
+      // omega*t is non-negative and wraps [0, 2pi), so the reference always
+      // lands where the arc ends (sweeping anticlockwise from 12 o'clock).
+      if (showWtArc || showEpsArc) {
+        var wtEnd = arcRef - wtPos;
+        var refX = phasorX + r * Math.cos(wtEnd);
+        var refY = phasorY + r * Math.sin(wtEnd);
+        ctx.strokeStyle = 'rgba(255,206,84,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(phasorX, phasorY); ctx.lineTo(refX, refY); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (showWtArc) {
+        // Always anticlockwise (positive sweep); time can never run backward.
+        drawSignedArc(phasorX, phasorY, wtArcR, arcRef, wtPos, ORANGE);
+      }
+
+      if (showEpsArc) {
+        // epsilon arc (PINK, innermost): starts where the omega-t arc ends and
+        // sweeps by epsSigned to land at the arrow. A negative epsilon sweeps
+        // CLOCKWISE (the visible "vector subtraction" you can read off).
+        var epsArcR = wtArcR - 9; if (epsArcR < 8) epsArcR = 8;
+        var epsStart = arcRef - wtPos;
+        drawSignedArc(phasorX, phasorY, epsArcR, epsStart, epsSigned, PINK);
+      }
+    }
+
+    // blue arrow
+    var vg = ctx.createLinearGradient(phasorX, phasorY, tipX, tipY);
+    vg.addColorStop(0, '#0099cc'); vg.addColorStop(1, '#00d4ff');
+    ctx.strokeStyle = vg; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(phasorX, phasorY); ctx.lineTo(tipX, tipY); ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // green tip dot (matches the wave's green) with white core
+    ctx.fillStyle = '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(tipX, tipY, 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(tipX, tipY, 3, 0, Math.PI * 2); ctx.fill();
+
+    return { x: tipX, y: tipY };
+  }
+
+  // Headline above the phasor (same position/style as the Wave app's phase-
+  // difference label): shows theta = omega t decomposed as omega x t = angle,
+  // reinforcing theta = omega t. The angle is wrapped to [0, 2pi) so it
+  // matches the visible arc.
+  // Stacked labels above the phasor, colour-matched to the arcs:
+  //   orange:  omega t = omega x t = value        (always shown)
+  //   pink:    epsilon = +/- pi                    (only when epsilon != 0)
+  //   violet:  omega t + epsilon = value rad       (only when epsilon != 0)
+  // The total (violet) value is the wrapped phase, matching the violet arc.
+  function drawPhasorHeadline() {
+    if (!shm_showAng) return;
+
+    var w = omega();
+    var ORANGE = 'rgba(255,206,84,0.95)';
+    var VIOLET = 'rgba(167,139,250,0.95)';
+    var PINK = 'rgba(244,114,182,0.95)';
+
+    var eps = currentEps();
+    if (eps === null) return;     // clock mode, not fired: no values to show
+
+    // Wrapping conventions (matching the arcs):
+    //   omega*t : non-negative, wrapped [0, 2pi). Time is never negative.
+    //   epsilon : signed in (-pi, pi]. The sign IS the diagnostic.
+    //   omega*t + epsilon : signed in (-pi, pi]. The signed angular position
+    //                       of the arrow relative to 12 o'clock.
+    function wrapPi(x) {
+      var y = x % (2 * Math.PI);
+      if (y > Math.PI) y -= 2 * Math.PI;
+      if (y <= -Math.PI) y += 2 * Math.PI;
+      return y;
+    }
+    function wrapPos(x) {
+      var y = x % (2 * Math.PI);
+      if (y < 0) y += 2 * Math.PI;
+      return y;
+    }
+    var at = arcTime();
+    var thetaPos = wrapPos(w * at);      // omega*t: always >= 0, in [0, 2pi)
+    var epsSigned = wrapPi(eps);         // signed in (-pi, pi]
+    // The displayed total is the literal sum of the displayed omega*t and
+    // displayed epsilon. Sits in (-pi, 3pi). No further wrapping -- it must
+    // arithmetically equal what students would read off the two lines above.
+    var totalSum = thetaPos + epsSigned;
+
+    var r = Math.abs(shm_x0) * cmToPx;
+    var ringR = r + 28; if (ringR < 60) ringR = 60;
+    var lx = phasorX, baseY = phasorY - ringR;
+    var lineH = 20;
+
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+
+    // Signed numeric formatter using a real minus sign (U+2212) for negatives.
+    function signedStr(x) {
+      if (x >= 0) return x.toFixed(2);
+      return '\u2212' + Math.abs(x).toFixed(2);
+    }
+    var epsZero = (Math.abs(epsSigned) < 1e-9);
+    // Symbolic form for the four data-logger special cases; otherwise numeric.
+    var epsSym = formatEpsSymbolic(epsSigned);
+    var epsStr = (epsSym !== null) ? epsSym : signedStr(epsSigned) + ' rad';
+
+    if (!epsZero) {
+      if (shm_showWt) {
+        ctx.fillStyle = ORANGE;
+        ctx.fillText('\u03c9t = ' + thetaPos.toFixed(2) + ' rad',
+                     lx, baseY - 2 * lineH);
+      }
+      if (shm_showEps) {
+        ctx.fillStyle = PINK;
+        ctx.fillText('\u03b5 = ' + epsStr, lx, baseY - lineH);
+      }
+      if (shm_showTot) {
+        ctx.fillStyle = VIOLET;
+        ctx.fillText('\u03c9t + \u03b5 = ' + signedStr(totalSum) + ' rad',
+                     lx, baseY);
+      }
+    } else {
+      // eps=0: omega*t IS the total; show the orange line if either toggle is on.
+      if (shm_showWt || shm_showTot) {
+        ctx.fillStyle = ORANGE;
+        ctx.fillText('\u03c9t = ' + thetaPos.toFixed(2) + ' rad', lx, baseY);
+      }
+    }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+
+  // Faint background grid behind the graph panel only (Wave-app density).
+  function drawGraphGrid() {
+    var axisTop = waveY - MAX_CM * cmToPx;
+    var axisBot = waveY + MAX_CM * cmToPx;
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    // vertical grid lines at each 2 s
+    var win = timeWindow(), waveWidth = waveEndX - waveStartX, tVal;
+    for (tVal = 2; tVal <= win + 1e-9; tVal += 2) {
+      var gx = waveStartX + (tVal / win) * waveWidth;
+      ctx.beginPath(); ctx.moveTo(gx, axisTop); ctx.lineTo(gx, axisBot); ctx.stroke();
+    }
+    // horizontal grid lines at each TICK_CM
+    var cm;
+    for (cm = -MAX_CM; cm <= MAX_CM; cm += TICK_CM) {
+      if (cm === 0) continue;
+      var gy = waveY - cm * cmToPx;
+      ctx.beginPath(); ctx.moveTo(waveStartX, gy); ctx.lineTo(waveEndX, gy); ctx.stroke();
+    }
+  }
+
+  // Wave Motion app's axis treatment: titled vertical displacement axis with
+  // numbered ticks (-10..+10 cm), horizontal time axis in seconds with a tick
+  // every second, an arrowhead and a "time (s)" label.
+  function drawAxis() {
+    var axisTop = waveY - MAX_CM * cmToPx;
+    var axisBot = waveY + MAX_CM * cmToPx;
+    var waveWidth = waveEndX - waveStartX;
+    var win = timeWindow();
+
+    // --- vertical displacement axis ---
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(waveStartX, axisTop - 10); ctx.lineTo(waveStartX, axisBot + 10); ctx.stroke();
+
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    var cm;
+    for (cm = -MAX_CM; cm <= MAX_CM; cm += TICK_CM) {
+      var ty = waveY - cm * cmToPx;
+      ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(waveStartX - 8, ty); ctx.lineTo(waveStartX, ty); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.fillText(cm.toString(), waveStartX - 12, ty);
+    }
+
+    // vertical axis title: rotated 90 degrees and placed just to the LEFT of
+    // the numeric tick labels (which are right-aligned at waveStartX - 12, the
+    // widest being "-12"). Centred vertically on the axis. The offset leaves a
+    // comfortable gap so it never looks cramped against the numbers.
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.translate(waveStartX - 48, waveY);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Displacement, x (cm)', 0, 0);
+    ctx.restore();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    // --- horizontal time axis ---
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(waveStartX - 10, waveY); ctx.lineTo(waveEndX + 12, waveY); ctx.stroke();
+    // arrowhead
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(waveEndX + 12, waveY); ctx.lineTo(waveEndX + 4, waveY - 4); ctx.lineTo(waveEndX + 4, waveY + 4);
+    ctx.closePath(); ctx.fill();
+
+    // time ticks + labels every 2 s (skip t=0, it sits on the vertical axis)
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    var tVal;
+    for (tVal = 2; tVal <= win + 1e-9; tVal += 2) {
+      var tx = waveStartX + (tVal / win) * waveWidth;
+      ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(tx, waveY); ctx.lineTo(tx, waveY + 8); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.fillText(tVal.toString(), tx, waveY + 11);
+    }
+    // time unit label, just past the arrowhead
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'italic 14px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.fillText('time (s)', waveEndX + 18, waveY);
+
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+
+  // Waveform over the fixed 0..20 s axis; cycle count = 20/T changes with
+  // k/m. The now-dot scrubs left-to-right and loops at 20 s. (Wave app.)
+  // Horizontal double-headed dimension arrow spanning one period T on the
+  // displacement wave, in the Wave Motion app's style: vertical end-caps
+  // dropping toward the peaks, a thick horizontal line with filled arrowheads,
+  // and a "Period, T = ... s" label above. x = A cos(omega t) peaks at t = 0,
+  // T, 2T...; we span the first full period (t=0 to t=T) between those peaks.
+  function drawPeriodArrow() {
+    var waveWidth = waveEndX - waveStartX;
+    var win = timeWindow();
+    var T = period();                 // seconds
+    if (T > win) return;              // period longer than the window: skip
+    // Span between the SECOND and THIRD peaks (t = T to t = 2T) so the arrow
+    // and its label sit clear of the y-axis / title at the left edge. If 2T
+    // doesn't fit the window, fall back to the first period (t = 0 to t = T).
+    var tA = T, tB = 2 * T;
+    if (tB > win) { tA = 0; tB = T; }
+    var x1 = waveStartX + (tA / win) * waveWidth;
+    var x2 = waveStartX + (tB / win) * waveWidth;
+
+    // Peak height of the wave (x = +A at t = 0). Raise the arrow above it,
+    // clamped to stay clear of the title at the top of the plot.
+    var amp = Math.abs(shm_x0);
+    var peakY = yForDisp(waveY, amp);
+    var arrowY = peakY - 30;
+    var axisTop = waveY - MAX_CM * cmToPx;
+    if (arrowY < axisTop + 14) arrowY = axisTop + 14;
+    if (arrowY > peakY - 10) arrowY = peakY - 10;
+    var capBottom = peakY - 4;
+    var col = '#FFFFFF';
+
+    ctx.save();
+    ctx.strokeStyle = col; ctx.fillStyle = col;
+
+    // Vertical end-caps from the arrow line down toward each peak.
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x1, arrowY); ctx.lineTo(x1, capBottom);
+    ctx.moveTo(x2, arrowY); ctx.lineTo(x2, capBottom);
+    ctx.stroke();
+
+    // Thick horizontal dimension line.
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x1, arrowY); ctx.lineTo(x2, arrowY);
+    ctx.stroke();
+
+    // Filled arrowheads at both ends, pointing outward.
+    var ah = 11, aw = 6;
+    ctx.beginPath();
+    ctx.moveTo(x1, arrowY); ctx.lineTo(x1 + ah, arrowY - aw); ctx.lineTo(x1 + ah, arrowY + aw);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x2, arrowY); ctx.lineTo(x2 - ah, arrowY - aw); ctx.lineTo(x2 - ah, arrowY + aw);
+    ctx.closePath(); ctx.fill();
+
+    // Label above the dimension line.
+    ctx.fillStyle = 'rgba(255,255,255,0.98)';
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('Period, T = ' + T.toFixed(2) + ' s', (x1 + x2) / 2, arrowY - 7);
+    ctx.restore();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+
+  // Phase-explorer readout: states the shift applied to cos, the resulting
+  // phase constant eps, and (at the cardinal phases) the recognised waveform.
+  // x = A cos(omega t + eps): a POSITIVE eps shifts the curve LEFT, so the
+  // rightward shift the student sees equals -eps. Placed above the wave,
+  // left-aligned to the vertical axis.
+  // Express any integer multiple of pi/4 as a tidy symbolic string, for the
+  // UNBOUNDED eps (e.g. -3pi/2, -2pi, -9pi/4, +5pi/4). n is eps/(pi/4).
+  function epsLabelPiOver4(eps) {
+    var n = Math.round(eps / (Math.PI / 4));
+    if (n === 0) return '0';
+    var sign = (n < 0) ? '\u2212' : '+';
+    var a = Math.abs(n);                 // a quarter-turns
+    // Reduce a/4 to lowest terms.
+    var num = a, den = 4;
+    var g = (function gcd(x, y){ while (y) { var t = y; y = x % y; x = t; } return x; })(a, 4);
+    num = a / g; den = 4 / g;
+    var body;
+    if (den === 1) body = (num === 1) ? '\u03c0' : num + '\u03c0';     // whole multiples of pi
+    else body = (num === 1) ? '\u03c0/' + den : num + '\u03c0/' + den; // fractions
+    return sign + body;
+  }
+  // Recognised waveform for eps, using the principal value (eps mod 2*pi). The
+  // sign is placed with A: cos -> "A cos", +pi/2 -> "-A sin", pi -> "-A cos",
+  // -pi/2 (== 3pi/2) -> "A sin". Returns null for diagonals (no simple form).
+  function waveformName(eps) {
+    var n = ((Math.round(eps / (Math.PI / 4)) % 8) + 8) % 8;  // 0..7
+    if (n === 0) return 'A cos(\u03c9t)';
+    if (n === 2) return '\u2212A sin(\u03c9t)';   // +pi/2
+    if (n === 4) return '\u2212A cos(\u03c9t)';   // pi
+    if (n === 6) return 'A sin(\u03c9t)';         // -pi/2 == 3pi/2
+    return null;                                    // diagonals: no simple name
+  }
+  function drawExplorerReadout() {
+    var eps = shm_explorerEps;
+    var snapped = shm_explorerSnapped;
+    var axisTop = waveY - MAX_CM * cmToPx;
+    var x = waveStartX;
+    var y = axisTop - 40;
+
+    ctx.save();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    if (snapped) {
+      // On a key angle: clean symbolic shift + eps, and (at cardinals) the
+      // recognised waveform.
+      var shiftPhase = -eps;                 // rightward shift = -eps
+      var shiftTxt;
+      if (Math.abs(shiftPhase) < 1e-6) shiftTxt = 'no shift';
+      else shiftTxt = 'shifted ' + (shiftPhase > 0 ? 'right' : 'left') + ' ' +
+                      epsLabelPiOver4(Math.abs(shiftPhase));
+      ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.fillText('cos ' + shiftTxt + '   \u2192   \u03b5 = ' + epsLabelPiOver4(eps), x, y);
+
+      var name = waveformName(eps);
+      ctx.font = 'italic 15px "Cambria Math", "STIX Two Math", Cambria, "Times New Roman", serif';
+      ctx.fillStyle = 'rgba(74,222,128,0.95)';
+      var line2;
+      if (Math.abs(eps) < 1e-9) {
+        line2 = 'x = A cos(\u03c9t)';
+      } else {
+        // epsLabelPiOver4 yields e.g. "-3pi/2"; split its sign for "wt - 3pi/2".
+        var lab = epsLabelPiOver4(eps);
+        var sgnSym = (lab.charAt(0) === '\u2212') ? '\u2212 ' : '+ ';
+        var body = lab.replace(/^[+\u2212]/, '');
+        line2 = 'x = A cos(\u03c9t ' + sgnSym + body + ')';
+      }
+      if (name) line2 += '   =   ' + name;
+      ctx.fillText(line2, x, y + 20);
+    } else {
+      // Between key angles: show the exact dragged value numerically (radians),
+      // no waveform name (it isn't a recognisable special form).
+      var shiftNum = -eps;                   // rightward shift = -eps
+      var shiftTxt2 = (Math.abs(shiftNum) < 1e-6) ? 'no shift'
+                    : 'shifted ' + (shiftNum > 0 ? 'right' : 'left') + ' ' +
+                      Math.abs(shiftNum).toFixed(2) + ' rad';
+      ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      var epsStr = (eps >= 0 ? '+' : '\u2212') + Math.abs(eps).toFixed(2);
+      ctx.fillText('cos ' + shiftTxt2 + '   \u2192   \u03b5 = ' + epsStr + ' rad', x, y);
+
+      ctx.font = 'italic 15px "Cambria Math", "STIX Two Math", Cambria, "Times New Roman", serif';
+      ctx.fillStyle = 'rgba(74,222,128,0.7)';
+      var sgn = (eps >= 0 ? '+ ' : '\u2212 ');
+      ctx.fillText('x = A cos(\u03c9t ' + sgn + Math.abs(eps).toFixed(2) + ')', x, y + 20);
+    }
+    ctx.restore();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawWave() {
+    var waveWidth = waveEndX - waveStartX;
+    var w = omega();
+    var win = timeWindow();
+
+    if (shm_showExplorer) {
+      // Phase-explorer mode: a FIXED display, independent of the k/m/A sliders.
+      // Exactly EXPLORER_CYCLES full cosine cycles across the graph width at a
+      // fixed 12 cm amplitude. The faint dashed reference is cos (eps = 0); the
+      // bright curve is cos(... + eps) and is the draggable one. explorerYAt()
+      // is the single source of the curve shape so drawing and hit-testing
+      // (overWave) can never disagree.
+      // Reference cos (eps = 0) -- drawn prominently in amber so students can
+      // clearly see the un-shifted starting curve against the green draggable
+      // one. Distinct colour keeps the two unmistakable.
+      ctx.strokeStyle = 'rgba(255,206,84,0.85)'; ctx.lineWidth = 2;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      for (var rpx = 0; rpx <= waveWidth; rpx += 1) {
+        var ry = explorerYAt(waveStartX + rpx, 0);
+        var rx = waveStartX + rpx;
+        if (rpx === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+
+      // bright draggable curve, phase-shifted by eps
+      ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 5;
+      ctx.beginPath();
+      for (var dpx = 0; dpx <= waveWidth; dpx += 1) {
+        var dy = explorerYAt(waveStartX + dpx, shm_explorerEps);
+        var dx = waveStartX + dpx;
+        if (dpx === 0) ctx.moveTo(dx, dy); else ctx.lineTo(dx, dy);
+      }
+      ctx.stroke(); ctx.shadowBlur = 0;
+
+      drawExplorerReadout();
+      return { x: waveStartX, y: waveY };
+    }
+
+    // trace y = centreY - x0 cos(omega t) over the fixed window, soft glow
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 5;
+    ctx.beginPath();
+    for (var px = 0; px <= waveWidth; px += 1) {
+      var tt = (px / waveWidth) * win;
+      var yy = yForDisp(waveY, shm_x0 * Math.cos(w * tt));
+      var xx = waveStartX + px;
+      if (px === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke(); ctx.shadowBlur = 0;
+
+    // now-dot: scrubs across as time advances, clamped to the right edge
+    var prog = shm_t / win; if (prog < 0) prog = 0; if (prog > 1) prog = 1;
+    var nowX = waveStartX + prog * waveWidth;
+    var nowY = yForDisp(waveY, disp(shm_t));
+    ctx.fillStyle = '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(nowX, nowY, 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(nowX, nowY, 3, 0, Math.PI * 2); ctx.fill();
+
+    if (shm_showPeriod) drawPeriodArrow();
+    return { x: nowX, y: nowY };
+  }
+
+  // The data-logger trace: once fired, plot displacement against time since the
+  // trigger (tau = shm_t - shm_tFire) over the fixed 20 s window, starting at
+  // the trigger height with the slope the motion actually had there. On the
+  // first pass the pen draws out progressively up to the current tau; after the
+  // window fills the full curve stays drawn and the now-dot loops across it
+  // (tau mod window), matching the looping feel of normal mode.
+  function drawTriggeredWave() {
+    var waveWidth = waveEndX - waveStartX;
+    var win = timeWindow();
+    var tauRaw = shm_t - shm_tFire; if (tauRaw < 0) tauRaw = 0;
+    var firstPass = (tauRaw < win);
+    var drawUpTo = firstPass ? tauRaw : win;        // how much of the curve to draw
+    var dotTau = firstPass ? tauRaw : (tauRaw % win); // now-dot position (loops after pass 1)
+
+    // trace from tau=0 to drawUpTo
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 5;
+    ctx.beginPath();
+    var firstDrawn = false;
+    var maxPx = Math.round((drawUpTo / win) * waveWidth);
+    for (var px = 0; px <= maxPx; px += 1) {
+      var tau = (px / waveWidth) * win;
+      var yy = yForDisp(waveY, disp(shm_tFire + tau));
+      var xx = waveStartX + px;
+      if (!firstDrawn) { ctx.moveTo(xx, yy); firstDrawn = true; } else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke(); ctx.shadowBlur = 0;
+
+    // now-dot
+    var nowX = waveStartX + (dotTau / win) * waveWidth;
+    var nowY = yForDisp(waveY, disp(shm_tFire + dotTau));
+    ctx.fillStyle = '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(nowX, nowY, 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(nowX, nowY, 3, 0, Math.PI * 2); ctx.fill();
+
+    return { x: nowX, y: nowY };
+  }
+
+  // Connectors, in the Wave Motion app's style:
+  //  - a dashed green vertical drop from the phasor tip to the phasor's
+  //    horizontal centre line (shows the projection onto the axis),
+  //  - a dashed green horizontal line from the phasor tip across to the
+  //    now-dot (tip y == now-dot y by construction),
+  //  - a dashed green vertical drop from the now-dot to the time axis,
+  //  - a dashed green horizontal line from the mass marker to the phasor tip
+  //    (links the spring into the same chain).
+  function drawProjections(massCentreY, phasorTip, waveNow) {
+    if (!shm_showProj) return;
+
+    // Vertical drop from phasor tip to the phasor's horizontal axis. Skipped
+    // entirely when the phasor is hidden.
+    if (phasorTip) {
+      ctx.strokeStyle = 'rgba(74,222,128,0.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(phasorTip.x, phasorTip.y); ctx.lineTo(phasorTip.x, phasorY); ctx.stroke();
+    }
+
+    // Horizontal connector: mass -> (phasor tip if shown) -> now-dot. If the
+    // phasor is hidden, mass goes straight to the now-dot (or stops at the
+    // mass if no wave). If no now-dot, it stops at the tip.
+    var acrossX;
+    if (waveNow) acrossX = waveNow.x;
+    else if (phasorTip) acrossX = phasorTip.x;
+    else acrossX = springX;             // no phasor, no wave -> nothing to extend to
+    if (acrossX !== springX) {
+      ctx.strokeStyle = 'rgba(74,222,128,0.85)'; ctx.lineWidth = 2; ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      ctx.moveTo(springX, massCentreY);
+      ctx.lineTo(acrossX, massCentreY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // now-dot -> time axis (vertical), only when the wave/now-dot is present
+    if (waveNow) {
+      ctx.strokeStyle = 'rgba(74,222,128,0.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(waveNow.x, waveNow.y); ctx.lineTo(waveNow.x, waveY); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawLabels() {
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'center';
+    ctx.fillText('SPRING', springX, 34);
+    if (shm_showPhasor) ctx.fillText('PHASOR', phasorX, 34);
+
+    // Equation caption under the phasor (WJEC form). Shown only when angular
+    // values are enabled (the master toggle), since it speaks the same maths
+    // Equation caption (WJEC form): x = A cos(omega*t + epsilon). Normal mode:
+    // A is always positive so epsilon = 0. Clock mode after firing: epsilon is
+    // the phase the data logger captured, shown symbolically for the four
+    // special positions (top/bottom/centre-up/centre-down) and numerically
+    // otherwise.
+    if (!shm_showAng || !shm_showPhasor) { ctx.textAlign = 'left'; return; }
+
+    var Amag = shm_x0;     // x0 is now always positive (= amplitude A)
+    var epsTerm;
+    if (shm_clockMode && shm_fired) {
+      var e = (omega() * shm_tFire) % (2 * Math.PI);
+      if (e > Math.PI) e -= 2 * Math.PI;
+      if (e <= -Math.PI) e += 2 * Math.PI;
+      var sym = formatEpsSymbolic(e);
+      if (sym !== null) {
+        // Symbolic: convert "+pi/2" / "-pi/2" / "+/-pi" / "0" into an additive
+        // term like " + pi/2", " - pi/2", " +/- pi", " + 0".
+        if (sym === '0') epsTerm = ' + 0';
+        else if (sym.charAt(0) === '+') epsTerm = ' + ' + sym.substring(1);
+        else if (sym.charAt(0) === '\u2212') epsTerm = ' \u2212 ' + sym.substring(1);
+        else if (sym.charAt(0) === '\u00b1') epsTerm = ' \u00b1 ' + sym.substring(1);
+        else epsTerm = ' + ' + sym;
+      } else {
+        epsTerm = (e >= 0 ? ' + ' : ' \u2212 ') + Math.abs(e).toFixed(2);
+      }
+    } else if (shm_clockMode && !shm_fired) {
+      epsTerm = null;   // not yet recorded
+    } else {
+      epsTerm = ' + 0';
+    }
+    ctx.textBaseline = 'alphabetic';
+    // Equation caption: left-justified to the vertical (displacement) axis and
+    // raised above the plot, so it clears the "Show period" dimension label
+    // (which sits inside the plot above the peaks). Italic serif for a typeset
+    // maths feel.
+    ctx.font = 'italic 16px "Cambria Math", "STIX Two Math", Cambria, "Times New Roman", serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.textAlign = 'left';
+    var eqY = waveY - MAX_CM * cmToPx - 40;     // raised well clear of the period label
+    var eqX = waveStartX;                        // left-aligned to the vertical axis
+    if (epsTerm === null) {
+      ctx.fillText('x = A cos(\u03c9t + \u03b5)   \u2014 waiting for trigger\u2026', eqX, eqY);
+    } else {
+      ctx.fillText('x = A cos(\u03c9t + \u03b5) = ' + Amag.toFixed(1) +
+                   ' cos(\u03c9t' + epsTerm + ')', eqX, eqY);
+    }
+    ctx.textAlign = 'left';
+  }
+
+  /* ============================================================== *
+   * ANALYSIS POPUP -- three stacked graphs of x(t), v(t), a(t)      *
+   * sharing the same 0..20 s time axis as the main wave graph. Each *
+   * panel auto-scales its y-axis to its own peak (since |v_peak| =  *
+   * A*omega and |a_peak| = A*omega^2, the scales differ). A green   *
+   * now-dot on each panel marks the current time t = displayTime(). *
+   * ============================================================== */
+  function drawAnalysis() {
+    if (!shm_showAnalysis) return;
+    var actx = analysisCtx, cv = analysisCanvas;
+    // Reset the dot-position buffer; it gets repopulated panel-by-panel below.
+    _analysisDotPositions = [];
+    // HiDPI: size the backing store to (cssW * dpr, cssH * dpr) and scale the
+    // context. Re-set the transform first to avoid compound scaling on resize.
+    var rect = cv.getBoundingClientRect();
+    var cssW = Math.max(1, Math.round(rect.width));
+    var cssH = Math.max(1, Math.round(rect.height));
+    var dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(cssW * dpr) || cv.height !== Math.round(cssH * dpr)) {
+      cv.width = Math.round(cssW * dpr);
+      cv.height = Math.round(cssH * dpr);
+    }
+    actx.setTransform(1, 0, 0, 1, 0, 0);
+    actx.scale(dpr, dpr);
+
+    // Background
+    actx.fillStyle = '#000';
+    actx.fillRect(0, 0, cssW, cssH);
+
+    // Layout: three panels stacked vertically with a small gap. Shared
+    // x-axis (time, 0..TIME_AXIS) but each gets its own y-axis range.
+    var w = omega();
+    var A = shm_x0;
+    var vPeak = A * w;             // cm/s
+    var aPeak = A * w * w;         // cm/s^2
+
+    var marginL = 70, marginR = 58, marginT = 12, marginB = 10, gapY = 14;
+    var plotsTotalH = cssH - marginT - marginB - 2 * gapY;
+    var panelH = plotsTotalH / 3;
+    var plotL = marginL, plotR = cssW - marginR;
+    var plotW = plotR - plotL;
+
+    var panels = [
+      { label: 'x (cm)',     unit: 'cm',     peak: A,     color: '#34d399', value: function (t) { return A * Math.cos(w * t); } },
+      { label: 'v (cm/s)',   unit: 'cm/s',   peak: vPeak, color: '#60a5fa', value: function (t) { return -A * w * Math.sin(w * t); } },
+      { label: 'a (cm/s\u00b2)', unit: 'cm/s\u00b2', peak: aPeak, color: '#f472b6', value: function (t) { return -A * w * w * Math.cos(w * t); } }
+    ];
+
+    var tNow = displayTime();
+    // In clock mode the displayed time wraps via the recording window; in
+    // analysis mode we never enter clock mode (mutex), so this is just shm_t.
+
+    for (var i = 0; i < 3; i++) {
+      var p = panels[i];
+      var top = marginT + i * (panelH + gapY);
+      var bot = top + panelH;
+      var mid = (top + bot) / 2;
+
+      // Grid: 5 horizontal gridlines (at +peak, +peak/2, 0, -peak/2, -peak)
+      // and time gridlines at every 2 s.
+      actx.strokeStyle = 'rgba(255,255,255,0.07)'; actx.lineWidth = 1;
+      actx.beginPath();
+      for (var g = -1; g <= 1; g += 0.5) {
+        var gy = mid - g * (panelH / 2) * 0.9;     // 0.9 keeps a small inner margin
+        actx.moveTo(plotL, gy); actx.lineTo(plotR, gy);
+      }
+      for (var ts = 0; ts <= TIME_AXIS; ts += 2) {
+        var gx = plotL + (ts / TIME_AXIS) * plotW;
+        actx.moveTo(gx, top); actx.lineTo(gx, bot);
+      }
+      actx.stroke();
+
+      // Axes: each panel gets its own time axis (the zero line) styled to
+      // match the main canvas -- horizontal line with an arrowhead at the
+      // right end, plus tick marks + labels at every 2 s. The left edge of
+      // the plot serves as the value (y) axis.
+      actx.strokeStyle = 'rgba(255,255,255,0.3)'; actx.lineWidth = 2;
+      actx.beginPath();
+      actx.moveTo(plotL - 10, mid); actx.lineTo(plotR + 12, mid);    // time axis
+      actx.moveTo(plotL, top - 6);  actx.lineTo(plotL, bot + 6);     // value axis
+      actx.stroke();
+
+      // arrowhead on the time axis (just past plotR)
+      actx.fillStyle = 'rgba(255,255,255,0.5)';
+      actx.beginPath();
+      actx.moveTo(plotR + 12, mid);
+      actx.lineTo(plotR + 4, mid - 4);
+      actx.lineTo(plotR + 4, mid + 4);
+      actx.closePath(); actx.fill();
+
+      // Y-axis tick labels (+peak, 0, -peak). Bold so the values read clearly
+      // against the dark background.
+      actx.fillStyle = 'rgba(255,255,255,0.95)';
+      actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      actx.textAlign = 'right'; actx.textBaseline = 'middle';
+      actx.fillText(p.peak.toFixed(p.peak >= 10 ? 0 : 1), plotL - 6, top + panelH * 0.05);
+      actx.fillText('0', plotL - 6, mid);
+      actx.fillText('\u2212' + p.peak.toFixed(p.peak >= 10 ? 0 : 1), plotL - 6, bot - panelH * 0.05);
+
+      // Y-axis label, rotated 90 degrees anticlockwise to the LEFT of the
+      // axis (standard scientific-graph convention). Centred vertically in
+      // the panel and in the panel's series colour.
+      actx.save();
+      actx.fillStyle = p.color;
+      actx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      actx.textAlign = 'center'; actx.textBaseline = 'middle';
+      actx.translate(plotL - 44, mid);
+      actx.rotate(-Math.PI / 2);
+      actx.fillText(p.label, 0, 0);
+      actx.restore();
+
+      // Time tick marks + labels every 2 s (skip 0, it sits on the value
+      // axis). Labels go just below the time axis line.
+      actx.textAlign = 'center'; actx.textBaseline = 'top';
+      actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      for (var tVal = 2; tVal <= TIME_AXIS + 1e-9; tVal += 2) {
+        var tx = plotL + (tVal / TIME_AXIS) * plotW;
+        actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+        actx.beginPath(); actx.moveTo(tx, mid); actx.lineTo(tx, mid + 6); actx.stroke();
+        actx.fillStyle = 'rgba(255,255,255,0.95)';
+        actx.fillText(tVal.toString(), tx, mid + 8);
+      }
+
+      // "time (s)" label just past the arrowhead (italic, matches main canvas).
+      actx.textAlign = 'left'; actx.textBaseline = 'middle';
+      actx.fillStyle = 'rgba(255,255,255,0.85)';
+      actx.font = 'italic 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      actx.fillText('time (s)', plotR + 16, mid);
+
+      // Trace from t=0 to TIME_AXIS. The function is periodic so we always
+      // plot the full window (the wave repeats inside it). Styling matches
+      // the main-canvas wave: 2.5 px line with a soft 5 px glow in the
+      // panel's series colour.
+      actx.strokeStyle = p.color; actx.lineWidth = 2.5;
+      actx.shadowColor = p.color; actx.shadowBlur = 5;
+      actx.beginPath();
+      var steps = Math.max(80, Math.round(plotW));
+      for (var s = 0; s <= steps; s++) {
+        var tt = (s / steps) * TIME_AXIS;
+        var vv = p.value(tt);
+        var xx = plotL + (tt / TIME_AXIS) * plotW;
+        var yy = mid - (vv / p.peak) * (panelH / 2) * 0.9;
+        if (s === 0) actx.moveTo(xx, yy); else actx.lineTo(xx, yy);
+      }
+      actx.stroke(); actx.shadowBlur = 0;
+
+      // Now-dot on each panel: matches the main-canvas now-dot (7px outer
+      // with a 15px glow, 3px white inner) so the three popup dots and the
+      // main one all visually agree.
+      if (tNow >= 0 && tNow <= TIME_AXIS) {
+        var nv = p.value(tNow);
+        var ndX = plotL + (tNow / TIME_AXIS) * plotW;
+        var ndY = mid - (nv / p.peak) * (panelH / 2) * 0.9;
+        // Stash for hit-testing (CSS coords; matches the canvas's bounding rect).
+        _analysisDotPositions.push({ x: ndX, y: ndY, plotL: plotL, plotW: plotW });
+
+        // Tangent on this panel (if its toggle is on). Drawn UNDER the dot
+        // so the dot sits on top of the tangent visually. The tangent's slope
+        // equals the value of the NEXT panel down (dx/dt = v; dv/dt = a), so
+        // it's drawn in that panel's colour to visually link the two.
+        var doTangent = (i === 0 && shm_tangentX) || (i === 1 && shm_tangentV);
+        if (doTangent) {
+          // Data-space slope at tNow:
+          //   panel 0 (x): dx/dt = v(tNow)
+          //   panel 1 (v): dv/dt = a(tNow)
+          var dataSlope = panels[i + 1].value(tNow);
+          var halfH = (panelH / 2) * 0.9;
+          var pxPerSec = plotW / TIME_AXIS;
+          var pxPerUnit = -halfH / p.peak;
+          var pixSlope = (dataSlope * pxPerUnit) / pxPerSec;
+          var tangLen = 70;
+          var tangColor = panels[i + 1].color;
+          // Constant visible length: 'tangLen' is measured ALONG the tangent
+          // direction, not along the x-axis. The unit tangent vector is
+          // (1, pixSlope) / sqrt(1 + pixSlope^2), so the endpoints are offset
+          // by tangLen along that direction. This keeps the drawn segment the
+          // same length whether the slope is gentle or steep.
+          var tNorm = Math.sqrt(1 + pixSlope * pixSlope);
+          var tDx = tangLen / tNorm;
+          var tDy = tangLen * pixSlope / tNorm;
+          // Clip the tangent to this panel's vertical band (top..bot) so a
+          // steep slope doesn't bleed into the panel above or below.
+          actx.save();
+          actx.beginPath();
+          actx.rect(plotL - 2, top, plotW + 4, panelH);
+          actx.clip();
+          actx.strokeStyle = tangColor; actx.lineWidth = 2;
+          actx.shadowColor = tangColor; actx.shadowBlur = 6;
+          actx.beginPath();
+          actx.moveTo(ndX - tDx, ndY - tDy);
+          actx.lineTo(ndX + tDx, ndY + tDy);
+          actx.stroke();
+          actx.shadowBlur = 0;
+          actx.restore();
+          // Label past the right end of the tangent: "dx/dt = v" / "dv/dt = a".
+          // Drawn AFTER restore so it isn't clipped (the label sits in margin).
+          var labelText = (i === 0) ? 'dx/dt = v' : 'dv/dt = a';
+          actx.font = 'bold italic 13px "Cambria Math","Times New Roman",serif';
+          actx.fillStyle = tangColor;
+          actx.shadowColor = '#000'; actx.shadowBlur = 4;
+          actx.textAlign = 'left'; actx.textBaseline = 'middle';
+          var labelX = ndX + tDx + 6;
+          var labelY = ndY + tDy;
+          // Clamp the label vertically into this panel; flip horizontally if it
+          // would overflow the right edge.
+          if (labelY < top + 8) labelY = top + 8;
+          if (labelY > bot - 8) labelY = bot - 8;
+          if (labelX + 70 > plotR) {
+            labelX = ndX - tDx - 6;
+            actx.textAlign = 'right';
+            var altY = ndY - tDy;
+            if (altY < top + 8) altY = top + 8;
+            if (altY > bot - 8) altY = bot - 8;
+            labelY = altY;
+          }
+          actx.fillText(labelText, labelX, labelY);
+          actx.shadowBlur = 0;
+
+          // Dashed vertical connector from THIS panel's dot down to the
+          // corresponding dot in the panel below -- visually links "the slope
+          // of the tangent up here" to "the value down here". Drawn between
+          // the two dots only (so it terminates AT each dot, not on top).
+          var nextTop = marginT + (i + 1) * (panelH + gapY);
+          var nextMid = nextTop + panelH / 2;
+          var nextHalfH = (panelH / 2) * 0.9;
+          var nextVal = panels[i + 1].value(tNow);
+          var nextY = nextMid - (nextVal / panels[i + 1].peak) * nextHalfH;
+          actx.strokeStyle = tangColor; actx.lineWidth = 1.5;
+          actx.setLineDash([5, 4]);
+          actx.beginPath();
+          actx.moveTo(ndX, ndY + 7);     // start just below the upper dot
+          actx.lineTo(ndX, nextY - 7);   // end just above the lower dot
+          actx.stroke();
+          actx.setLineDash([]);
+        }
+
+        actx.fillStyle = p.color; actx.shadowColor = p.color; actx.shadowBlur = 15;
+        actx.beginPath(); actx.arc(ndX, ndY, 7, 0, Math.PI * 2); actx.fill();
+        actx.shadowBlur = 0;
+        actx.fillStyle = '#fff';
+        actx.beginPath(); actx.arc(ndX, ndY, 3, 0, Math.PI * 2); actx.fill();
+      }
+    }
+  }
+
+  /* ============================================================== *
+   * ENERGY POPUP -- KE, EPE and Total on a single panel sharing the *
+   * 0..TIME_AXIS time axis. Total is a flat line at 1/2 k A^2 (the  *
+   * exchange is between KE and EPE, total is conserved). Three now- *
+   * dots, one per curve; any one can be grabbed to scrub time. All  *
+   * energies displayed in mJ. Independent of clock mode & analysis. *
+   * ============================================================== */
+  var _energyDotPositions = [];     // for hit-testing the now-dots
+
+  function drawEnergy() {
+    if (!shm_showEnergy) return;
+    var actx = energyCtx, cv = energyCanvas;
+    _energyDotPositions = [];
+
+    // HiDPI sizing (same pattern as the analysis canvas).
+    var rect = cv.getBoundingClientRect();
+    var cssW = Math.max(1, Math.round(rect.width));
+    var cssH = Math.max(1, Math.round(rect.height));
+    var dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(cssW * dpr) || cv.height !== Math.round(cssH * dpr)) {
+      cv.width = Math.round(cssW * dpr);
+      cv.height = Math.round(cssH * dpr);
+    }
+    actx.setTransform(1, 0, 0, 1, 0, 0);
+    actx.scale(dpr, dpr);
+
+    actx.fillStyle = '#000';
+    actx.fillRect(0, 0, cssW, cssH);
+
+    // Physics. Using SI internally then converting to mJ for display.
+    //   x(t) = A cos(omega t)  [m]                  (A_m = shm_x0/100)
+    //   v(t) = -A omega sin(omega t)  [m/s]
+    //   EPE  = 1/2 k x^2  [J]   -> 1/2 k A_m^2 cos^2(omega t)
+    //   KE   = 1/2 m v^2  [J]   -> 1/2 m A_m^2 omega^2 sin^2(omega t) = 1/2 k A_m^2 sin^2(omega t)
+    //   Total = 1/2 k A_m^2  (constant)
+    var w = omega();
+    var A_m = shm_x0 / 100;            // amplitude in m
+    var Etotal = 0.5 * shm_k * A_m * A_m;        // joules
+    var EtotalmJ = Etotal * 1000;                // millijoules
+    function ke_mJ(t)  { return EtotalmJ * Math.sin(w * t) * Math.sin(w * t); }
+    function epe_mJ(t) { return EtotalmJ * Math.cos(w * t) * Math.cos(w * t); }
+    function tot_mJ(t) { return EtotalmJ; }
+
+    // Layout (single panel filling the canvas, same margin conventions as the
+    // analysis popup so axes and labels match visually).
+    // Margins: top includes a strip for the horizontal legend; bottom holds
+    // the time tick labels with clearance.
+    var marginL = 70, marginR = 58, marginT = 36, marginB = 28;
+    var plotL = marginL, plotR = cssW - marginR;
+    var plotW = plotR - plotL;
+    var top = marginT, bot = cssH - marginB;
+    var panelH = bot - top;
+
+    // The y-axis runs from 0 (bottom of plot) to peak (top), with peak set so
+    // the Total line sits just below the top edge.
+    var peak = EtotalmJ * 1.1;
+    if (peak < 1e-6) peak = 1;        // defensive: never zero
+    function valToY(v) {
+      // y = top + (1 - v/peak) * panelH, so v=0 -> bot, v=peak -> top
+      var frac = v / peak;
+      if (frac < 0) frac = 0; if (frac > 1) frac = 1;
+      return top + (1 - frac) * panelH;
+    }
+
+    var COL_KE   = '#34d399';    // green
+    var COL_EPE  = '#f472b6';    // pink
+    var COL_TOT  = '#ffce54';    // amber (the conserved total)
+
+    // Vertical gridlines at every 2 s (the horizontal y-gridlines come later
+    // at proper data values along with the tick labels).
+    actx.strokeStyle = 'rgba(255,255,255,0.07)'; actx.lineWidth = 1;
+    actx.beginPath();
+    for (var ts = 0; ts <= TIME_AXIS; ts += 2) {
+      var gx = plotL + (ts / TIME_AXIS) * plotW;
+      actx.moveTo(gx, top); actx.lineTo(gx, bot);
+    }
+    actx.stroke();
+
+    // Axes: horizontal at the BOTTOM of this panel (y = bot, energy = 0) with
+    // arrowhead; vertical at plotL.
+    actx.strokeStyle = 'rgba(255,255,255,0.3)'; actx.lineWidth = 2;
+    actx.beginPath();
+    actx.moveTo(plotL - 10, bot); actx.lineTo(plotR + 12, bot);    // time axis
+    actx.moveTo(plotL, top - 6);  actx.lineTo(plotL, bot + 6);     // value axis
+    actx.stroke();
+    actx.fillStyle = 'rgba(255,255,255,0.5)';
+    actx.beginPath();
+    actx.moveTo(plotR + 12, bot);
+    actx.lineTo(plotR + 4, bot - 4);
+    actx.lineTo(plotR + 4, bot + 4);
+    actx.closePath(); actx.fill();
+
+    // Y-axis: choose a "nice" tick step so we get ~5 divisions covering 0..peak.
+    // Round the step to 1, 2, or 5 times a power of 10 so labels read cleanly
+    // (e.g. for peak ~ 5 mJ -> step = 1; peak ~ 50 -> step = 10).
+    function niceStep(range, targetDivs) {
+      var raw = range / targetDivs;
+      var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+      var n = raw / mag;
+      if (n < 1.5) return mag;
+      if (n < 3.5) return 2 * mag;
+      if (n < 7.5) return 5 * mag;
+      return 10 * mag;
+    }
+    var yStep = niceStep(EtotalmJ, 5);
+    var yMaxLabelled = Math.ceil(EtotalmJ / yStep) * yStep;
+
+    // Horizontal gridlines at every yStep, plus matching tick labels on the
+    // y-axis. Use a fainter line than the time-tick gridlines so the eye can
+    // distinguish them.
+    actx.strokeStyle = 'rgba(255,255,255,0.12)'; actx.lineWidth = 1;
+    actx.beginPath();
+    for (var yv = 0; yv <= yMaxLabelled + 1e-9; yv += yStep) {
+      var gy = valToY(yv);
+      if (gy < top - 1 || gy > bot + 1) continue;
+      actx.moveTo(plotL, gy); actx.lineTo(plotR, gy);
+    }
+    actx.stroke();
+
+    // Y-axis tick labels at each gridline value.
+    actx.fillStyle = 'rgba(255,255,255,0.95)';
+    actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'right'; actx.textBaseline = 'middle';
+    var labDecimals = (yStep < 1) ? 1 : 0;
+    for (var yv2 = 0; yv2 <= yMaxLabelled + 1e-9; yv2 += yStep) {
+      var ly = valToY(yv2);
+      if (ly < top - 1 || ly > bot + 1) continue;
+      // small tick mark
+      actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(plotL - 5, ly); actx.lineTo(plotL, ly); actx.stroke();
+      actx.fillStyle = 'rgba(255,255,255,0.95)';
+      actx.fillText(yv2.toFixed(labDecimals), plotL - 8, ly);
+    }
+
+    // Y-axis label rotated.
+    actx.save();
+    actx.fillStyle = 'rgba(255,255,255,0.95)';
+    actx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'center'; actx.textBaseline = 'middle';
+    actx.translate(plotL - 48, (top + bot) / 2);
+    actx.rotate(-Math.PI / 2);
+    actx.fillText('Energy (mJ)', 0, 0);
+    actx.restore();
+
+    // Time tick marks + labels every 2 s on the bottom axis.
+    actx.textAlign = 'center'; actx.textBaseline = 'top';
+    actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    for (var tVal = 2; tVal <= TIME_AXIS + 1e-9; tVal += 2) {
+      var tx = plotL + (tVal / TIME_AXIS) * plotW;
+      actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(tx, bot); actx.lineTo(tx, bot + 6); actx.stroke();
+      actx.fillStyle = 'rgba(255,255,255,0.95)';
+      actx.fillText(tVal.toString(), tx, bot + 8);
+    }
+    actx.textAlign = 'left'; actx.textBaseline = 'middle';
+    actx.fillStyle = 'rgba(255,255,255,0.85)';
+    actx.font = 'italic 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillText('time (s)', plotR + 16, bot);
+
+    // Three traces. We draw Total first (so KE/EPE sit on top of it), then
+    // EPE, then KE. Matches the main-canvas wave style: 2.5 px line with soft
+    // glow in the curve's colour.
+    function drawTrace(fn, color) {
+      actx.strokeStyle = color; actx.lineWidth = 2;
+      // Reduced glow vs the analysis popup: KE/EPE oscillate at twice the
+      // natural period, so curves can be dense -- less glow keeps individual
+      // cycles distinguishable.
+      actx.shadowColor = color; actx.shadowBlur = 2;
+      actx.beginPath();
+      var steps = Math.max(80, Math.round(plotW * 2));   // extra resolution for fast cycles
+      for (var s = 0; s <= steps; s++) {
+        var tt = (s / steps) * TIME_AXIS;
+        var vv = fn(tt);
+        var xx = plotL + (tt / TIME_AXIS) * plotW;
+        var yy = valToY(vv);
+        if (s === 0) actx.moveTo(xx, yy); else actx.lineTo(xx, yy);
+      }
+      actx.stroke(); actx.shadowBlur = 0;
+    }
+    drawTrace(tot_mJ, COL_TOT);
+    drawTrace(epe_mJ, COL_EPE);
+    drawTrace(ke_mJ, COL_KE);
+
+    // Legend across the top of the plot, horizontally aligned. Small swatch
+    // + name for each series, evenly spaced.
+    actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textBaseline = 'middle';
+    var series = [
+      { color: COL_KE,  name: 'KE'    },
+      { color: COL_EPE, name: 'EPE'   },
+      { color: COL_TOT, name: 'Total' }
+    ];
+    var legY = marginT / 2 + 2;        // centred in the top strip
+    var legSpacing = 90;               // pixels between legend entries
+    var legTotalW = (series.length - 1) * legSpacing + 60;
+    var legStartX = (plotL + plotR) / 2 - legTotalW / 2;
+    for (var li = 0; li < series.length; li++) {
+      var lx = legStartX + li * legSpacing;
+      actx.fillStyle = series[li].color;
+      actx.fillRect(lx, legY - 2, 18, 4);
+      actx.fillStyle = 'rgba(255,255,255,0.95)';
+      actx.textAlign = 'left';
+      actx.fillText(series[li].name, lx + 24, legY);
+    }
+
+    // Now-dots for each curve at tNow (mass tracking shm_t -- no clock-mode
+    // wrap because the energy popup is independent of clock mode). All three
+    // sit at the same x but different y.
+    var tNow = shm_t;
+    if (tNow >= 0 && tNow <= TIME_AXIS) {
+      function drawDot(fn, color) {
+        var ndX = plotL + (tNow / TIME_AXIS) * plotW;
+        var ndY = valToY(fn(tNow));
+        _energyDotPositions.push({ x: ndX, y: ndY, plotL: plotL, plotW: plotW });
+        actx.fillStyle = color; actx.shadowColor = color; actx.shadowBlur = 15;
+        actx.beginPath(); actx.arc(ndX, ndY, 7, 0, Math.PI * 2); actx.fill();
+        actx.shadowBlur = 0;
+        actx.fillStyle = '#fff';
+        actx.beginPath(); actx.arc(ndX, ndY, 3, 0, Math.PI * 2); actx.fill();
+      }
+      drawDot(tot_mJ, COL_TOT);
+      drawDot(epe_mJ, COL_EPE);
+      drawDot(ke_mJ,  COL_KE);
+    }
+  }
+
+  /* ============================================================== *
+   * a vs x POPUP -- straight line plot demonstrating a = -omega^2 x. *
+   * Axes centred at origin: x ranges -A..+A horizontally, a ranges  *
+   * -A*omega^2..+A*omega^2 vertically. The trace is a single line.  *
+   * A green now-dot slides along the line as the sim runs. Dragging *
+   * the dot scrubs time within a window of one period from the      *
+   * drag-anchor time, so the dot only moves through up to one cycle *
+   * per drag (no wrap-around confusion).                            *
+   * ============================================================== */
+  var _avsxDotPositions = [];
+
+  function drawAvsX() {
+    if (!shm_showAvsX) return;
+    var actx = avsxCtx, cv = avsxCanvas;
+    _avsxDotPositions = [];
+
+    var rect = cv.getBoundingClientRect();
+    var cssW = Math.max(1, Math.round(rect.width));
+    var cssH = Math.max(1, Math.round(rect.height));
+    var dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(cssW * dpr) || cv.height !== Math.round(cssH * dpr)) {
+      cv.width = Math.round(cssW * dpr);
+      cv.height = Math.round(cssH * dpr);
+    }
+    actx.setTransform(1, 0, 0, 1, 0, 0);
+    actx.scale(dpr, dpr);
+
+    actx.fillStyle = '#000';
+    actx.fillRect(0, 0, cssW, cssH);
+
+    // Physics
+    var w = omega();
+    var A = shm_x0;                    // amplitude, cm
+    var aPeak = A * w * w;             // peak acceleration, cm/s^2
+
+    // Layout: square plot with origin centred. Reserve margins for tick labels
+    // and an equation caption at the top.
+    var marginL = 70, marginR = 70, marginT = 36, marginB = 36;
+    var plotL = marginL, plotR = cssW - marginR;
+    var plotT = marginT, plotB = cssH - marginB;
+    var plotW = plotR - plotL, plotH = plotB - plotT;
+    var cx = (plotL + plotR) / 2;      // origin x in pixels
+    var cy = (plotT + plotB) / 2;      // origin y in pixels
+    function xToPx(xv) { return cx + (xv / A) * (plotW / 2) * 0.9; }
+    function aToPy(av) { return cy - (av / aPeak) * (plotH / 2) * 0.9; }
+
+    // Nice tick steps for both axes
+    function niceStep(range, targetDivs) {
+      var raw = range / targetDivs;
+      var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+      var n = raw / mag;
+      if (n < 1.5) return mag;
+      if (n < 3.5) return 2 * mag;
+      if (n < 7.5) return 5 * mag;
+      return 10 * mag;
+    }
+    var xStep = niceStep(A, 4);
+    var aStep = niceStep(aPeak, 4);
+
+    // Gridlines at every nice step (very faint). Anchor to multiples of the
+    // step so they line up with the (zero-aligned) tick labels.
+    actx.strokeStyle = 'rgba(255,255,255,0.07)'; actx.lineWidth = 1;
+    actx.beginPath();
+    var xGridFirst = Math.ceil(-A / xStep) * xStep;
+    for (var xv = xGridFirst; xv <= A + 1e-9; xv += xStep) {
+      var gx = xToPx(xv);
+      actx.moveTo(gx, plotT); actx.lineTo(gx, plotB);
+    }
+    var aGridFirst = Math.ceil(-aPeak / aStep) * aStep;
+    for (var av = aGridFirst; av <= aPeak + 1e-9; av += aStep) {
+      var gy = aToPy(av);
+      actx.moveTo(plotL, gy); actx.lineTo(plotR, gy);
+    }
+    actx.stroke();
+
+    // Origin axes (the x=0 vertical and a=0 horizontal lines run through the
+    // centre of the plot, drawn brighter than the grid).
+    actx.strokeStyle = 'rgba(255,255,255,0.45)'; actx.lineWidth = 2;
+    actx.beginPath();
+    actx.moveTo(plotL - 8, cy); actx.lineTo(plotR + 8, cy);     // a = 0 (horizontal)
+    actx.moveTo(cx, plotT - 8); actx.lineTo(cx, plotB + 8);     // x = 0 (vertical)
+    actx.stroke();
+
+    // Arrowheads on both axes (positive directions)
+    actx.fillStyle = 'rgba(255,255,255,0.6)';
+    actx.beginPath();                                // x-axis arrow (right)
+    actx.moveTo(plotR + 8, cy);
+    actx.lineTo(plotR, cy - 4); actx.lineTo(plotR, cy + 4);
+    actx.closePath(); actx.fill();
+    actx.beginPath();                                // a-axis arrow (up)
+    actx.moveTo(cx, plotT - 8);
+    actx.lineTo(cx - 4, plotT); actx.lineTo(cx + 4, plotT);
+    actx.closePath(); actx.fill();
+
+    // Tick marks + labels on the x-axis (along the a=0 horizontal line)
+    actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.textAlign = 'center'; actx.textBaseline = 'top';
+    for (var xv2 = Math.ceil(-A / xStep) * xStep; xv2 <= A + 1e-9; xv2 += xStep) {
+      if (Math.abs(xv2) < 1e-6) continue;
+      var tx = xToPx(xv2);
+      actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(tx, cy - 3); actx.lineTo(tx, cy + 3); actx.stroke();
+      var lab = (xv2 > 0 ? '' : '\u2212') + Math.abs(xv2).toFixed(xStep < 1 ? 1 : 0);
+      actx.fillText(lab, tx, cy + 6);
+    }
+    // x-axis label
+    actx.textAlign = 'left'; actx.textBaseline = 'middle';
+    actx.font = 'italic bold 12px "Cambria Math","Times New Roman",serif';
+    actx.fillText('x (cm)', plotR + 12, cy);
+
+    // Tick marks + labels on the y-axis (along the x=0 vertical line). Anchor
+    // ticks to multiples of aStep (so a tick lands exactly on 0 and the rest
+    // are clean values); iterating from -aPeak directly would offset every
+    // label (e.g. -0.1, 0.4, 0.9...) when aPeak isn't a multiple of aStep.
+    actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'right'; actx.textBaseline = 'middle';
+    var aFirst = Math.ceil(-aPeak / aStep) * aStep;
+    for (var av2 = aFirst; av2 <= aPeak + 1e-9; av2 += aStep) {
+      if (Math.abs(av2) < 1e-6) continue;
+      var ty = aToPy(av2);
+      actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(cx - 3, ty); actx.lineTo(cx + 3, ty); actx.stroke();
+      var lab2 = (av2 > 0 ? '' : '\u2212') + Math.abs(av2).toFixed(aStep < 1 ? 1 : 0);
+      actx.fillText(lab2, cx - 6, ty);
+    }
+    // y-axis label rotated, placed just to the LEFT of the numeric tick
+    // labels (which sit at cx - 6). Centred in the upper half of the y-axis
+    // so it doesn't overlap the horizontal x-axis line at cy.
+    actx.save();
+    actx.textAlign = 'center'; actx.textBaseline = 'middle';
+    actx.font = 'italic bold 13px "Cambria Math","Times New Roman",serif';
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.translate(cx - 28, (plotT + cy) / 2);   // just left of "20", "15" etc.
+    actx.rotate(-Math.PI / 2);
+    actx.fillText('a (cm/s\u00b2)', 0, 0);
+    actx.restore();
+
+    // Origin label "0"
+    actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillStyle = 'rgba(255,255,255,0.7)';
+    actx.textAlign = 'right'; actx.textBaseline = 'top';
+    actx.fillText('0', cx - 4, cy + 4);
+
+    // The line: a = -omega^2 x, from (+A, -A*omega^2) to (-A, +A*omega^2).
+    actx.strokeStyle = '#34d399'; actx.lineWidth = 2.5;
+    actx.shadowColor = '#34d399'; actx.shadowBlur = 5;
+    actx.beginPath();
+    actx.moveTo(xToPx(-A), aToPy(aPeak));      // left-top
+    actx.lineTo(xToPx(A),  aToPy(-aPeak));     // right-bottom
+    actx.stroke(); actx.shadowBlur = 0;
+
+    // Equation caption at the top, right-aligned to the plot's right edge --
+    // mirrors the main canvas convention (y-label on left, equation on right)
+    // and avoids visual competition with the rotated y-label.
+    actx.fillStyle = 'rgba(255,255,255,0.85)';
+    actx.font = 'italic 14px "Cambria Math","STIX Two Math",Cambria,"Times New Roman",serif';
+    actx.textAlign = 'right'; actx.textBaseline = 'middle';
+    var wSq = w * w;
+    actx.fillText('a = \u2212\u03c9\u00b2 x = \u2212' + wSq.toFixed(2) + ' x',
+                  plotR, marginT / 2);
+
+    // Now-dot at (x(t), a(t)). Sits on the line.
+    var tNow = displayTime();
+    var xNow = A * Math.cos(w * tNow);
+    var aNow = -A * w * w * Math.cos(w * tNow);
+    var ndX = xToPx(xNow);
+    var ndY = aToPy(aNow);
+    _avsxDotPositions.push({ x: ndX, y: ndY, plotL: plotL, plotW: plotW });
+    actx.fillStyle = '#34d399'; actx.shadowColor = '#34d399'; actx.shadowBlur = 15;
+    actx.beginPath(); actx.arc(ndX, ndY, 7, 0, Math.PI * 2); actx.fill();
+    actx.shadowBlur = 0;
+    actx.fillStyle = '#fff';
+    actx.beginPath(); actx.arc(ndX, ndY, 3, 0, Math.PI * 2); actx.fill();
+  }
+
+  /* ============================================================== *
+   * ENERGY vs x POPUP -- KE, EPE and Total against displacement.   *
+   * Same centred-origin x-axis as the a-vs-x popup (-A..+A), but    *
+   * energy is >= 0 so the horizontal axis sits at the bottom        *
+   * (energy = 0) like the energy-vs-time popup. KE = E - 1/2 k x^2, *
+   * EPE = 1/2 k x^2, Total = E (constant). Scrubber/play-driven     *
+   * dots, no dragging. mJ throughout. Matches the suite style.      *
+   * ============================================================== */
+  function drawEnergyX() {
+    if (!shm_showEnergyX) return;
+    var actx = energyXCtx, cv = energyXCanvas;
+
+    // HiDPI sizing (suite standard pattern).
+    var rect = cv.getBoundingClientRect();
+    var cssW = Math.max(1, Math.round(rect.width));
+    var cssH = Math.max(1, Math.round(rect.height));
+    var dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(cssW * dpr) || cv.height !== Math.round(cssH * dpr)) {
+      cv.width = Math.round(cssW * dpr);
+      cv.height = Math.round(cssH * dpr);
+    }
+    actx.setTransform(1, 0, 0, 1, 0, 0);
+    actx.scale(dpr, dpr);
+    actx.fillStyle = '#000';
+    actx.fillRect(0, 0, cssW, cssH);
+
+    // Physics (mJ), matching the energy-vs-time popup exactly.
+    var w = omega();
+    var A = Math.abs(shm_x0);                  // amplitude, cm
+    if (A < 1e-9) A = 1;                        // defensive
+    var A_m = shm_x0 / 100;                     // m
+    var EtotalmJ = 0.5 * shm_k * A_m * A_m * 1000;   // mJ
+    function epeAt(xc) { var xm = xc / 100; return 0.5 * shm_k * xm * xm * 1000; }   // mJ
+    function keAt(xc)  { return EtotalmJ - epeAt(xc); }                              // mJ
+    var COL_KE  = '#34d399';     // green
+    var COL_EPE = '#f472b6';     // pink
+    var COL_TOT = '#ffce54';     // amber (the conserved total)
+
+    // Layout: centred-origin x (so x=0 is mid-width) with a small top strip for
+    // the legend; energy axis is 0 at the bottom up to just above the total.
+    var marginL = 70, marginR = 70, marginT = 40, marginB = 36;
+    var plotL = marginL, plotR = cssW - marginR;
+    var plotT = marginT, plotB = cssH - marginB;
+    var plotW = plotR - plotL, plotH = plotB - plotT;
+    var cx = (plotL + plotR) / 2;              // x = 0 in pixels
+    var ePeak = EtotalmJ * 1.12;               // headroom above Total
+    if (ePeak < 1e-9) ePeak = 1;
+    function xToPx(xv) { return cx + (xv / A) * (plotW / 2) * 0.9; }
+    function eToPy(ev) {
+      var frac = ev / ePeak; if (frac < 0) frac = 0; if (frac > 1) frac = 1;
+      return plotB - frac * plotH;             // 0 -> bottom, ePeak -> top
+    }
+
+    // Nice tick steps.
+    function niceStep(range, targetDivs) {
+      var raw = range / targetDivs;
+      if (raw <= 0 || !isFinite(raw)) return 1;
+      var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+      var n = raw / mag;
+      if (n < 1.5) return mag;
+      if (n < 3.5) return 2 * mag;
+      if (n < 7.5) return 5 * mag;
+      return 10 * mag;
+    }
+    var xStep = niceStep(A, 4);
+    var eStep = niceStep(EtotalmJ, 5);
+    var eMaxLab = Math.ceil(EtotalmJ / eStep) * eStep;
+
+    // Faint gridlines (vertical at x steps, horizontal at energy steps).
+    actx.strokeStyle = 'rgba(255,255,255,0.07)'; actx.lineWidth = 1;
+    actx.beginPath();
+    for (var xv = Math.ceil(-A / xStep) * xStep; xv <= A + 1e-9; xv += xStep) {
+      var gx = xToPx(xv); actx.moveTo(gx, plotT); actx.lineTo(gx, plotB);
+    }
+    for (var ev = 0; ev <= eMaxLab + 1e-9; ev += eStep) {
+      var gy = eToPy(ev); if (gy < plotT - 1 || gy > plotB + 1) continue;
+      actx.moveTo(plotL, gy); actx.lineTo(plotR, gy);
+    }
+    actx.stroke();
+
+    // Axes: x-axis at the bottom (energy = 0); y-axis vertical through x = 0.
+    actx.strokeStyle = 'rgba(255,255,255,0.45)'; actx.lineWidth = 2;
+    actx.beginPath();
+    actx.moveTo(plotL - 8, plotB); actx.lineTo(plotR + 8, plotB);   // energy = 0
+    actx.moveTo(cx, plotT - 8);    actx.lineTo(cx, plotB + 8);      // x = 0
+    actx.stroke();
+
+    // Arrowheads (x to the right, energy up).
+    actx.fillStyle = 'rgba(255,255,255,0.6)';
+    actx.beginPath();
+    actx.moveTo(plotR + 8, plotB); actx.lineTo(plotR, plotB - 4); actx.lineTo(plotR, plotB + 4);
+    actx.closePath(); actx.fill();
+    actx.beginPath();
+    actx.moveTo(cx, plotT - 8); actx.lineTo(cx - 4, plotT); actx.lineTo(cx + 4, plotT);
+    actx.closePath(); actx.fill();
+
+    // x-axis tick marks + labels along the bottom.
+    actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.textAlign = 'center'; actx.textBaseline = 'top';
+    for (var xv2 = Math.ceil(-A / xStep) * xStep; xv2 <= A + 1e-9; xv2 += xStep) {
+      if (Math.abs(xv2) < 1e-6) continue;
+      var tx = xToPx(xv2);
+      actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(tx, plotB - 3); actx.lineTo(tx, plotB + 3); actx.stroke();
+      var lab = (xv2 > 0 ? '' : '\u2212') + Math.abs(xv2).toFixed(xStep < 1 ? 1 : 0);
+      actx.fillStyle = 'rgba(255,255,255,0.9)';
+      actx.fillText(lab, tx, plotB + 6);
+    }
+    // x-axis label past the right arrowhead.
+    actx.textAlign = 'left'; actx.textBaseline = 'middle';
+    actx.font = 'italic bold 12px "Cambria Math","Times New Roman",serif';
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.fillText('x (cm)', plotR + 12, plotB);
+
+    // Energy (y) tick marks + labels along the vertical axis at x = 0.
+    actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'right'; actx.textBaseline = 'middle';
+    var eDec = (eStep < 1) ? 1 : 0;
+    for (var ev2 = eStep; ev2 <= eMaxLab + 1e-9; ev2 += eStep) {
+      var ty = eToPy(ev2); if (ty < plotT - 1 || ty > plotB + 1) continue;
+      actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(cx - 3, ty); actx.lineTo(cx + 3, ty); actx.stroke();
+      actx.fillStyle = 'rgba(255,255,255,0.9)';
+      actx.fillText(ev2.toFixed(eDec), cx - 6, ty);
+    }
+    // y-axis label rotated, just left of the tick numbers, centred up the axis.
+    actx.save();
+    actx.textAlign = 'center'; actx.textBaseline = 'middle';
+    actx.font = 'italic bold 13px "Cambria Math","Times New Roman",serif';
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.translate(cx - 34, (plotT + plotB) / 2);
+    actx.rotate(-Math.PI / 2);
+    actx.fillText('Energy (mJ)', 0, 0);
+    actx.restore();
+
+    // Origin label "0".
+    actx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillStyle = 'rgba(255,255,255,0.7)';
+    actx.textAlign = 'right'; actx.textBaseline = 'top';
+    actx.fillText('0', cx - 4, plotB + 4);
+
+    // Curves. Total first (flat), then EPE (upward parabola), then KE (downward
+    // parabola). Same line/glow style as the energy-vs-time popup.
+    function drawCurve(fn, color, glow) {
+      actx.strokeStyle = color; actx.lineWidth = 2;
+      actx.shadowColor = color; actx.shadowBlur = glow;
+      actx.beginPath();
+      var steps = Math.max(80, Math.round(plotW));
+      for (var s = 0; s <= steps; s++) {
+        var xc = -A + (s / steps) * (2 * A);
+        var px = xToPx(xc), py = eToPy(fn(xc));
+        if (s === 0) actx.moveTo(px, py); else actx.lineTo(px, py);
+      }
+      actx.stroke(); actx.shadowBlur = 0;
+    }
+    drawCurve(function () { return EtotalmJ; }, COL_TOT, 2);
+    drawCurve(epeAt, COL_EPE, 4);
+    drawCurve(keAt,  COL_KE, 4);
+
+    // Legend across the top (energy-popup style). Full word "Total".
+    actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textBaseline = 'middle';
+    var legend = [
+      { color: COL_KE,  name: 'KE'    },
+      { color: COL_EPE, name: 'EPE'   },
+      { color: COL_TOT, name: 'Total' }
+    ];
+    var legY = marginT / 2 + 2, legSpacing = 86;
+    var legTotalW = (legend.length - 1) * legSpacing + 60;
+    var legStartX = (plotL + plotR) / 2 - legTotalW / 2;
+    for (var li = 0; li < legend.length; li++) {
+      var lx = legStartX + li * legSpacing;
+      actx.fillStyle = legend[li].color;
+      actx.fillRect(lx, legY - 2, 18, 4);
+      actx.fillStyle = 'rgba(255,255,255,0.95)';
+      actx.textAlign = 'left';
+      actx.fillText(legend[li].name, lx + 24, legY);
+    }
+
+    // Now-dots at the current displacement (scrubber/play driven, no drag).
+    var tNow = displayTime();
+    var xNow = shm_x0 * Math.cos(w * tNow);
+    function drawDot(fn, color) {
+      var dX = xToPx(xNow), dY = eToPy(fn(xNow));
+      actx.fillStyle = color; actx.shadowColor = color; actx.shadowBlur = 15;
+      actx.beginPath(); actx.arc(dX, dY, 7, 0, Math.PI * 2); actx.fill();
+      actx.shadowBlur = 0;
+      actx.fillStyle = '#fff';
+      actx.beginPath(); actx.arc(dX, dY, 3, 0, Math.PI * 2); actx.fill();
+    }
+    drawDot(function () { return EtotalmJ; }, COL_TOT);
+    drawDot(epeAt, COL_EPE);
+    drawDot(keAt,  COL_KE);
+  }
+
+  /* ============================================================== *
+   * GRAPHS WINDOW (Tab 1) -- one popup, preset buttons swap which   *
+   * graph is shown. Renders the EXISTING graph functions into this  *
+   * window's own canvas by temporarily retargeting the canvas/ctx/  *
+   * dot-buffer module vars, calling the real draw fn, then          *
+   * restoring. Synchronous, so the retarget is invisible to the      *
+   * standalone popups. No existing draw code is modified.           *
+   * Full functionality preserved: analysis tangents + dot scrub,    *
+   * energy dot scrub, a-vs-x / energy-vs-x scrubber dots.           *
+   * ============================================================== */
+  var shm_graphsPreset = 'analysis';   // 'analysis' | 'energy' | 'avsx' | 'energyx'
+
+  // This window's own dot buffer (populated by whichever draw fn runs).
+  var _graphsDotPositions = [];
+
+  // Render the active preset into the graphs canvas by retargeting.
+  function drawGraphsWindow() {
+    if (!shm_showGraphs) return;
+
+    // Save originals.
+    var _aC = analysisCanvas, _aX = analysisCtx, _aShow = shm_showAnalysis, _aDots = _analysisDotPositions;
+    var _eC = energyCanvas,   _eX = energyCtx,   _eShow = shm_showEnergy;
+    var _vC = avsxCanvas,     _vX = avsxCtx,     _vShow = shm_showAvsX;
+    var _xC = energyXCanvas,  _xX = energyXCtx,  _xShow = shm_showEnergyX;
+
+    try {
+      if (shm_graphsPreset === 'analysis') {
+        analysisCanvas = graphsCanvas; analysisCtx = graphsCtx; shm_showAnalysis = true;
+        drawAnalysis();
+        _graphsDotPositions = _analysisDotPositions;   // analysis populated this
+      } else if (shm_graphsPreset === 'energy') {
+        energyCanvas = graphsCanvas; energyCtx = graphsCtx; shm_showEnergy = true;
+        drawEnergy();
+        _graphsDotPositions = _energyDotPositions;
+      } else if (shm_graphsPreset === 'avsx') {
+        avsxCanvas = graphsCanvas; avsxCtx = graphsCtx; shm_showAvsX = true;
+        drawAvsX();
+        _graphsDotPositions = [];                      // a-vs-x: scrubber only
+      } else {
+        energyXCanvas = graphsCanvas; energyXCtx = graphsCtx; shm_showEnergyX = true;
+        drawEnergyX();
+        _graphsDotPositions = [];                      // energy-vs-x: scrubber only
+      }
+    } finally {
+      // Restore originals no matter what.
+      analysisCanvas = _aC; analysisCtx = _aX; shm_showAnalysis = _aShow; _analysisDotPositions = _aDots;
+      energyCanvas = _eC;   energyCtx = _eX;   shm_showEnergy = _eShow;
+      avsxCanvas = _vC;     avsxCtx = _vX;     shm_showAvsX = _vShow;
+      energyXCanvas = _xC;  energyXCtx = _xX;  shm_showEnergyX = _xShow;
+    }
+  }
+
+  // Show/hide the tangent controls: only meaningful for the analysis preset.
+  function syncGraphsControls() {
+    var ctrls = document.getElementById('shmGraphsControls');
+    var show = (shm_graphsPreset === 'analysis');
+    ctrls.style.display = show ? 'flex' : 'none';
+  }
+
+  // Dot-scrubbing on the graphs canvas. Reuses the SAME generic helper as the
+  // standalone popups, with a getter that returns this window's dot buffer
+  // (empty for the scrubber-only presets, so no drag there -- matching the
+  // standalone a-vs-x / energy-vs-x behaviour).
+  attachDotScrub(document.getElementById('shmGraphsCanvas'), function () { return _graphsDotPositions; });
+
+  // ---- Graphs window open/close + preset switching. ----
+  function setGraphsOpen(open) {
+    shm_showGraphs = open;
+    graphsChk.checked = open;
+    if (open) {
+      graphsWindow.classList.add('open');
+      raiseWindow(graphsWindow);
+      syncGraphsControls();
+      requestAnimationFrame(drawGraphsWindow);
+    } else {
+      graphsWindow.classList.remove('open');
+    }
+    syncMutex();
+  }
+  function setGraphsPreset(preset) {
+    shm_graphsPreset = preset;
+    var btns = graphsTypeSelector.getElementsByClassName('graphs-type-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-gtype') === preset);
+    }
+    syncGraphsControls();
+    if (shm_showGraphs) drawGraphsWindow();
+  }
+  graphsChk.addEventListener('change', function (e) { setGraphsOpen(e.target.checked); });
+  graphsClose.addEventListener('click', function () { setGraphsOpen(false); });
+  graphsPlayBtn.addEventListener('click', function () { playBtn.click(); });
+  graphsTypeSelector.addEventListener('click', function (e) {
+    var t = e.target;
+    while (t && t !== graphsTypeSelector && !t.getAttribute('data-gtype')) t = t.parentNode;
+    if (t && t.getAttribute('data-gtype')) setGraphsPreset(t.getAttribute('data-gtype'));
+  });
+
+  // Graphs-window tangent toggles drive the SAME shm_tangentX/V state used by
+  // the standalone analysis popup (so behaviour is identical). We mirror the
+  // standalone checkboxes' logic.
+  gTangXChk.addEventListener('change', function (e) {
+    shm_tangentX = e.target.checked;
+    if (shm_tangentX) { shm_tangentV = false; gTangVChk.checked = false; if (tangVChk) tangVChk.checked = false; }
+    if (tangXChk) tangXChk.checked = e.target.checked;
+    if (!shm_running) drawFrame();
+  });
+  gTangVChk.addEventListener('change', function (e) {
+    shm_tangentV = e.target.checked;
+    if (shm_tangentV) { shm_tangentX = false; gTangXChk.checked = false; if (tangXChk) tangXChk.checked = false; }
+    if (tangVChk) tangVChk.checked = e.target.checked;
+    if (!shm_running) drawFrame();
+  });
+
+  graphsWindow.addEventListener('mousedown', function () { raiseWindow(graphsWindow); });
+  graphsWindow.addEventListener('touchstart', function () { raiseWindow(graphsWindow); }, { passive: true });
+  // The Graphs window has a higher minimum size than the base popup (its
+  // preset-button + tangent rows need room above the canvas). The shared
+  // resize handler clamps to a smaller floor, which can leave the inline
+  // height below the CSS min-height and mis-size the flex canvas. This wrapper
+  // raises the inline width/height back to the window's own minimums before
+  // redrawing, so the canvas always sizes correctly. Scoped to this window.
+  var GRAPHS_MIN_W = 460, GRAPHS_MIN_H = 400;
+  function onGraphsResize() {
+    var hPx = parseFloat(graphsWindow.style.height) || graphsWindow.offsetHeight;
+    var wPx = parseFloat(graphsWindow.style.width) || graphsWindow.offsetWidth;
+    if (hPx < GRAPHS_MIN_H) graphsWindow.style.height = GRAPHS_MIN_H + 'px';
+    if (wPx < GRAPHS_MIN_W) graphsWindow.style.width = GRAPHS_MIN_W + 'px';
+    drawGraphsWindow();
+  }
+  attachPopupDragResize(graphsWindow, graphsHeader, graphsResizeGrip, onGraphsResize);
+
+  function drawFrame() {
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    drawGraphGrid();
+    drawAxis();
+
+    // Phase-explorer mode: a dedicated view. Only the graph + the draggable
+    // cosine are shown -- no spring, phasor, vectors, projections or the usual
+    // labels, since the activity is purely about the phase of the wave.
+    if (shm_showExplorer) {
+      drawWave();
+      if (shm_showAnalysis) drawAnalysis();
+      if (shm_showEnergy) drawEnergy();
+      if (shm_showAvsX) drawAvsX();
+      if (shm_showEnergyX) drawEnergyX();
+      if (shm_showGraphs) drawGraphsWindow();
+      return;
+    }
+
+    // Phasor (whole assembly: circle, crosshairs, arrow, tip, arcs, labels).
+    // Hidden when the "Show phasor" toggle is off, leaving the mass + wave for
+    // the data-logger / sketching exercises.
+    var phasorTip = null;
+    if (shm_showPhasor) {
+      phasorTip = drawPhasor();
+      drawPhasorHeadline();
+    }
+    var massCentreY = drawSpring(disp(displayTime()));
+    drawMassVectors(massCentreY);
+    drawDisplacementVector(massCentreY);
+
+    // In clock-start mode the data logger only plots once it has fired; until
+    // then the graph is just the empty axis while the mass oscillates. In
+    // normal mode the wave always draws.
+    var waveNow = null;
+    if (!shm_clockMode) {
+      waveNow = drawWave();
+    } else if (shm_fired) {
+      waveNow = drawTriggeredWave();
+    }
+
+    drawProjections(massCentreY, phasorTip, waveNow);
+    if (shm_clockMode) drawTriggerPointer(massCentreY);
+    drawLabels();
+
+    // Keep the analysis popup in sync (if open).
+    if (shm_showAnalysis) drawAnalysis();
+    if (shm_showEnergy) drawEnergy();
+    if (shm_showAvsX) drawAvsX();
+    if (shm_showEnergyX) drawEnergyX();
+    if (shm_showGraphs) drawGraphsWindow();
+  }
+
+  // Pointer layout: a horizontal line living in the empty space LEFT of the
+  // spring column, so its arrows never sit under the mass. The line spans
+  // trigLineX1..trigLineX2; arrows sit on its right-centre, clear of the knob
+  // and clock label on the far left.
+  var trigLineX1 = 18;                 // left end (knob + label here)
+  var trigLineX2 = springX - 26;       // right end, just short of the mass block
+  function trigArrowsX() { return (trigLineX1 + trigLineX2) / 2 + 8; }
+
+  // Geometry of the two direction arrows (used by both drawing and hit-test),
+  // returned only when the pointer is strictly between the extremes.
+  function triggerArrowBoxes() {
+    var amp = Math.abs(shm_x0);
+    if (amp < 0.05) return null;                 // amplitude ~0: nothing to do
+    if (Math.abs(shm_triggerCm) >= amp - 0.05) return null;  // at an extreme: no direction
+    var py = yForDisp(equilibriumY, shm_triggerCm);
+    var ax = trigArrowsX(), s = 8;
+    return {
+      up:   { cx: ax - 12, cy: py, s: s },
+      down: { cx: ax + 12, cy: py, s: s }
+    };
+  }
+
+  // Horizontal trigger pointer, in the empty space left of the spring. A clock
+  // glyph + "t=0" sits above the left end; the grab knob anchors the left end;
+  // direction arrows sit on the right-centre (clear of the mass). Range +/-|x0|.
+  function drawTriggerPointer(massCentreY) {
+    var py = yForDisp(equilibriumY, shm_triggerCm);
+    var x1 = trigLineX1, x2 = trigLineX2;
+
+    // The main horizontal line. While the user is actively dragging the
+    // pointer, extend it all the way to the graph's y-axis so they can read
+    // the height precisely against the displacement gridlines.
+    var x2Draw = shm_clockDragging ? waveStartX : x2;
+    ctx.strokeStyle = 'rgba(255,206,84,0.9)'; ctx.lineWidth = 2; ctx.setLineDash([5, 3]);
+    ctx.beginPath(); ctx.moveTo(x1, py); ctx.lineTo(x2Draw, py); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // grab knob (filled dot with a soft ring) on the left end
+    ctx.fillStyle = 'rgba(255,206,84,0.2)';
+    ctx.beginPath(); ctx.arc(x1, py, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,206,84,1)';
+    ctx.beginPath(); ctx.arc(x1, py, 5, 0, Math.PI * 2); ctx.fill();
+
+    // clock glyph + "t=0" label above the left end
+    drawClockGlyph(x1 + 6, py - 16, 6);
+    ctx.fillStyle = 'rgba(255,206,84,0.95)';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('t = 0', x1 + 15, py - 16);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    // direction arrows (only between the extremes)
+    var boxes = triggerArrowBoxes();
+    if (boxes) {
+      drawDirArrow(boxes.up, +1, shm_triggerDir === 1, shm_hoverArrow === 1);
+      drawDirArrow(boxes.down, -1, shm_triggerDir === -1, shm_hoverArrow === -1);
+    }
+  }
+
+  // A small clock face: circle, two hands, centred at (cx,cy) with radius r.
+  function drawClockGlyph(cx, cy, r) {
+    ctx.strokeStyle = 'rgba(255,206,84,0.95)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - r + 2);          // minute hand (up)
+    ctx.moveTo(cx, cy); ctx.lineTo(cx + r - 3, cy);          // hour hand (right)
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+
+  // One direction arrow. dir = +1 (up) or -1 (down).
+  //   selected => bright, filled chip behind it.
+  //   unselected => clearly visible (not faint).
+  //   hovered => glow + slight thickening (Wave-app highlight style).
+  function drawDirArrow(b, dir, selected, hovered) {
+    var col = selected ? 'rgba(255,206,84,1)' : 'rgba(255,206,84,0.65)';
+    // chip behind the selected arrow, or a lighter hover chip
+    if (selected) {
+      ctx.fillStyle = 'rgba(255,206,84,0.2)';
+      ctx.beginPath(); ctx.arc(b.cx, b.cy, b.s + 4, 0, Math.PI * 2); ctx.fill();
+    } else if (hovered) {
+      ctx.fillStyle = 'rgba(255,206,84,0.12)';
+      ctx.beginPath(); ctx.arc(b.cx, b.cy, b.s + 4, 0, Math.PI * 2); ctx.fill();
+    }
+    if (hovered) { col = 'rgba(255,206,84,1)'; ctx.shadowColor = 'rgba(255,206,84,0.9)'; ctx.shadowBlur = 8; }
+    ctx.strokeStyle = col; ctx.lineWidth = (hovered || selected) ? 3 : 2.5; ctx.lineCap = 'round';
+    var tipY = (dir === 1) ? b.cy - b.s : b.cy + b.s;
+    var baseY = (dir === 1) ? b.cy + b.s : b.cy - b.s;
+    ctx.beginPath();
+    ctx.moveTo(b.cx, baseY); ctx.lineTo(b.cx, tipY);          // shaft
+    ctx.moveTo(b.cx - 4, tipY + (dir === 1 ? 4 : -4)); ctx.lineTo(b.cx, tipY);   // head left
+    ctx.lineTo(b.cx + 4, tipY + (dir === 1 ? 4 : -4));        // head right
+    ctx.stroke();
+    ctx.lineCap = 'butt'; ctx.shadowBlur = 0;
+  }
+
+  /* ---- Animation loop (real-time dt; only runs while tab active). ----
+     Normal mode: shm_t loops at 20 s and the wave plots shm_t directly.
+     Clock mode: the mass free-runs (shm_t advances) and the graph stays blank
+     until the mass passes the trigger height in the chosen direction; at that
+     instant the logger fires (shm_tFire = shm_t) and the trace plots time since
+     trigger (tau = shm_t - shm_tFire) until tau fills the 20 s window. */
+  function velSign(t) {
+    // d(t) = x0 cos(wt); d'(t) = -x0 w sin(wt). Screen "up" = +displacement.
+    return -shm_x0 * omega() * Math.sin(omega() * t);   // >0 moving up
+  }
+
+  // Exact crossing time for the trigger condition within [prevT, curT]. We
+  // already know (from checkTrigger) that the condition was met somewhere in
+  // this interval; this just refines curT (a frame time, off by up to one dt)
+  // to the analytic value so the captured epsilon = omega*tFire is precise.
+  function exactTfire(prevT, curT) {
+    var w = omega(), amp = Math.abs(shm_x0);
+    if (amp < 1e-9) return curT;
+    var h = shm_triggerCm;
+    if (h > amp) h = amp; if (h < -amp) h = -amp;
+    var atExtreme = (Math.abs(h) >= amp - 1e-6);
+    if (atExtreme) {
+      // Extreme: cos(wt) = +/-1. Solutions wt = n*pi. The detection fires when
+      // the mass has *just reached* the extreme (curD within 0.02 of +/-amp),
+      // so the exact turning point n*pi/w may be slightly BEFORE prevT or
+      // AFTER curT (depending on whether the threshold trips on approach or at
+      // the peak itself). We widen the search by one half-period so we catch
+      // the actual turning point and snap to it.
+      var sign = (h > 0) ? 1 : -1;
+      var halfPeriod = Math.PI / w;
+      var windowLo = prevT - halfPeriod;
+      var windowHi = curT + halfPeriod;
+      var nLo = Math.floor(windowLo * w / Math.PI);
+      var nHi = Math.ceil(windowHi * w / Math.PI);
+      var best = curT, bestErr = Infinity;
+      for (var n = nLo; n <= nHi; n++) {
+        var t = n * Math.PI / w;
+        if (t < 0) continue;                // physical times only
+        if (t < windowLo || t > windowHi) continue;
+        // candidate must put x at the right extreme (within rounding)
+        var xCand = shm_x0 * Math.cos(w * t);
+        if ((sign > 0 && Math.abs(xCand - amp) < 0.1) ||
+            (sign < 0 && Math.abs(xCand + amp) < 0.1)) {
+          var err = Math.abs(t - curT);
+          if (err < bestErr) { bestErr = err; best = t; }
+        }
+      }
+      return best;
+    }
+    // Between extremes: cos(wt) = h/x0. Solutions wt = +/-acos(c) + 2*pi*n.
+    var c = h / shm_x0; if (c > 1) c = 1; if (c < -1) c = -1;
+    var base = Math.acos(c);                // in [0, pi]
+    // Candidate phases in [0, 2pi): base and 2pi-base; extend by adding 2pi*n
+    // covering the interval [prevT, curT].
+    var phaseLo = prevT * w, phaseHi = curT * w;
+    var bestT = curT, bestE = Infinity;
+    var nMin = Math.floor(phaseLo / (2 * Math.PI)) - 1;
+    var nMax = Math.ceil(phaseHi / (2 * Math.PI)) + 1;
+    for (var nn = nMin; nn <= nMax; nn++) {
+      var cands = [base + 2 * Math.PI * nn, (2 * Math.PI - base) + 2 * Math.PI * nn];
+      for (var ci = 0; ci < cands.length; ci++) {
+        var wtCand = cands[ci];
+        if (wtCand < 0) continue;
+        var tCand = wtCand / w;
+        if (tCand < prevT - 1e-9 || tCand > curT + 1e-9) continue;
+        // velocity sign check at the candidate: v = -x0*w*sin(wt). +up means v>0.
+        var v = -shm_x0 * w * Math.sin(wtCand);
+        var up = v > 0;
+        var dirOk = (shm_triggerDir === 1 && up) || (shm_triggerDir === -1 && !up);
+        if (!dirOk) continue;
+        var err = Math.abs(tCand - curT);
+        if (err < bestE) { bestE = err; bestT = tCand; }
+      }
+    }
+    return bestT;
+  }
+
+  function fire(prevT, curT) {
+    shm_fired = true;
+    shm_tFire = exactTfire(prevT, curT);
+  }
+
+  function checkTrigger(prevT, curT) {
+    if (shm_fired) return;
+    var amp = Math.abs(shm_x0);
+    if (amp < 0.05) return;
+    var prevD = disp(prevT), curD = disp(curT);
+    var trg = shm_triggerCm;
+    var atExtreme = (Math.abs(trg) >= amp - 0.05);
+
+    if (atExtreme) {
+      // Fire when the mass reaches that turning point.
+      if (trg > 0 && curD >= amp - 0.02 && prevD < curD) { fire(prevT, curT); }
+      if (trg < 0 && curD <= -amp + 0.02 && prevD > curD) { fire(prevT, curT); }
+      if (!shm_fired && Math.abs(curD - trg) < 0.15 && Math.abs(velSign(curT)) < Math.abs(velSign(prevT))) {
+        fire(prevT, curT);
+      }
+      return;
+    }
+
+    // Between extremes: detect a crossing of the trigger height with the chosen
+    // velocity direction. A crossing happened if prevD and curD straddle trg.
+    var crossed = (prevD - trg) * (curD - trg) <= 0 && prevD !== curD;
+    if (crossed) {
+      var movingUp = (curD - prevD) > 0;           // displacement increasing => up
+      if ((shm_triggerDir === 1 && movingUp) || (shm_triggerDir === -1 && !movingUp)) {
+        fire(prevT, curT);
+      }
+    }
+  }
+
+  function loop() {
+    shm_raf = requestAnimationFrame(loop);
+    var now = performance.now();
+    if (shm_running) {
+      var dt = (now - shm_lastFrame) / 1000;
+      if (dt > 0.1) dt = 0.1;          // clamp after stalls/tab hidden
+      var prevT = shm_t;
+      shm_t += dt;
+
+      if (shm_clockMode) {
+        var wasFireds = shm_fired;
+        checkTrigger(prevT, shm_t);
+        if (shm_fired && !wasFireds) syncDispEnabled();  // enable scrubber on fire
+        // Once fired the trace stays put and the now-dot loops across it
+        // (handled in drawTriggeredWave via tau mod window), matching the
+        // looping feel of normal mode. The mass keeps oscillating throughout.
+        syncTimeSlider();                // thumb tracks tau once fired
+      } else {
+        if (shm_t >= timeWindow()) shm_t -= timeWindow();   // loop the fixed window
+        syncTimeSlider();                // thumb tracks the animation
+      }
+    }
+    shm_lastFrame = now;
+    drawFrame();
+  }
+
+  /* ---- Tab lifecycle: register hooks so the router controls us ---- */
+  tabHooks.shm.onEnter = function () {
+    updateReadout();
+    shm_lastFrame = performance.now();
+    if (!shm_raf) loop();
+  };
+  tabHooks.shm.onLeave = function () {
+    shm_running = false;
+    playBtn.innerHTML = '&#9654; Play';
+    playBtn.classList.remove('playing');
+    syncPopupRunState();
+    if (shm_raf) { cancelAnimationFrame(shm_raf); shm_raf = null; }
+  };
+
+  // First paint (tab is active by default on load).
+  updateReadout();
+  syncDispEnabled();
+  syncAngEnabled();
+  syncMutex();
+  syncPopupRunState();
+  drawFrame();
+})();
+
+
+/* ============================================================= *
+ * TAB 2 LOGIC  (namespace: damp)                                 *
+ * ============================================================= */
+
+
+/* ============================================================= *
+ * TAB 3 LOGIC  (namespace: res)                                  *
+ * ============================================================= */
+
+
+// Initial entry into the default tab.
+if (tabHooks[currentTab] && tabHooks[currentTab].onEnter) {
+  tabHooks[currentTab].onEnter();
+}
+</script>
+</body>
+</html>
