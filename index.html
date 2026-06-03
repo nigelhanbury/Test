@@ -175,6 +175,22 @@ input[type=range]:disabled { opacity:0.4; }
 }
 .ang-children .checkbox-row label { font-size:0.85em; }
 
+/* Always-visible general displacement equation, between graph and controls. */
+.shm-eqn-banner {
+  font-family: "Cambria Math", "STIX Two Math", Cambria, "Times New Roman", serif;
+  font-style: italic; font-size: 1.4em; color: #e8f5ee;
+  text-align: center; letter-spacing: 0.5px;
+  margin: 4px auto 10px; padding: 6px 22px;
+  border: 1px solid rgba(52,211,153,0.3); border-radius: 999px;
+  background: rgba(52,211,153,0.08);
+}
+.shm-eqn-label {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-style: normal; font-size: 0.62em; font-weight: 600;
+  color: rgba(200,200,224,0.7); letter-spacing: 0.3px;
+  margin-right: 8px; vertical-align: middle;
+}
+
 /* Grouped checkbox sections: each group is a labelled column; the bar lays the
    groups out in a centred row that wraps. A faint divider + heading keeps the
    controls organised rather than one long list. */
@@ -425,6 +441,10 @@ input[type=range]:disabled { opacity:0.4; }
       <button class="tab-help-btn" onclick="showHelpModal('shm')" title="Help">?</button>
     </div>
   </div>
+
+  <!-- General form of the displacement equation, always shown between the
+       graph and the slider controls as a constant reference. -->
+  <div class="shm-eqn-banner"><span class="shm-eqn-label">General form of displacement equation:</span> x = A cos(&omega;t + &epsilon;)</div>
 
   <div class="controls">
     <div class="control-group">
@@ -800,7 +820,7 @@ function showHelpModal(topic) {
       '<p><span class="key">3.</span> Ask students to predict the shape (cos, sin, \u2212cos, \u2212sin\u2026).</p>' +
       '<p><span class="key">4.</span> Press <span class="key">Play</span> to confirm the captured waveform.</p>' +
       '<h3>Then</h3>' +
-      '<p>Use the <span class="key">Phase explorer</span> to work out the value of \u03b5 that produces the captured shape.</p>' +
+      '<p>Use either the <span class="key">phasor</span> or the <span class="key">Phase explorer</span> to work out the value of \u03b5 that produces the captured shape.</p>' +
       '<p>The data logger and Phase explorer are mutually exclusive \u2014 turning one on disables the other.</p>';
   } else if (topic === 'explorer') {
     c.innerHTML =
@@ -812,28 +832,20 @@ function showHelpModal(topic) {
       '<p>The faint <span class="key">amber dashed curve</span> is the un-shifted reference cos(\u03c9t), so the shift is always visible.</p>' +
       '<p>The readout shows the shift, the resulting <span class="key">\u03b5</span>, and \u2014 at the key angles \u2014 the recognised form (cos, \u00b1sin, \u2212cos).</p>' +
       '<h3>Sign convention</h3>' +
-      '<p>x = A cos(\u03c9t + \u03b5). Dragging <span class="key">right</span> shifts the curve later in time, so \u03b5 <span class="key">decreases</span> (e.g. right by \u03c0/2 gives \u03b5 = \u2212\u03c0/2 = sin). \u03b5 is unbounded and not wrapped, so students can see that values differing by 2\u03c0 describe the same wave.</p>' +
-      '<h3>Tip</h3>' +
-      '<p>If the phasor was visible before entering, its arrow tracks \u03b5 as a cross-check (WJEC: v = \u2212A\u03c9 sin(\u03c9t + \u03b5)).</p>';
+      '<p>x = A cos(\u03c9t + \u03b5). Dragging <span class="key">right</span> shifts the curve later in time, so \u03b5 <span class="key">decreases</span> (e.g. right by \u03c0/2 gives \u03b5 = \u2212\u03c0/2 = sin). \u03b5 is unbounded and not wrapped, so students can see that values differing by 2\u03c0 describe the same wave.</p>';
   } else {
     c.innerHTML =
       '<h2>Simple Harmonic Motion \u2014 Help</h2>' +
       '<h3>What you see</h3>' +
-      '<p>A mass on a spring, the rotating <span class="key">phasor</span> whose vertical projection gives the displacement, and the <span class="key">displacement\u2013time graph</span>. All three move from one clock, so they always agree.</p>' +
-      '<h3>Controls</h3>' +
-      '<p><span class="key">Spring constant k</span> and <span class="key">Mass m</span> \u2014 set \u03c9 = \u221a(k/m); period T = 2\u03c0\u221a(m/k).</p>' +
-      '<p><span class="key">Amplitude A</span> \u2014 the maximum displacement.</p>' +
-      '<p><span class="key">Time</span> \u2014 scrub through the motion by hand; <span class="key">Play / Reset</span> animate or restore the opening setup.</p>' +
-      '<p><span class="key">Drag the mass or phasor</span> (when paused at t = 0) to set the start.</p>' +
-      '<h3>Display</h3>' +
-      '<p><span class="key">Show phasor / projection lines / period</span> \u2014 reveal the rotating arrow, the link lines, and a one-period marker on the graph.</p>' +
+      '<p>A mass on a spring, the rotating <span class="key">phasor</span> whose vertical projection gives the displacement, and the <span class="key">displacement\u2013time graph</span>.</p>' +
+      '<h3>Setting the start</h3>' +
+      '<p><span class="key">Drag the mass</span> (when paused at t = 0) to set the starting displacement.</p>' +
+      '<p>The <span class="key">Time</span> scrubber gently snaps to x = 0 near a zero crossing, making it easy to line the graph, phasor and mass up at equilibrium.</p>' +
       '<h3>Vectors</h3>' +
-      '<p><span class="key">Displacement, velocity, acceleration, force</span> \u2014 draw the chosen vectors on the mass, each labelled. Velocity, acceleration and force are scaled to their own peaks (different units), as in a textbook diagram; displacement is shown at true scale.</p>' +
-      '<h3>Angular values</h3>' +
-      '<p>Show \u03c9t, \u03b5 and \u03c9t + \u03b5 on the phasor, and the equation x = A cos(\u03c9t + \u03b5).</p>' +
+      '<p>Displacement, velocity, acceleration and force can each be shown as a labelled vector next to the mass, as a visual aid.</p>' +
       '<h3>Analysis</h3>' +
       '<p><span class="key">Graphs</span> \u2014 one window with presets: x, v, a vs t; energy vs t; a vs x; energy vs x.</p>' +
-      '<p><span class="key">Data logger</span> and <span class="key">Phase explorer</span> \u2014 see their own help (the ? beside each).</p>' +
+      '<p><span class="key">Data logger</span> and <span class="key">Phase explorer</span> have their own help (the ? beside each).</p>' +
       '<h3>Touch</h3>' +
       '<p>Drag with a finger or Apple Pencil exactly as with a mouse.</p>';
   }
@@ -1240,6 +1252,31 @@ window.closeHelpModal = closeHelpModal;
     } else {
       shm_t = v;
     }
+
+    // Subtle snap to x = 0 when the scrubber lands the mass near equilibrium,
+    // so it's easy to line the graph/phasor/mass up at a zero crossing. Only on
+    // the scrubber (not Play). x = A cos(omega t) crosses zero where the phase
+    // is pi/2 + n*pi; if the current displacement is within a small band of 0,
+    // nudge shm_t to the nearest exact crossing and reflect it on the slider.
+    var w = omega();
+    if (w > 1e-9 && Math.abs(shm_x0) > 1e-9) {
+      var SNAP_CM = 0.35;                                  // displacement band
+      if (Math.abs(disp(shm_t)) < SNAP_CM) {
+        var phase = w * shm_t;                             // explorer is off here
+        // nearest phase of form pi/2 + n*pi
+        var n = Math.round((phase - Math.PI / 2) / Math.PI);
+        var snapPhase = Math.PI / 2 + n * Math.PI;
+        var snapT = snapPhase / w;
+        // Keep within the slider's range; only snap if it stays valid.
+        var snapV = (shm_clockMode && shm_fired) ? snapT - shm_tFire : snapT;
+        if (snapV >= parseFloat(timeSlider.min) && snapV <= parseFloat(timeSlider.max)) {
+          shm_t = snapT;
+          v = snapV;
+          timeSlider.value = snapV;
+        }
+      }
+    }
+
     timeVal.textContent = v.toFixed(2) + ' s';
     syncDispEnabled();
     drawFrame();
