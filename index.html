@@ -450,16 +450,16 @@ input[type=range]:disabled { opacity:0.4; }
     <div class="control-group">
       <label for="shmK">Spring constant (k)</label>
       <div class="slider-row">
-        <input id="shmK" type="range" min="1" max="10" step="0.1" value="4">
-        <span class="value-display" id="shmKv">4.0 N/m</span>
+        <input id="shmK" type="range" min="0.5" max="6" step="0.1" value="1.5">
+        <span class="value-display" id="shmKv">1.5 N/m</span>
       </div>
     </div>
 
     <div class="control-group">
       <label for="shmM">Mass (m)</label>
       <div class="slider-row">
-        <input id="shmM" type="range" min="0.5" max="2" step="0.1" value="1.0">
-        <span class="value-display" id="shmMv">1.0 kg</span>
+        <input id="shmM" type="range" min="0.5" max="5" step="0.1" value="4.0">
+        <span class="value-display" id="shmMv">4.0 kg</span>
       </div>
     </div>
 
@@ -878,8 +878,8 @@ window.closeHelpModal = closeHelpModal;
   var W = canvas.width, H = canvas.height;
 
   /* ---- State (Tab-1 only) ---- */
-  var shm_k = 4.0;        // N/m
-  var shm_m = 1.0;        // kg
+  var shm_k = 1.5;        // N/m
+  var shm_m = 4.0;        // kg
   var shm_x0 = 5.0;       // cm (amplitude A, always > 0; the mass releases from +A)
   var shm_t = 0;          // seconds (simulation time)
   var shm_running = false;
@@ -1689,7 +1689,7 @@ window.closeHelpModal = closeHelpModal;
     playBtn.classList.remove('playing');
 
     // Parameters back to defaults
-    shm_k = 4; shm_m = 1; shm_x0 = 5;
+    shm_k = 1.5; shm_m = 4; shm_x0 = 5;
     kSlider.value = shm_k; kVal.textContent = shm_k.toFixed(1) + ' N/m';
     mSlider.value = shm_m; mVal.textContent = shm_m.toFixed(1) + ' kg';
     aSlider.value = shm_x0; aVal.textContent = shm_x0.toFixed(1) + ' cm';
