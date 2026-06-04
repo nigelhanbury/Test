@@ -529,10 +529,6 @@ input[type=range]:disabled { opacity:0.4; }
         <input type="checkbox" id="shmPeriodChk">
         <label for="shmPeriodChk">Show period</label>
       </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="shmProbesChk">
-        <label for="shmProbesChk">Show probes</label>
-      </div>
     </div>
 
     <div class="chk-group">
@@ -1163,8 +1159,6 @@ function showHelpModal(topic) {
       '<h3>Touch</h3>' +
       '<p>Drag the mass, probes and windows with a finger or Apple Pencil exactly as with a mouse.</p>';
   } else {
-    c.innerHTML =
-      '<h2>Simple Harmonic Motion \u2014 Help</h2>' +
       '<h3>What you see</h3>' +
       '<p>A mass on a spring, the rotating <span class="key">phasor</span> whose vertical projection gives the displacement, and the <span class="key">displacement\u2013time graph</span>.</p>' +
       '<h3>Setting the start</h3>' +
@@ -1172,8 +1166,6 @@ function showHelpModal(topic) {
       '<p>The <span class="key">Time</span> scrubber gently snaps to x = 0 near a zero crossing, making it easy to line the graph, phasor and mass up at equilibrium.</p>' +
       '<h3>Vectors</h3>' +
       '<p>Displacement, velocity, acceleration and force can each be shown as a labelled vector next to the mass, as a visual aid.</p>' +
-      '<h3>Probes</h3>' +
-      '<p><span class="key">Show probes</span> adds two draggable markers (drag when paused) that read off the time and displacement at any point. The <span class="key">\u0394t</span> and <span class="key">\u0394x</span> readout shows the difference between them \u2014 useful for questions like \u201cwhen is the displacement next at this value?\u201d: line up one probe, then drag the other until \u0394x = 0 and read \u0394t.</p>' +
       '<h3>Analysis</h3>' +
       '<p><span class="key">Graphs</span> \u2014 one window with presets: x, v, a vs t; energy vs t; a vs x; energy vs x.</p>' +
       '<p><span class="key">Data logger</span> and <span class="key">Phase explorer</span> have their own help (the ? beside each).</p>' +
@@ -1403,7 +1395,6 @@ window.closeHelpModal = closeHelpModal;
   var resetBtn = document.getElementById('shmResetBtn');
   var projChk = document.getElementById('shmProjChk');
   var periodChk = document.getElementById('shmPeriodChk');
-  var probesChk = document.getElementById('shmProbesChk');
   var velChk = document.getElementById('shmVelChk');
   var accelChk = document.getElementById('shmAccelChk');
   var forceChk = document.getElementById('shmForceChk');
@@ -1618,9 +1609,6 @@ window.closeHelpModal = closeHelpModal;
   });
   periodChk.addEventListener('change', function (e) {
     shm_showPeriod = e.target.checked; if (!shm_running) drawFrame();
-  });
-  probesChk.addEventListener('change', function (e) {
-    shm_showProbes = e.target.checked; if (!shm_running) drawFrame();
   });
   velChk.addEventListener('change', function (e) {
     shm_showVel = e.target.checked; if (!shm_running) drawFrame();
@@ -2047,8 +2035,6 @@ window.closeHelpModal = closeHelpModal;
     shm_showPhasor = true;  phasorChk.checked = true;
     shm_showProj = true;    projChk.checked = true;
     shm_showPeriod = false; periodChk.checked = false;
-    shm_showProbes = false; probesChk.checked = false;
-    shm_probeT1 = 4; shm_probeT2 = 10; shm_probeDrag = 0;
     shm_showVel = false;    velChk.checked = false;
     shm_showAccel = false;  accelChk.checked = false;
     shm_showForce = false;  forceChk.checked = false;
@@ -2089,14 +2075,6 @@ window.closeHelpModal = closeHelpModal;
      + touch support via the shared canvasPoint() coordinate-scaling helper. */
   var shm_dragging = false;
   var shm_explorerDragging = false;
-  // Measuring probes (ported from the Damped tab). Two draggable vertical lines
-  // on the displacement-time graph; each reads (t, x). Useful for "when is the
-  // displacement next at this value?" questions (tides etc). Draggable when
-  // paused. A Delta readout between them gives Delta t and Delta x directly.
-  var shm_showProbes = false;
-  var shm_probeT1 = 4;            // s
-  var shm_probeT2 = 10;          // s
-  var shm_probeDrag = 0;         // 0 none, 1 or 2 = which probe is being dragged
   var shm_explorerDragX0 = 0;     // pointer x at drag start
   var shm_explorerEps0 = 0;       // eps at drag start
 
@@ -2200,19 +2178,6 @@ window.closeHelpModal = closeHelpModal;
   }
 
   function dragStart(cx, cy) {
-    // Measuring probes: grab a probe handle to drag it (paused only). Takes
-    // priority over other drags and returns early, so when no probe is hit this
-    // block is inert and the existing mass/trigger/explorer logic is unchanged.
-    if (shm_showProbes && !shm_running) {
-      var hp = probeHitHandle(cx, cy);
-      if (hp !== 0) {
-        shm_probeDrag = hp;
-        var tnew = probePxToT(cx);
-        if (hp === 1) shm_probeT1 = tnew; else shm_probeT2 = tnew;
-        drawFrame();
-        return true;
-      }
-    }
     // Phase-explorer mode: grab the displacement curve to drag its phase. Only
     // when paused (the curve must be static to drag it). Independent of the
     // mass/trigger drags below.
@@ -2248,18 +2213,12 @@ window.closeHelpModal = closeHelpModal;
             cy >= b.cy - b.s - 3 && cy <= b.cy + b.s + 3);
   }
   function dragMove(cx, cy) {
-    if (shm_probeDrag !== 0) {
-      var tnew = probePxToT(cx);
-      if (shm_probeDrag === 1) shm_probeT1 = tnew; else shm_probeT2 = tnew;
-      drawFrame();
-      return;
-    }
     if (shm_explorerDragging) { setEpsFromX(cx); return; }
     if (shm_clockDragging) { setTriggerFromY(cy); return; }
     if (!shm_dragging) return;
     setX0FromY(cy);
   }
-  function dragEnd() { shm_dragging = false; shm_clockDragging = false; shm_explorerDragging = false; shm_probeDrag = 0; }
+  function dragEnd() { shm_dragging = false; shm_clockDragging = false; shm_explorerDragging = false; }
 
   // Mouse
   canvas.addEventListener('mousedown', function (e) {
@@ -2267,7 +2226,7 @@ window.closeHelpModal = closeHelpModal;
     if (dragStart(p.x, p.y)) e.preventDefault();
   });
   document.addEventListener('mousemove', function (e) {
-    if (shm_dragging || shm_clockDragging || shm_explorerDragging || shm_probeDrag !== 0) {
+    if (shm_dragging || shm_clockDragging || shm_explorerDragging) {
       var p = canvasPoint(canvas, e.clientX, e.clientY);
       dragMove(p.x, p.y);
     }
@@ -2278,7 +2237,7 @@ window.closeHelpModal = closeHelpModal;
   // draggable); pointer cursor over a direction arrow; the hovered arrow is
   // highlighted (Wave-app style) by re-drawing when the hover state changes.
   canvas.addEventListener('mousemove', function (e) {
-    if (shm_dragging || shm_clockDragging || shm_explorerDragging || shm_probeDrag !== 0) { canvas.style.cursor = 'grabbing'; return; }
+    if (shm_dragging || shm_clockDragging || shm_explorerDragging) { canvas.style.cursor = 'grabbing'; return; }
     var p = canvasPoint(canvas, e.clientX, e.clientY);
 
     // Phase-explorer: show a grab cursor over the draggable curve.
@@ -2298,9 +2257,6 @@ window.closeHelpModal = closeHelpModal;
     if (newHover !== shm_hoverArrow) { shm_hoverArrow = newHover; drawFrame(); }
 
     if (newHover !== 0) { canvas.style.cursor = 'pointer'; return; }
-    if (shm_showProbes && !shm_running && probeHitHandle(p.x, p.y) !== 0) {
-      canvas.style.cursor = 'grab'; return;
-    }
     var canDrag = (!shm_running && shm_t === 0 && (overMass(p.x, p.y) || overTrigger(p.x, p.y)));
     canvas.style.cursor = canDrag ? 'grab' : 'default';
   });
@@ -2312,7 +2268,7 @@ window.closeHelpModal = closeHelpModal;
     if (dragStart(p.x, p.y)) e.preventDefault();
   }, { passive: false });
   canvas.addEventListener('touchmove', function (e) {
-    if (!shm_dragging && !shm_clockDragging && !shm_explorerDragging && shm_probeDrag === 0) return;
+    if (!shm_dragging && !shm_clockDragging && !shm_explorerDragging) return;
     var t = e.touches[0];
     var p = canvasPoint(canvas, t.clientX, t.clientY);
     dragMove(p.x, p.y);
@@ -4200,106 +4156,6 @@ window.closeHelpModal = closeHelpModal;
   }
   attachPopupDragResize(graphsWindow, graphsHeader, graphsResizeGrip, onGraphsResize);
 
-  /* ---- Measuring probes (ported from the Damped tab) ----
-     Two draggable vertical lines on the displacement-time graph; each reads
-     (t, x). A Delta readout shows Delta t and Delta x between them -- so the
-     "when is the displacement next at this value?" question is answered by
-     dragging probe 2 until Delta x = 0 and reading Delta t. View geometry uses
-     Tab 1's waveStartX..waveEndX over 0..TIME_AXIS. Draggable only when paused. */
-  function probeTtoPx(t) {
-    var ww = waveEndX - waveStartX;
-    return waveStartX + (t / timeWindow()) * ww;
-  }
-  function probePxToT(px) {
-    var ww = waveEndX - waveStartX;
-    var t = ((px - waveStartX) / ww) * timeWindow();
-    if (t < 0) t = 0; if (t > timeWindow()) t = timeWindow();
-    return t;
-  }
-  function probeHandleY() { return waveY + MAX_CM * cmToPx + 14; }
-  function probeHitHandle(px, py) {
-    var hy = probeHandleY();
-    var r = 16;
-    if (Math.abs(py - hy) > r) return 0;
-    var h1 = probeTtoPx(shm_probeT1), h2 = probeTtoPx(shm_probeT2);
-    var n1 = Math.abs(px - h1) <= r, n2 = Math.abs(px - h2) <= r;
-    if (n1 && n2) return (Math.abs(px - h1) <= Math.abs(px - h2)) ? 1 : 2;
-    if (n1) return 1;
-    if (n2) return 2;
-    return 0;
-  }
-  function drawShmProbes() {
-    var hy = probeHandleY();
-    var lineTopY = waveY - MAX_CM * cmToPx - 4;
-    var items = [
-      { t: shm_probeT1, col: '#facc15' },
-      { t: shm_probeT2, col: '#22d3ee' }
-    ];
-    var labelInfo = [];
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      var px = probeTtoPx(it.t);
-      var xcm = disp(it.t);
-      var dotY = yForDisp(waveY, xcm);
-
-      ctx.save();
-      ctx.globalAlpha = 0.9; ctx.lineWidth = 2;
-      ctx.setLineDash([6, 5]); ctx.strokeStyle = it.col;
-      ctx.beginPath(); ctx.moveTo(px, lineTopY); ctx.lineTo(px, hy); ctx.stroke();
-      ctx.restore();
-
-      ctx.save();
-      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-      ctx.beginPath(); ctx.arc(px, hy, 9, 0, 2 * Math.PI);
-      ctx.fillStyle = it.col; ctx.fill(); ctx.stroke();
-      ctx.restore();
-
-      ctx.save();
-      ctx.fillStyle = it.col; ctx.shadowColor = it.col; ctx.shadowBlur = 8;
-      ctx.beginPath(); ctx.arc(px, dotY, 6, 0, 2 * Math.PI); ctx.fill();
-      ctx.restore();
-
-      var label = '(' + it.t.toFixed(2) + ' s, ' + xcm.toFixed(2) + ' cm)';
-      ctx.save();
-      ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
-      var halfW = ctx.measureText(label).width / 2;
-      ctx.restore();
-      var lx = px;
-      if (lx - halfW < waveStartX + 2) lx = waveStartX + 2 + halfW;
-      if (lx + halfW > waveEndX) lx = waveEndX - halfW;
-      labelInfo.push({ text: label, lx: lx, halfW: halfW, col: it.col });
-    }
-
-    var ROW = 16;
-    var baseY = lineTopY - 4;
-    var rowOf = [0, 0];
-    if (labelInfo.length === 2) {
-      var gap = Math.abs(labelInfo[0].lx - labelInfo[1].lx);
-      var minGap = labelInfo[0].halfW + labelInfo[1].halfW + 6;
-      if (gap < minGap) rowOf[1] = 1;
-    }
-    ctx.save();
-    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
-    ctx.textBaseline = 'bottom'; ctx.textAlign = 'center';
-    for (var li = 0; li < labelInfo.length; li++) {
-      ctx.fillStyle = labelInfo[li].col;
-      ctx.fillText(labelInfo[li].text, labelInfo[li].lx, baseY - rowOf[li] * ROW);
-    }
-    ctx.restore();
-
-    // Delta readout between the probes: |Delta t| and Delta x. Drag probe 2 to
-    // match probe 1's height (Delta x = 0) and read Delta t -- the recurrence time.
-    var dt = Math.abs(shm_probeT2 - shm_probeT1);
-    var dx = disp(shm_probeT2) - disp(shm_probeT1);
-    ctx.save();
-    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.fillText('\u0394t = ' + dt.toFixed(2) + ' s    \u0394x = ' + dx.toFixed(2) + ' cm',
-                 waveStartX + 4, hy + 28);
-    ctx.restore();
-  }
-
   function drawFrame() {
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     drawGraphGrid();
@@ -4343,7 +4199,6 @@ window.closeHelpModal = closeHelpModal;
     drawProjections(massCentreY, phasorTip, waveNow);
     if (shm_clockMode) drawTriggerPointer(massCentreY);
     drawLabels();
-    if (shm_showProbes) drawShmProbes();
 
     // Keep the analysis popup in sync (if open).
     if (shm_showAnalysis) drawAnalysis();
