@@ -128,6 +128,8 @@ canvas {
   border:1px solid rgba(255,255,255,0.08);
   padding:4px 14px; border-radius:999px; min-width:64px; text-align:center;
 }
+#resScrubber { opacity: 0.45; transition: opacity 0.15s; }
+#resScrubber.active { opacity: 1; }
 input[type=range] {
   width:140px; height:6px; -webkit-appearance:none; appearance:none;
   background:rgba(255,255,255,0.18); border-radius:999px; outline:none;
@@ -291,7 +293,8 @@ input[type=range]:disabled { opacity:0.4; }
 .popout-title.no-upper { text-transform: none; letter-spacing: 0.5px; font-size: 0.82em; }
 .popout-body { flex: 1; min-height: 0; padding: 6px; position: relative; }
 #shmAnalysisCanvas, #shmEnergyCanvas, #shmAvsXCanvas, #shmEnergyXCanvas, #shmGraphsCanvas,
-#dampAnalysisCanvas, #dampEnergyCanvas, #dampAvsXCanvas, #dampEnergyXCanvas, #dampGraphsCanvas { width: 100%; height: 100%; display: block; }
+#dampAnalysisCanvas, #dampEnergyCanvas, #dampAvsXCanvas, #dampEnergyXCanvas, #dampGraphsCanvas,
+#resPhaseCanvas, #resGraphsCanvas { width: 100%; height: 100%; display: block; }
 .graphs-window .popout-body { overflow: hidden; }
 
 /* Energy popup default position: offset to the right and slightly lower than
@@ -310,6 +313,15 @@ input[type=range]:disabled { opacity:0.4; }
   left: calc(50% + 340px);
   width: 380px;
   height: 380px;
+}
+
+/* Phase popout (Tab 3): square-ish (two phasors on a circle). Opens near the
+   centre, a touch below the tab bar. */
+.res-phase-window {
+  top: 150px;
+  left: calc(50% - 210px);
+  width: 420px;
+  height: 440px;
 }
 
 /* Popup header tools (Pause/Play + close). */
@@ -451,6 +463,7 @@ input[type=range]:disabled { opacity:0.4; }
   <button class="main-tab"        id="tabBtn-damp" onclick="switchTab('damp')">Damped SHM</button>
   <button class="tab-help-btn" onclick="showHelpModal('damped')" title="Help">?</button>
   <button class="main-tab"        id="tabBtn-res"  onclick="switchTab('res')">Forced &amp; Resonance</button>
+  <button class="tab-help-btn" onclick="showHelpModal('resonance')" title="Help">?</button>
 </div>
 
 <!-- ============================================================= -->
@@ -914,7 +927,99 @@ input[type=range]:disabled { opacity:0.4; }
 <!-- Self-contained. Do not let other tabs touch anything here.   -->
 <!-- ============================================================= -->
 <section class="tab-content" id="resTab">
-  <div class="placeholder">Tab&nbsp;3 &mdash; Forced Oscillations &amp; Resonance (scaffold)</div>
+
+  <div class="canvas-wrap">
+    <canvas id="resCanvas" width="1100" height="370"></canvas>
+
+    <div class="canvas-ui">
+      <button id="resPlayBtn"  class="cbtn play">&#9654; Play</button>
+      <button id="resResetBtn" class="cbtn reset">&#8635; Reset</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label for="resK">Spring constant (k)</label>
+      <div class="slider-row">
+        <input id="resK" type="range" min="1.3" max="6" step="0.1" value="1.3">
+        <span class="value-display" id="resKv">1.3 N/m</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label for="resM">Mass (m)</label>
+      <div class="slider-row">
+        <input id="resM" type="range" min="0.5" max="5" step="0.1" value="0.5">
+        <span class="value-display" id="resMv">0.5 kg</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label for="resF">Driving frequency (f)</label>
+      <div class="slider-row">
+        <input id="resF" type="range" min="0" max="1.0" step="0.005" value="0.255">
+        <span class="value-display" id="resFv">0.255 Hz</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label for="resGamma">Damping rate (<span style="text-transform:none">&gamma;</span>)</label>
+      <div class="slider-row">
+        <input id="resGamma" type="range" min="0.21" max="2.0" step="0.01" value="0.21">
+        <span class="value-display" id="resGammav">0.21 s&#8315;&#185;</span>
+      </div>
+    </div>
+
+    <div class="control-group" id="resScrubber">
+      <label for="resTimeSlider">Time</label>
+      <div class="slider-row">
+        <input id="resTimeSlider" type="range" min="0" max="1000" step="1" value="0">
+        <span class="value-display" id="resTimeVal">0.00 s</span>
+      </div>
+    </div>
+
+    <!-- Derived f0 readout kept in DOM (display:none) so updateReadout can write
+         into it without special-casing, matching Tabs 1 & 2. -->
+    <div class="control-group" id="resDerived" style="display:none">
+      <label>Derived (from k and m)</label>
+      <div class="shm-derived-readout" id="resReadout"></div>
+    </div>
+  </div>
+
+  <div class="checkbox-bar">
+    <div class="chk-group">
+      <div class="chk-group-title">Display</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="resF0Chk" checked>
+        <label for="resF0Chk">Show natural frequency line</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="resCurveChk" checked>
+        <label for="resCurveChk">Show resonance curve</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="resProbesChk">
+        <label for="resProbesChk">Show probe</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="resDispChk">
+        <label for="resDispChk">Show displacement</label>
+      </div>
+    </div>
+
+    <div class="chk-group">
+      <div class="chk-group-title">Analysis</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="resPhaseChk">
+        <label for="resPhaseChk">Show phase difference</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="resGraphsChk">
+        <label for="resGraphsChk">Graphs</label>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 </div><!-- /container -->
@@ -1030,6 +1135,47 @@ input[type=range]:disabled { opacity:0.4; }
     <canvas id="shmGraphsCanvas"></canvas>
   </div>
   <div class="popout-resize-grip" id="shmGraphsResizeGrip" title="Drag to resize"></div>
+</div>
+
+<!-- ============================================================= -->
+<!-- TAB 3 popout: driver-vs-oscillator phasors (res namespace).   -->
+<!-- Two phasors rotating at the driving frequency with a fixed     -->
+<!-- lag between them; shows what leads what.                       -->
+<!-- ============================================================= -->
+<div id="resPhaseWindow" class="popout-window res-phase-window">
+  <div class="popout-header" id="resPhaseHeader">
+    <span class="popout-title no-upper">Phase &mdash; driver vs oscillator</span>
+    <div class="popout-header-tools">
+      <button class="popout-playbtn" id="resPhasePlayBtn" title="Play / Pause">&#9654;</button>
+      <button class="work-close" id="resPhaseClose" title="Close">&times;</button>
+    </div>
+  </div>
+  <div class="popout-body">
+    <canvas id="resPhaseCanvas"></canvas>
+  </div>
+  <div class="popout-resize-grip" id="resPhaseResizeGrip" title="Drag to resize"></div>
+</div>
+
+<!-- ============================================================= -->
+<!-- TAB 3 Graphs popout (res namespace): reference plots across     -->
+<!-- the full frequency range. Presets: amplitude vs f, phase vs f.  -->
+<!-- ============================================================= -->
+<div id="resGraphsWindow" class="popout-window graphs-window">
+  <div class="popout-header" id="resGraphsHeader">
+    <span class="popout-title no-upper">Graphs</span>
+    <div class="popout-header-tools">
+      <button class="work-close" id="resGraphsClose" title="Close">&times;</button>
+    </div>
+  </div>
+  <div class="graphs-type-selector" id="resGraphsTypeSelector">
+    <button class="graphs-type-btn active" data-gtype="amp"   id="resGtBtn_amp">amplitude vs <i>f</i></button>
+    <button class="graphs-type-btn"        data-gtype="phase" id="resGtBtn_phase">phase vs <i>f</i></button>
+    <button class="graphs-type-btn"        data-gtype="trace" id="resGtBtn_trace">force &amp; displacement vs <i>t</i></button>
+  </div>
+  <div class="popout-body">
+    <canvas id="resGraphsCanvas"></canvas>
+  </div>
+  <div class="popout-resize-grip" id="resGraphsResizeGrip" title="Drag to resize"></div>
 </div>
 
 <!-- Shared help modal (content swapped per topic). Operational guidance only,
@@ -1162,6 +1308,22 @@ function showHelpModal(topic) {
       '<p>The <span class="key">enlarge button</span> at the graph\u2019s top-right opens a big resizable copy \u2014 good for projecting.</p>' +
       '<h3>Touch</h3>' +
       '<p>Drag the mass, probes and windows with a finger or Apple Pencil exactly as with a mouse.</p>';
+  } else if (topic === 'resonance') {
+    c.innerHTML =
+      '<h2>Forced Oscillations &amp; Resonance \u2014 Help</h2>' +
+      '<h3>What you see</h3>' +
+      '<p>On the right, a mass on a spring being pushed back and forth by a <span class="key">driver</span> at a frequency you choose. On the left, the <span class="key">resonance curve</span> shows how the amplitude of the forced oscillation varies with driving frequency. The yellow dot on the curve marks the frequency you are currently driving at, and the mass on the right swings with exactly that amount.</p>' +
+      '<h3>The controls</h3>' +
+      '<p><span class="key">Spring constant</span> and <span class="key">mass</span> set the system\u2019s own <span class="key">natural frequency</span>. <span class="key">Driving frequency</span> is the frequency the driver is forcing the mass to oscillate at. <span class="key">Damping rate</span> sets how much energy is lost. The <span class="key">Time</span> scrubber lets you step through the motion by hand when paused; <span class="key">Play</span> animates it.</p>' +
+      '<h3>What to look for</h3>' +
+      '<p>See how the amplitude of the forced oscillation changes with driving frequency. At <span class="key">resonance</span>, the amplitude is maximum \u2014 this happens when the driving frequency equals the natural frequency of the system. Lower the damping and the peak grows taller and sharper; raise it and the peak flattens away.</p>' +
+      '<h3>Display options</h3>' +
+      '<p><span class="key">Natural frequency line</span> marks where resonance happens. <span class="key">Resonance curve</span> shows or hides the curve. <span class="key">Show displacement</span> draws the mass\u2019s current displacement from x = 0 as a labelled arrow in cm. <span class="key">Show probe</span> adds a draggable marker that reads off the frequency and the amplitude in cm anywhere on the curve. The curve does not change as it animates, so the probe can be dragged at any time.</p>' +
+      '<h3>Analysis</h3>' +
+      '<p><span class="key">Phase difference</span> opens a window with two turning arrows. The <span class="key">driving force</span> arrow leads; the <span class="key">displacement</span> arrow follows behind it. Well below resonance they point almost the same way (in phase); at resonance the displacement is a quarter turn behind; well above resonance it points the opposite way (antiphase). The window says in words how far the displacement lags the driving force.</p>' +
+      '<p><span class="key">Graphs</span> opens a larger window with three views you can switch between: <span class="key">amplitude</span> against driving frequency (the resonance curve, bigger for projecting), <span class="key">phase</span> against driving frequency (rising from nothing, through a quarter cycle at resonance, towards half a cycle), and <span class="key">force &amp; displacement against time</span> (the two waveforms together, showing the displacement lagging the driving force).</p>' +
+      '<h3>Touch</h3>' +
+      '<p>Drag the probe and the windows with a finger or Apple Pencil exactly as with a mouse.</p>';
   } else {
     c.innerHTML =
       '<h2>Simple Harmonic Motion \u2014 Help</h2>' +
@@ -8666,7 +8828,1330 @@ window.closeHelpModal = closeHelpModal;
 
 /* ============================================================= *
  * TAB 3 LOGIC  (namespace: res)                                  *
+ * Self-contained. Directly-driven oscillator + resonance curve.  *
+ * Step 2: state, slider wiring, readout, Play/Reset, lifecycle.  *
+ * Drawing is a stub here; the real render arrives in Step 3.     *
  * ============================================================= */
+
+(function () {
+  var canvas = document.getElementById('resCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+
+  /* ---- State (Tab-3 only) ---- */
+  var res_k = 1.3;          // N/m
+  var res_m = 0.5;          // kg
+  var res_f = 0.255;        // Hz (driving frequency)
+  var res_gamma = 0.21;     // damping rate gamma (s^-1)
+  var res_t = 0;            // seconds (simulation time)
+  var res_running = false;
+
+  // Display / analysis toggles (defaults: calm core).
+  var res_showF0 = true;       // natural-frequency marker line on the curve
+  var res_showCurve = true;    // the resonance curve itself
+  var res_showProbes = false;  // measuring probes on the resonance curve
+  var res_showDisp = false;    // displacement vector on the spring diagram
+  var res_probeF1 = 0.10;      // probe frequency (Hz)
+  var res_probeDrag = 0;       // 0 none, 1 or 2 = which probe is being dragged
+  var res_curvePxPerAmp = 1;   // last curve y-scale, set each draw for probe placement
+  var res_showPhase = false;   // driver-vs-oscillator phase view (added later)
+  var res_showGraphs = false;  // graphs popout (added later)
+
+  var res_raf = null;          // animation handle (so we can stop on leave)
+  var res_lastFrame = 0;       // performance.now() of previous frame, for dt
+
+  // Factory defaults, captured for a hard Reset.
+  var RES_DEFAULTS = { k: 1.3, m: 0.5, f: 0.255, gamma: 0.21 };
+
+  /* ---- Derived physics ----
+     Natural (undamped) angular frequency and frequency from k and m. */
+  function omega0() { return Math.sqrt(res_k / res_m); }        // rad/s
+  function f0()     { return omega0() / (2 * Math.PI); }        // Hz
+
+  /* ---- DOM refs ---- */
+  var kSlider     = document.getElementById('resK');
+  var mSlider     = document.getElementById('resM');
+  var fSlider     = document.getElementById('resF');
+  var gammaSlider = document.getElementById('resGamma');
+  var kVal     = document.getElementById('resKv');
+  var mVal     = document.getElementById('resMv');
+  var fVal     = document.getElementById('resFv');
+  var gammaVal = document.getElementById('resGammav');
+  var readout  = document.getElementById('resReadout');
+
+  var f0Chk     = document.getElementById('resF0Chk');
+  var curveChk  = document.getElementById('resCurveChk');
+  var probesChk = document.getElementById('resProbesChk');
+  var dispChk   = document.getElementById('resDispChk');
+  var phaseChk  = document.getElementById('resPhaseChk');
+  var graphsChk = document.getElementById('resGraphsChk');
+
+  var playBtn  = document.getElementById('resPlayBtn');
+  var resetBtn = document.getElementById('resResetBtn');
+
+  // Time scrubber
+  var scrubber     = document.getElementById('resScrubber');
+  var timeSlider   = document.getElementById('resTimeSlider');
+  var timeVal      = document.getElementById('resTimeVal');
+  var SCRUB_CYCLES = 2;        // scrub window spans this many drive periods
+
+  // Phase popout (driver vs oscillator phasors).
+  var phaseWindow     = document.getElementById('resPhaseWindow');
+  var phaseHeader     = document.getElementById('resPhaseHeader');
+  var phaseCanvas     = document.getElementById('resPhaseCanvas');
+  var phaseCtx        = phaseCanvas.getContext('2d');
+  var phasePlayBtn    = document.getElementById('resPhasePlayBtn');
+  var phaseClose      = document.getElementById('resPhaseClose');
+  var phaseResizeGrip = document.getElementById('resPhaseResizeGrip');
+  var _resWinZ = 950;
+
+  // Graphs popout (amplitude vs f, phase vs f) reference plots.
+  var graphsWindow      = document.getElementById('resGraphsWindow');
+  var graphsHeader      = document.getElementById('resGraphsHeader');
+  var graphsCanvas      = document.getElementById('resGraphsCanvas');
+  var graphsCtx         = graphsCanvas.getContext('2d');
+  var graphsClose       = document.getElementById('resGraphsClose');
+  var graphsResizeGrip  = document.getElementById('resGraphsResizeGrip');
+  var graphsTypeSelector = document.getElementById('resGraphsTypeSelector');
+  var res_graphsPreset  = 'amp';   // 'amp' | 'phase'
+
+  /* ---- Derived readout (kept in a display:none group, like Tabs 1 & 2) ---- */
+  function updateReadout() {
+    var w0 = omega0(), nf = f0();
+    readout.innerHTML =
+      '<span class="pill">&omega;&#8320; = &radic;(k/m) = ' + w0.toFixed(2) + ' rad/s</span>' +
+      '<span class="pill">f&#8320; = ' + nf.toFixed(3) + ' Hz</span>';
+  }
+
+  /* ---- Layout ----
+     Two panels side by side on the 1100x370 canvas. Left ~58% holds the
+     resonance curve; right ~42% will hold the driven oscillator (Step 4).
+     The curve's plot area sits inside the left panel with room for axis
+     titles and tick labels. ---- */
+  var SPLIT_X = Math.round(W * 0.58);     // boundary between left and right panels
+  var curve = {
+    x: 78,                                 // left edge of plot (room for y title + ticks)
+    y: 44,                                 // top of plot (room for the f0 label)
+    w: SPLIT_X - 78 - 28,                  // plot width
+    h: H - 44 - 52                         // plot height (room for x title + ticks)
+  };
+
+  /* ---- Driving force (real, fixed) ----
+     A fixed driving force amplitude in newtons. With a fixed absolute cm
+     scale this makes every displacement a real value, so the f = 0 intercept
+     of the resonance curve equals the static extension F0/k at EVERY k --
+     students can compute F0/k by hand and check it against the graph. ---- */
+  var RES_F0_N = 0.02;                     // driving force amplitude (N)
+
+  /* Frequency axis: 0..F_MAX Hz. */
+  var F_MAX = 1.0;                         // Hz (matches the f slider max)
+
+  /* Fixed displacement axis: the vertical cm scale is ABSOLUTE (does not
+     rescale with k, m or damping). This is what makes the peak height fall
+     with damping and the f=0 intercept equal F0/k. RES_AXIS_CM is the top of
+     the amplitude axis; curves larger than this clip at the top (honest: the
+     response really is very large there). */
+  var RES_AXIS_CM = 6;                     // cm at top of the amplitude axis
+
+  /* ---- Steady-state amplitude response of a directly-driven damped
+     oscillator, returned in CENTIMETRES (real physics).
+       A(omega) = F0 / ( m * sqrt( (w0^2 - omega^2)^2 + (2*gamma*omega)^2 ) )
+     in metres; x100 for cm. omega = 2*pi*f. ---- */
+  function ampAt(freqHz) {
+    var omega = 2 * Math.PI * freqHz;
+    var w0 = omega0();
+    var denomSq = (w0 * w0 - omega * omega);
+    denomSq = denomSq * denomSq + (2 * res_gamma * omega) * (2 * res_gamma * omega);
+    var denom = Math.sqrt(denomSq);
+    if (denom < 1e-9) denom = 1e-9;
+    return (RES_F0_N / (res_m * denom)) * 100;   // cm
+  }
+
+  /* Peak amplitude (cm) over the visible frequency range. Still used by the
+     phasor popout to normalise the displacement phasor to the current peak. */
+  function curvePeak() {
+    var peak = 0, i, N = 600, a;
+    for (i = 0; i <= N; i++) {
+      a = ampAt(F_MAX * i / N);
+      if (a > peak) peak = a;
+    }
+    return peak;
+  }
+
+  /* Map a frequency (Hz) to a plot x; map an amplitude (cm) to a plot y on the
+     fixed absolute scale (cm at top = RES_AXIS_CM). */
+  function freqToX(freqHz) { return curve.x + (freqHz / F_MAX) * curve.w; }
+  function curvePxPerCm() { return curve.h / RES_AXIS_CM; }
+  function ampToY(aCm) {
+    var y = curve.y + curve.h - aCm * curvePxPerCm();
+    if (y < curve.y) y = curve.y;                // clip at the top of the panel
+    return y;
+  }
+
+  /* Phase lag of the oscillator BEHIND the driver, 0..pi.
+       phi = atan2( 2*gamma*omega , w0^2 - omega^2 )
+     0 well below resonance, pi/2 at resonance, -> pi well above. */
+  function phaseLag(freqHz) {
+    var omega = 2 * Math.PI * freqHz;
+    var w0 = omega0();
+    return Math.atan2(2 * res_gamma * omega, w0 * w0 - omega * omega);
+  }
+
+  /* ---- Right panel: driven oscillator ----
+     A vertical spring-mass driven from a moving support at the top. The
+     support (driver) moves as cos(2*pi*f*t); the mass settles to the
+     steady-state response x(t) = A cos(2*pi*f*t - phi). The mass amplitude
+     A is ampAt(f) -- the SAME value the curve marker reads -- converted to
+     screen cm by a scale that keeps the largest visible response inside the
+     panel for any settings. ---- */
+  /* ---- Right panel: directly-driven horizontal oscillator ----
+     Fixed wall on the left, spring running right to a mass on a surface. The
+     mass oscillates horizontally about x = 0 as the steady-state response
+     x(t) = A cos(2*pi*f*t - phi). A prominent DRIVING-FORCE arrow acts on the
+     mass along the axis of motion, its tail pinned to the mass at all times
+     and its length/direction following F0 cos(2*pi*f*t) -- this is the actual
+     applied force (directly driven), NOT a moving support. ---- */
+  var osc = {
+    panelCx: SPLIT_X + (W - SPLIT_X) / 2,  // centre of the right panel
+    eqX: SPLIT_X + (W - SPLIT_X) / 2,      // mass equilibrium x (x = 0)
+    midY: 223,                             // spring/mass axis = surfaceY - massH/2
+    wallX: SPLIT_X + 34,                   // inside face of the fixed wall
+    massW: 50, massH: 50,
+    surfaceY: 248                          // top of the surface line (mass sits on it)
+  };
+  // Mass horizontal travel is scaled to the FIXED reference amplitude (the
+  // lightest-damping peak), so the resonant swing is genuinely smaller at
+  // heavier damping -- the same characteristic the curve shows.
+  // Fixed px-per-cm so the swing is a real, absolute amplitude (matches the
+  // curve's cm scale). Clamped so a very large response can't overrun the panel.
+  var OSC_PX_PER_CM = 11;                  // screen px per cm of mass displacement
+  function oscMassAmpPx() {
+    var px = ampAt(res_f) * OSC_PX_PER_CM;
+    var maxPx = 90;                        // clamp to keep the mass on-screen
+    if (px > maxPx) px = maxPx;
+    return px;
+  }
+  // Driving-force arrow: peak length in px (prominent). Direction/length track
+  // F0 cos(driver phase); sign flips as the force reverses.
+  var OSC_FORCE_MAX_PX = 60;
+
+  /* ---- Resonance-curve panel ---- */
+  function drawCurvePanel() {
+    var pad = 0;
+
+    // y-scale: FIXED absolute cm scale (RES_AXIS_CM at the top). Peak height
+    // falls with damping; the f=0 intercept equals F0/k. Tall curves clip.
+    var pxPerCm = curvePxPerCm();
+    res_curvePxPerAmp = pxPerCm;            // (now px per cm; used for probes)
+
+    // --- faint background grid (Wave-app density) ---
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    var gi;
+    for (gi = 1; gi <= 6; gi++) {                  // vertical lines each 0.25 Hz
+      var gx = curve.x + (gi / 6) * curve.w;
+      ctx.beginPath(); ctx.moveTo(gx, curve.y); ctx.lineTo(gx, curve.y + curve.h); ctx.stroke();
+    }
+    for (gi = 1; gi <= 4; gi++) {                  // 4 horizontal divisions
+      var gy = curve.y + (gi / 4) * curve.h;
+      ctx.beginPath(); ctx.moveTo(curve.x, gy); ctx.lineTo(curve.x + curve.w, gy); ctx.stroke();
+    }
+
+    // --- axes ---
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2;
+    // vertical (amplitude) axis
+    ctx.beginPath();
+    ctx.moveTo(curve.x, curve.y - 10);
+    ctx.lineTo(curve.x, curve.y + curve.h);
+    ctx.stroke();
+    // horizontal (frequency) axis
+    ctx.beginPath();
+    ctx.moveTo(curve.x, curve.y + curve.h);
+    ctx.lineTo(curve.x + curve.w + 12, curve.y + curve.h);
+    ctx.stroke();
+    // x-axis arrowhead
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    var ax = curve.x + curve.w + 12, ay = curve.y + curve.h;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay); ctx.lineTo(ax - 8, ay - 4); ctx.lineTo(ax - 8, ay + 4);
+    ctx.closePath(); ctx.fill();
+
+    // --- frequency ticks + labels every 0.25 Hz ---
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    var fv;
+    for (fv = 0.25; fv <= F_MAX + 1e-9; fv += 0.25) {
+      var tx = freqToX(fv);
+      ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(tx, curve.y + curve.h); ctx.lineTo(tx, curve.y + curve.h + 8); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.fillText(fv.toFixed(2), tx, curve.y + curve.h + 11);
+    }
+    // "0" at the origin
+    ctx.fillStyle = 'rgba(255,255,255,1)';
+    ctx.fillText('0', curve.x, curve.y + curve.h + 11);
+
+    // x-axis title (italic unit style, matching Tab 2's "time (s)")
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'italic 14px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.fillText('driving frequency, f (Hz)', curve.x + curve.w / 2, curve.y + curve.h + 30);
+
+    // --- vertical (amplitude) scale in cm, fixed absolute scale ---
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    var cmv;
+    for (cmv = 1; cmv <= RES_AXIS_CM; cmv++) {
+      var ty = curve.y + curve.h - cmv * pxPerCm;
+      if (ty < curve.y) break;
+      ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(curve.x - 8, ty); ctx.lineTo(curve.x, ty); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.fillText(cmv.toString(), curve.x - 12, ty);
+    }
+    // "0" at the origin tick
+    ctx.fillStyle = 'rgba(255,255,255,1)';
+    ctx.fillText('0', curve.x - 12, curve.y + curve.h);
+
+    // y-axis title (rotated), in cm
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.translate(curve.x - 46, curve.y + curve.h / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('amplitude, A (cm)', 0, 0);
+    ctx.restore();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    // --- natural-frequency line (gated by checkbox) ---
+    var nf = f0();
+    if (res_showF0 && nf <= F_MAX) {
+      var fx = freqToX(nf);
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = 'rgba(138,180,248,0.85)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(fx, curve.y + curve.h); ctx.lineTo(fx, curve.y); ctx.stroke();
+      ctx.setLineDash([]);
+      // label at the top
+      ctx.fillStyle = 'rgba(138,180,248,0.95)';
+      ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('f\u2080', fx, curve.y - 12);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    }
+
+    // --- the resonance curve (gated by checkbox) ---
+    if (res_showCurve) {
+      ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      var i, N = curve.w, started = false;
+      for (i = 0; i <= N; i++) {
+        var hz = F_MAX * i / N;
+        var px = curve.x + i;
+        var py = ampToY(ampAt(hz));
+        if (!started) { ctx.moveTo(px, py); started = true; } else { ctx.lineTo(px, py); }
+      }
+      ctx.stroke();
+
+      // --- current driving-frequency marker (dot on the curve) ---
+      var cx = freqToX(res_f);
+      var cy = ampToY(ampAt(res_f));
+      // dropline to the f-axis
+      ctx.setLineDash([4, 5]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx, curve.y + curve.h); ctx.lineTo(cx, cy); ctx.stroke();
+      ctx.setLineDash([]);
+      // the dot
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#facc15';
+      ctx.shadowColor = '#facc15'; ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.stroke();
+    }
+
+    if (res_showProbes) drawCurveProbes();
+  }
+
+  /* ---- Probes on the resonance curve ----
+     Two draggable vertical lines (yellow, cyan) reading off (f, amplitude)
+     where they cross the curve, plus a Delta-f readout. Draggable only when
+     paused. Handles sit on the frequency axis with generous touch halos. ---- */
+  function probeFtoX(f) { return freqToX(f); }
+  function probeXtoF(px) {
+    var f = ((px - curve.x) / curve.w) * F_MAX;
+    if (f < 0) f = 0; if (f > F_MAX) f = F_MAX;
+    return f;
+  }
+  function probeHandleY() { return curve.y + curve.h + 26; }   // just below the f-axis ticks
+  function probeHitHandle(px, py) {
+    var hy = probeHandleY();
+    var r = 16;                                  // generous for finger/Pencil
+    if (Math.abs(py - hy) > r) return 0;
+    var h1 = probeFtoX(res_probeF1);
+    return (Math.abs(px - h1) <= r) ? 1 : 0;
+  }
+
+  function drawCurveProbes() {
+    var hy = probeHandleY();
+    var px = probeFtoX(res_probeF1);
+    var amp = ampAt(res_probeF1);
+    var dotY = ampToY(amp);
+    var col = '#facc15';                       // yellow
+
+    // dashed vertical line from plot top to handle
+    ctx.save();
+    ctx.globalAlpha = 0.9; ctx.lineWidth = 2;
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = col;
+    ctx.beginPath(); ctx.moveTo(px, curve.y); ctx.lineTo(px, hy); ctx.stroke();
+    ctx.restore();
+
+    // bottom handle
+    ctx.save();
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.beginPath(); ctx.arc(px, hy, 9, 0, 2 * Math.PI);
+    ctx.fillStyle = col; ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // on-curve dot
+    ctx.save();
+    ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(px, dotY, 6, 0, 2 * Math.PI); ctx.fill();
+    ctx.restore();
+
+    // coordinate label: frequency and amplitude in cm (fixed absolute scale)
+    var label = '(' + res_probeF1.toFixed(3) + ' Hz, ' + amp.toFixed(2) + ' cm)';
+    ctx.save();
+    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    var halfW = ctx.measureText(label).width / 2;
+    var lx = px;
+    if (lx - halfW < curve.x + 2) lx = curve.x + 2 + halfW;
+    if (lx + halfW > curve.x + curve.w) lx = curve.x + curve.w - halfW;
+    ctx.fillStyle = col;
+    ctx.textBaseline = 'bottom'; ctx.textAlign = 'center';
+    ctx.fillText(label, lx, curve.y - 4);
+    ctx.restore();
+  }
+
+  /* ---- Coiled spring between two y positions (quadratic-curve coils,
+     matching the Tab-1/Tab-2 idiom) ---- */
+  function drawCoilSpring(cx, topY, botY, coils, sw) {
+    var len = botY - topY;
+    if (len < 4) len = 4;
+    var spacing = len / coils;
+    var grad = ctx.createLinearGradient(cx - sw / 2, 0, cx + sw / 2, 0);
+    grad.addColorStop(0, '#ff9999'); grad.addColorStop(0.5, '#ff6b6b'); grad.addColorStop(1, '#ff4444');
+    ctx.strokeStyle = grad; ctx.lineWidth = 3; ctx.beginPath();
+    ctx.moveTo(cx, topY);
+    var i;
+    for (i = 0; i < coils; i++) {
+      var cY = topY + i * spacing, nY = cY + spacing;
+      if (i % 2 === 0) ctx.quadraticCurveTo(cx - sw, cY + spacing / 2, cx - sw / 2, nY);
+      else             ctx.quadraticCurveTo(cx + sw, cY + spacing / 2, cx + sw / 2, nY);
+    }
+    ctx.lineTo(cx, topY + len); ctx.stroke();
+  }
+
+  /* ---- Horizontal coiled spring from (x1) to (x2) at height y ----
+     Exact transpose of Tab 2's drawSpring: same coil count, width and
+     gradient, coil-to-coil with no straight lead. ---- */
+  function drawCoilSpringH(x1, x2, y, coils, sw) {
+    var len = x2 - x1;
+    if (len < 4) len = 4;
+    var spacing = len / coils;
+    var grad = ctx.createLinearGradient(x1, y - sw / 2, x1, y + sw / 2);
+    grad.addColorStop(0, '#ff9999'); grad.addColorStop(0.5, '#ff6b6b'); grad.addColorStop(1, '#ff4444');
+    ctx.strokeStyle = grad; ctx.lineWidth = 3; ctx.beginPath();
+    ctx.moveTo(x1, y);
+    var i;
+    for (i = 0; i < coils; i++) {
+      var cX = x1 + i * spacing, nX = cX + spacing;
+      if (i % 2 === 0) ctx.quadraticCurveTo(cX + spacing / 2, y - sw, nX, y);
+      else             ctx.quadraticCurveTo(cX + spacing / 2, y + sw, nX, y);
+    }
+    ctx.lineTo(x2, y); ctx.stroke();
+  }
+
+  /* ---- Prominent horizontal arrow from (x0,y) of signed length L ---- */
+  function drawForceArrowH(x0, y, L, col) {
+    if (Math.abs(L) < 1.5) return;                  // force ~ 0: no arrow (correct)
+    var x1 = x0 + L;
+    var head = 12, halfThick = 2, spread = 6;
+    ctx.save();
+    ctx.strokeStyle = col; ctx.fillStyle = col;
+    ctx.lineCap = 'round';
+    // shaft (stop short so the head sits cleanly)
+    var shaftEnd = x1 - (L > 0 ? head : -head);
+    ctx.lineWidth = 2 * halfThick;
+    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(shaftEnd, y); ctx.stroke();
+    // arrowhead
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    ctx.lineTo(shaftEnd, y - spread);
+    ctx.lineTo(shaftEnd, y + spread);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  /* ---- Right panel: directly-driven horizontal oscillator ---- */
+  function drawOscillatorPanel() {
+    // panel divider (subtle)
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(SPLIT_X, 24); ctx.lineTo(SPLIT_X, H - 24); ctx.stroke();
+
+    // panel title
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('THE DRIVEN OSCILLATOR', SPLIT_X + 16, 22);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    var midY = osc.midY;
+    var rightEdge = W - 24;
+
+    // phases
+    var phase = 2 * Math.PI * res_f * res_t;        // driver phase
+    var phi = phaseLag(res_f);                       // mass lags driver by phi
+
+    // mass displacement from equilibrium (px): A cos(phase - phi)
+    var massAmpPx = oscMassAmpPx();
+    var massCx = osc.eqX + massAmpPx * Math.cos(phase - phi);
+
+    // --- fixed wall on the left (hatched) ---
+    var wallX = osc.wallX, wallTop = midY - 54, wallBot = osc.surfaceY;
+    ctx.strokeStyle = 'rgba(180,185,200,0.9)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(wallX, wallTop); ctx.lineTo(wallX, wallBot); ctx.stroke();
+    ctx.strokeStyle = 'rgba(150,155,170,0.7)'; ctx.lineWidth = 1.5;
+    var hy;
+    for (hy = wallTop + 4; hy <= wallBot; hy += 9) {
+      ctx.beginPath(); ctx.moveTo(wallX, hy); ctx.lineTo(wallX - 9, hy + 9); ctx.stroke();
+    }
+
+    // --- surface line ---
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(wallX, osc.surfaceY); ctx.lineTo(rightEdge, osc.surfaceY); ctx.stroke();
+
+    // --- equilibrium (x = 0) guide --- prominent dashed line, drawn only from
+    // the base of the mass (surface level) downward, not up through the mass.
+    ctx.strokeStyle = 'rgba(186,200,224,0.95)'; ctx.lineWidth = 2; ctx.setLineDash([7, 5]);
+    ctx.beginPath(); ctx.moveTo(osc.eqX, osc.surfaceY); ctx.lineTo(osc.eqX, osc.surfaceY + 46); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(203,213,225,0.95)';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('x = 0', osc.eqX + 6, osc.surfaceY + 4);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    // --- spring from wall to mass left face ---
+    var massLeft = massCx - osc.massW / 2;
+    drawCoilSpringH(wallX, massLeft, midY, 12, 25);
+
+    // --- mass block (sits on the surface) ---
+    var mTop = osc.surfaceY - osc.massH;
+    var mLeft = massCx - osc.massW / 2;
+    var mg = ctx.createLinearGradient(mLeft, mTop, mLeft, mTop + osc.massH);
+    mg.addColorStop(0, '#4a5568'); mg.addColorStop(0.5, '#2d3748'); mg.addColorStop(1, '#1a202c');
+    ctx.fillStyle = mg;
+    ctx.fillRect(mLeft, mTop, osc.massW, osc.massH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 1;
+    ctx.strokeRect(mLeft, mTop, osc.massW, osc.massH);
+    // marker dot at mass centre (on the spring axis)
+    ctx.fillStyle = '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(massCx, midY, 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+
+    // --- DRIVING FORCE vector on the mass ---
+    // Drawn on a line just above the spring axis so a left-pointing arrow never
+    // tangles with the coils. Tail pinned to the mass centre at all times;
+    // signed length tracks F0 cos(phase): points right on the +half-cycle,
+    // collapses to zero, then points left.
+    var forceY = midY - 40;
+    var forceL = OSC_FORCE_MAX_PX * Math.cos(phase);
+    // a short stub linking the arrow line down to the mass, so it reads as
+    // acting ON the mass
+    ctx.strokeStyle = 'rgba(96,165,250,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(massCx, midY - osc.massH / 2 - 2); ctx.lineTo(massCx, forceY); ctx.stroke();
+    ctx.setLineDash([]);
+    drawForceArrowH(massCx, forceY, forceL, '#60a5fa');
+    // label
+    ctx.fillStyle = '#93c5fd';
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('driving force, F\u2080 = ' + RES_F0_N.toFixed(2) + ' N', osc.eqX, forceY - 22);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    // --- DISPLACEMENT vector (optional) ---
+    // Tail fixed on the x = 0 dashed line, head tracking the mass's current
+    // horizontal position, drawn in a clear band below the surface so it does
+    // not collide with the spring, mass or force arrow.
+    if (res_showDisp) {
+      var dispY = osc.surfaceY + 30;
+      var dispL = massCx - osc.eqX;            // signed displacement in px
+      var dispCm = dispL / OSC_PX_PER_CM;      // px -> cm (fixed absolute scale)
+      // tie-down tick on the x = 0 line
+      ctx.strokeStyle = 'rgba(251,191,36,0.95)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(osc.eqX, dispY - 7); ctx.lineTo(osc.eqX, dispY + 7); ctx.stroke();
+      if (Math.abs(dispL) >= 1.5) {
+        drawForceArrowH(osc.eqX, dispY, dispL, '#fbbf24');
+      }
+      // value readout in a FIXED position, centred directly under the x = 0
+      // dashed line (does not move with the mass).
+      var valTxt = 'x = ' + dispCm.toFixed(1) + ' cm';
+      ctx.fillStyle = '#fcd34d';
+      ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(valTxt, osc.eqX, dispY + 14);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    }
+  }
+
+  /* ---- Frame ---- */
+  function drawFrame() {
+    ctx.clearRect(0, 0, W, H);
+    drawCurvePanel();
+    drawOscillatorPanel();
+    if (res_showPhase) drawPhase();
+    if (res_showGraphs) drawGraphsWindow();
+  }
+
+  /* ============================================================= *
+   * Phase popout: driver-vs-oscillator phasors                    *
+   * Two arrows rotating anticlockwise at the driving frequency,   *
+   * the oscillator trailing the driver by the lag phi. Shows what *
+   * leads what, with a plain-language readout.                    *
+   * ============================================================= */
+
+  function raiseWindow(win) { _resWinZ += 1; win.style.zIndex = _resWinZ; }
+
+  // Drag-by-header + resize-from-grip (mouse + touch). Own copy of the suite
+  // helper so Tab 3 is fully self-contained.
+  function attachPopupDragResize(win, header, grip, onResize) {
+    var st = { drag: false, rz: false, sx: 0, sy: 0, wl: 0, wt: 0, rw: 0, rh: 0 };
+    function startDrag(cx, cy) {
+      var r = win.getBoundingClientRect();
+      st.drag = true; st.sx = cx; st.sy = cy; st.wl = r.left; st.wt = r.top;
+    }
+    function moveDrag(cx, cy) {
+      if (!st.drag) return;
+      var nl = st.wl + (cx - st.sx), nt = st.wt + (cy - st.sy);
+      var minL = -(win.offsetWidth - 80), maxL = window.innerWidth - 80;
+      if (nl < minL) nl = minL; if (nl > maxL) nl = maxL;
+      if (nt < 0) nt = 0; if (nt > window.innerHeight - 36) nt = window.innerHeight - 36;
+      win.style.left = nl + 'px'; win.style.top = nt + 'px';
+    }
+    function startResize(cx, cy) {
+      var r = win.getBoundingClientRect();
+      st.rz = true; st.sx = cx; st.sy = cy; st.rw = r.width; st.rh = r.height;
+    }
+    function moveResize(cx, cy) {
+      if (!st.rz) return;
+      var nw = st.rw + (cx - st.sx), nh = st.rh + (cy - st.sy);
+      if (nw < 360) nw = 360; if (nw > window.innerWidth - 20) nw = window.innerWidth - 20;
+      if (nh < 220) nh = 220; if (nh > window.innerHeight - 20) nh = window.innerHeight - 20;
+      win.style.width = nw + 'px'; win.style.height = nh + 'px';
+      if (onResize) onResize();
+    }
+    function endAll() { st.drag = false; st.rz = false; }
+
+    header.addEventListener('mousedown', function (e) {
+      if (e.target.tagName === 'BUTTON') return;
+      startDrag(e.clientX, e.clientY); e.preventDefault();
+    });
+    grip.addEventListener('mousedown', function (e) {
+      startResize(e.clientX, e.clientY); e.preventDefault();
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (st.drag) moveDrag(e.clientX, e.clientY);
+      else if (st.rz) moveResize(e.clientX, e.clientY);
+    });
+    document.addEventListener('mouseup', endAll);
+
+    header.addEventListener('touchstart', function (e) {
+      if (e.target.tagName === 'BUTTON') return;
+      var t = e.touches[0]; startDrag(t.clientX, t.clientY); e.preventDefault();
+    }, { passive: false });
+    grip.addEventListener('touchstart', function (e) {
+      var t = e.touches[0]; startResize(t.clientX, t.clientY); e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', function (e) {
+      if (st.drag) { var t = e.touches[0]; moveDrag(t.clientX, t.clientY); if (e.cancelable) e.preventDefault(); }
+      else if (st.rz) { var t2 = e.touches[0]; moveResize(t2.clientX, t2.clientY); if (e.cancelable) e.preventDefault(); }
+    }, { passive: false });
+    document.addEventListener('touchend', endAll);
+    document.addEventListener('touchcancel', endAll);
+  }
+
+  // Open/close the phase popout, keeping the checkbox in sync.
+  function setPhaseOpen(open) {
+    res_showPhase = open;
+    phaseChk.checked = open;
+    if (open) {
+      phaseWindow.classList.add('open');
+      raiseWindow(phaseWindow);
+      requestAnimationFrame(drawPhase);
+    } else {
+      phaseWindow.classList.remove('open');
+    }
+  }
+
+  // Draw an arrowheaded phasor from (ox,oy) at radius R and screen angle ang
+  // (radians, measured anticlockwise from +x, i.e. standard maths sense).
+  function drawPhasor(actx, ox, oy, R, ang, col, lw) {
+    var tx = ox + R * Math.cos(ang);
+    var ty = oy - R * Math.sin(ang);    // screen y is down, so subtract
+    actx.strokeStyle = col; actx.lineWidth = lw;
+    actx.beginPath(); actx.moveTo(ox, oy); actx.lineTo(tx, ty); actx.stroke();
+    // arrowhead
+    var head = 11, spread = 0.42;
+    actx.fillStyle = col;
+    actx.beginPath();
+    actx.moveTo(tx, ty);
+    actx.lineTo(tx - head * Math.cos(ang - spread), ty + head * Math.sin(ang - spread));
+    actx.lineTo(tx - head * Math.cos(ang + spread), ty + head * Math.sin(ang + spread));
+    actx.closePath(); actx.fill();
+    return { x: tx, y: ty };
+  }
+
+  function drawPhase() {
+    if (!res_showPhase) return;
+    var actx = phaseCtx, cv = phaseCanvas;
+
+    var rect = cv.getBoundingClientRect();
+    var cssW = Math.max(1, Math.round(rect.width));
+    var cssH = Math.max(1, Math.round(rect.height));
+    var dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(cssW * dpr) || cv.height !== Math.round(cssH * dpr)) {
+      cv.width = Math.round(cssW * dpr);
+      cv.height = Math.round(cssH * dpr);
+    }
+    actx.setTransform(1, 0, 0, 1, 0, 0);
+    actx.scale(dpr, dpr);
+
+    actx.fillStyle = '#000';
+    actx.fillRect(0, 0, cssW, cssH);
+
+    // Reserve a readout strip at the bottom.
+    var readoutH = 66;
+    var plotH = cssH - readoutH;
+    var ocx = cssW / 2;
+    var ocy = plotH / 2 + 6;
+    var R = Math.max(30, Math.min(cssW, plotH) / 2 - 40);
+
+    // reference circle
+    actx.strokeStyle = 'rgba(255,255,255,0.12)'; actx.lineWidth = 1;
+    actx.beginPath(); actx.arc(ocx, ocy, R, 0, Math.PI * 2); actx.stroke();
+    // faint axes
+    actx.beginPath(); actx.moveTo(ocx - R, ocy); actx.lineTo(ocx + R, ocy); actx.stroke();
+    actx.beginPath(); actx.moveTo(ocx, ocy - R); actx.lineTo(ocx, ocy + R); actx.stroke();
+
+    // angles: driver phase grows anticlockwise; oscillator lags BEHIND by phi
+    // (i.e. its angle is smaller). Rotation sense matches the Phasors tab.
+    var driverAng = 2 * Math.PI * res_f * res_t;
+    var phi = phaseLag(res_f);
+    var oscAng = driverAng - phi;
+
+    // Phasor lengths:
+    //  - driver (force) is the fixed reference -> length = R (tip on circle).
+    //  - oscillator (displacement) length = R * A(f)/A_peak, so it reaches the
+    //    circle only at resonance and shrinks away from it. A_peak is the true
+    //    maximum at the current damping, so this tracks the resonance curve.
+    var peak = curvePeak();
+    var oscR = (peak > 1e-9) ? R * (ampAt(res_f) / peak) : 0;
+
+    // lag arc between the two phasors (from oscillator up to driver), drawn at
+    // a small radius so it stays inside even when the displacement phasor is short
+    actx.strokeStyle = 'rgba(250,204,21,0.6)'; actx.lineWidth = 2;
+    actx.beginPath(); actx.arc(ocx, ocy, R * 0.28, -driverAng, -oscAng); actx.stroke();
+
+    // phasors: driver/force (blue, fixed) leads; oscillator/displacement
+    // (green, length = amplitude) trails
+    drawPhasor(actx, ocx, ocy, R, driverAng, '#8ab4f8', 3);
+    if (oscR > 2) drawPhasor(actx, ocx, ocy, oscR, oscAng, '#4ade80', 3);
+
+    // small legend
+    actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'left'; actx.textBaseline = 'top';
+    actx.fillStyle = '#8ab4f8'; actx.fillText('\u2014 driving force', 12, 10);
+    actx.fillStyle = '#4ade80'; actx.fillText('\u2014 displacement', 12, 28);
+
+    // ---- readout strip ----
+    var stripY = plotH + 6;
+    actx.strokeStyle = 'rgba(255,255,255,0.1)'; actx.lineWidth = 1;
+    actx.beginPath(); actx.moveTo(10, stripY); actx.lineTo(cssW - 10, stripY); actx.stroke();
+
+    var deg = phi * 180 / Math.PI;
+    actx.textAlign = 'center'; actx.textBaseline = 'middle';
+    actx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillStyle = '#e5e7eb';
+    actx.fillText('Displacement lags the driving force by ' + deg.toFixed(0) + '\u00b0', ocx, stripY + 30);
+
+    actx.textAlign = 'left'; actx.textBaseline = 'alphabetic';
+  }
+
+  /* ============================================================= *
+   * Graphs popout: full-range reference plots                     *
+   * Preset 'amp'   -> amplitude vs driving frequency              *
+   * Preset 'phase' -> phase lag vs driving frequency              *
+   * Both mark the current driving frequency.                      *
+   * ============================================================= */
+
+  // Shared HiDPI sizing + black background; returns plot geometry.
+  function graphsPrep() {
+    var actx = graphsCtx, cv = graphsCanvas;
+    var rect = cv.getBoundingClientRect();
+    var cssW = Math.max(1, Math.round(rect.width));
+    var cssH = Math.max(1, Math.round(rect.height));
+    var dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(cssW * dpr) || cv.height !== Math.round(cssH * dpr)) {
+      cv.width = Math.round(cssW * dpr);
+      cv.height = Math.round(cssH * dpr);
+    }
+    actx.setTransform(1, 0, 0, 1, 0, 0);
+    actx.scale(dpr, dpr);
+    actx.fillStyle = '#000';
+    actx.fillRect(0, 0, cssW, cssH);
+    var mL = 64, mR = 28, mT = 30, mB = 52;
+    return {
+      actx: actx, cssW: cssW, cssH: cssH,
+      x: mL, y: mT, w: cssW - mL - mR, h: cssH - mT - mB
+    };
+  }
+
+  // Common axis furniture: frequency x-axis with ticks, f0 line, current-f
+  // dropline. yLabel is the rotated vertical title.
+  function graphsAxes(g, yLabel) {
+    var actx = g.actx;
+    // grid
+    actx.strokeStyle = 'rgba(255,255,255,0.05)'; actx.lineWidth = 1;
+    var gi;
+    for (gi = 1; gi <= 6; gi++) {
+      var gx = g.x + (gi / 6) * g.w;
+      actx.beginPath(); actx.moveTo(gx, g.y); actx.lineTo(gx, g.y + g.h); actx.stroke();
+    }
+    for (gi = 1; gi <= 4; gi++) {
+      var gy = g.y + (gi / 4) * g.h;
+      actx.beginPath(); actx.moveTo(g.x, gy); actx.lineTo(g.x + g.w, gy); actx.stroke();
+    }
+    // axes
+    actx.strokeStyle = 'rgba(255,255,255,0.3)'; actx.lineWidth = 2;
+    actx.beginPath(); actx.moveTo(g.x, g.y - 8); actx.lineTo(g.x, g.y + g.h); actx.stroke();
+    actx.beginPath(); actx.moveTo(g.x, g.y + g.h); actx.lineTo(g.x + g.w + 10, g.y + g.h); actx.stroke();
+    // x ticks
+    actx.textAlign = 'center'; actx.textBaseline = 'top';
+    actx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    var fv;
+    for (fv = 0; fv <= F_MAX + 1e-9; fv += 0.25) {
+      var tx = g.x + (fv / F_MAX) * g.w;
+      if (fv > 0) {
+        actx.strokeStyle = 'rgba(255,255,255,0.6)'; actx.lineWidth = 2;
+        actx.beginPath(); actx.moveTo(tx, g.y + g.h); actx.lineTo(tx, g.y + g.h + 7); actx.stroke();
+      }
+      actx.fillStyle = 'rgba(255,255,255,1)';
+      actx.fillText(fv.toFixed(2), tx, g.y + g.h + 10);
+    }
+    // x title
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.font = 'italic 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillText('driving frequency, f (Hz)', g.x + g.w / 2, g.y + g.h + 30);
+    // y title
+    actx.save();
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'center'; actx.textBaseline = 'middle';
+    actx.translate(g.x - 44, g.y + g.h / 2);
+    actx.rotate(-Math.PI / 2);
+    actx.fillText(yLabel, 0, 0);
+    actx.restore();
+    actx.textAlign = 'left'; actx.textBaseline = 'alphabetic';
+
+    // f0 line
+    var nf = f0();
+    if (nf <= F_MAX) {
+      var fx = g.x + (nf / F_MAX) * g.w;
+      actx.setLineDash([6, 5]);
+      actx.strokeStyle = 'rgba(138,180,248,0.85)'; actx.lineWidth = 1.5;
+      actx.beginPath(); actx.moveTo(fx, g.y + g.h); actx.lineTo(fx, g.y); actx.stroke();
+      actx.setLineDash([]);
+      actx.fillStyle = 'rgba(138,180,248,0.95)';
+      actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+      actx.textAlign = 'center'; actx.textBaseline = 'bottom';
+      actx.fillText('f\u2080', fx, g.y - 1);
+      actx.textAlign = 'left'; actx.textBaseline = 'alphabetic';
+    }
+  }
+
+  function drawGraphsAmp() {
+    var g = graphsPrep();
+    var actx = g.actx;
+    graphsAxes(g, 'amplitude, A (cm)');
+    // fixed absolute cm scale (matches the main curve): RES_AXIS_CM at the top
+    var pxPerCm = g.h / RES_AXIS_CM;
+    actx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'right'; actx.textBaseline = 'middle';
+    var cmv;
+    for (cmv = 1; cmv <= RES_AXIS_CM; cmv++) {
+      var tyc = g.y + g.h - cmv * pxPerCm;
+      if (tyc < g.y) break;
+      actx.strokeStyle = 'rgba(255,255,255,0.65)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(g.x - 7, tyc); actx.lineTo(g.x, tyc); actx.stroke();
+      actx.fillStyle = 'rgba(255,255,255,1)';
+      actx.fillText(cmv.toString(), g.x - 10, tyc);
+    }
+    actx.fillStyle = 'rgba(255,255,255,1)';
+    actx.fillText('0', g.x - 10, g.y + g.h);
+    actx.textAlign = 'left'; actx.textBaseline = 'alphabetic';
+    // curve (clip at top)
+    actx.strokeStyle = '#4ade80'; actx.lineWidth = 2.6;
+    actx.beginPath();
+    var i, N = Math.round(g.w), started = false;
+    for (i = 0; i <= N; i++) {
+      var hz = F_MAX * i / N;
+      var px = g.x + (i / N) * g.w;
+      var py = g.y + g.h - ampAt(hz) * pxPerCm;
+      if (py < g.y) py = g.y;
+      if (!started) { actx.moveTo(px, py); started = true; } else { actx.lineTo(px, py); }
+    }
+    actx.stroke();
+    // current-f marker + dropline
+    var cx = g.x + (res_f / F_MAX) * g.w;
+    var cy = g.y + g.h - ampAt(res_f) * pxPerCm;
+    if (cy < g.y) cy = g.y;
+    actx.setLineDash([4, 5]);
+    actx.strokeStyle = 'rgba(255,255,255,0.45)'; actx.lineWidth = 1.5;
+    actx.beginPath(); actx.moveTo(cx, g.y + g.h); actx.lineTo(cx, cy); actx.stroke();
+    actx.setLineDash([]);
+    actx.beginPath(); actx.arc(cx, cy, 5, 0, Math.PI * 2);
+    actx.fillStyle = '#facc15'; actx.shadowColor = '#facc15'; actx.shadowBlur = 8; actx.fill();
+    actx.shadowBlur = 0; actx.lineWidth = 1.5; actx.strokeStyle = 'rgba(255,255,255,0.9)'; actx.stroke();
+  }
+
+  function drawGraphsPhase() {
+    var g = graphsPrep();
+    var actx = g.actx;
+    graphsAxes(g, 'phase lag (degrees)');
+    // y runs 0..180 degrees; add right-side reference ticks
+    actx.textAlign = 'right'; actx.textBaseline = 'middle';
+    actx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    var degs = [0, 45, 90, 135, 180], di;
+    for (di = 0; di < degs.length; di++) {
+      var yy = g.y + g.h - (degs[di] / 180) * g.h;
+      actx.fillStyle = 'rgba(255,255,255,0.8)';
+      actx.fillText(degs[di].toString(), g.x - 6, yy);
+      if (degs[di] === 90) {
+        actx.setLineDash([3, 4]); actx.strokeStyle = 'rgba(255,255,255,0.18)'; actx.lineWidth = 1;
+        actx.beginPath(); actx.moveTo(g.x, yy); actx.lineTo(g.x + g.w, yy); actx.stroke();
+        actx.setLineDash([]);
+      }
+    }
+    actx.textAlign = 'left'; actx.textBaseline = 'alphabetic';
+    // phase curve (0 -> 180 deg as f increases through f0)
+    actx.strokeStyle = '#4ade80'; actx.lineWidth = 2.6;
+    actx.beginPath();
+    var i, N = Math.round(g.w), started = false;
+    for (i = 0; i <= N; i++) {
+      var hz = F_MAX * i / N;
+      var deg = phaseLag(hz) * 180 / Math.PI;
+      var px = g.x + (i / N) * g.w;
+      var py = g.y + g.h - (deg / 180) * g.h;
+      if (!started) { actx.moveTo(px, py); started = true; } else { actx.lineTo(px, py); }
+    }
+    actx.stroke();
+    // current-f marker
+    var cdeg = phaseLag(res_f) * 180 / Math.PI;
+    var cx = g.x + (res_f / F_MAX) * g.w;
+    var cy = g.y + g.h - (cdeg / 180) * g.h;
+    actx.setLineDash([4, 5]);
+    actx.strokeStyle = 'rgba(255,255,255,0.45)'; actx.lineWidth = 1.5;
+    actx.beginPath(); actx.moveTo(cx, g.y + g.h); actx.lineTo(cx, cy); actx.stroke();
+    actx.setLineDash([]);
+    actx.beginPath(); actx.arc(cx, cy, 5, 0, Math.PI * 2);
+    actx.fillStyle = '#facc15'; actx.shadowColor = '#facc15'; actx.shadowBlur = 8; actx.fill();
+    actx.shadowBlur = 0; actx.lineWidth = 1.5; actx.strokeStyle = 'rgba(255,255,255,0.9)'; actx.stroke();
+  }
+
+  /* ---- Preset 'trace': driving force and displacement as two waveforms on a
+     shared time axis (2 driver cycles). Both normalised to equal height so the
+     PHASE relationship is the focus; the displacement lags the force by phi.
+     The phase difference is stated above the plot. ---- */
+  function drawGraphsTrace() {
+    var g = graphsPrep();
+    var actx = g.actx;
+
+    var phi = phaseLag(res_f);
+    var T = (res_f > 1e-6) ? (1 / res_f) : 4.0;     // one period (s)
+    var span = 2 * T;                                // x-axis covers 2 cycles
+    var gw = g.w - 78;                               // reserve room for right force axis + title
+
+    // --- grid ---
+    actx.strokeStyle = 'rgba(255,255,255,0.05)'; actx.lineWidth = 1;
+    var gi;
+    for (gi = 1; gi <= 8; gi++) {
+      var gx = g.x + (gi / 8) * gw;
+      actx.beginPath(); actx.moveTo(gx, g.y); actx.lineTo(gx, g.y + g.h); actx.stroke();
+    }
+    // --- axes: horizontal zero line through the middle, vertical t-axis ---
+    var midY = g.y + g.h / 2;
+    actx.strokeStyle = 'rgba(255,255,255,0.3)'; actx.lineWidth = 2;
+    actx.beginPath(); actx.moveTo(g.x, g.y - 8); actx.lineTo(g.x, g.y + g.h); actx.stroke();
+    actx.beginPath(); actx.moveTo(g.x, midY); actx.lineTo(g.x + gw + 10, midY); actx.stroke();
+
+    // time ticks + labels on the centre axis line (Tab 1/2 style), with an
+    // arrowhead and an italic "time (s)" label past it.
+    actx.fillStyle = 'rgba(255,255,255,0.5)';
+    actx.beginPath();
+    actx.moveTo(g.x + gw + 10, midY);
+    actx.lineTo(g.x + gw + 2, midY - 4); actx.lineTo(g.x + gw + 2, midY + 4);
+    actx.closePath(); actx.fill();
+    actx.textAlign = 'center'; actx.textBaseline = 'top';
+    actx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    var k;
+    for (k = 1; k <= 4; k++) {
+      var tt = k * (T / 2);
+      var tx = g.x + (tt / span) * gw;
+      actx.strokeStyle = 'rgba(255,255,255,0.6)'; actx.lineWidth = 2;
+      actx.beginPath(); actx.moveTo(tx, midY); actx.lineTo(tx, midY + 8); actx.stroke();
+      actx.fillStyle = 'rgba(255,255,255,1)';
+      actx.fillText(tt.toFixed(2), tx, midY + 11);
+    }
+    actx.textAlign = 'center'; actx.textBaseline = 'top';
+    actx.fillStyle = 'rgba(255,255,255,0.9)';
+    actx.font = 'italic 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillText('time (s)', g.x + gw / 2, g.y + g.h + 6);
+
+    var amp = g.h * 0.34;                            // half-height = full scale of each axis
+    var Acm = ampAt(res_f);                          // current displacement amplitude (cm)
+    var Apeak = curvePeak();                          // peak displacement over f (cm), current damping
+    if (Apeak < 1e-9) Apeak = 1e-9;
+    var dispAmpPx = amp * (Acm / Apeak);             // wave half-height tracks current amplitude
+
+    // --- LEFT axis: displacement (cm, green) -- FIXED to the peak over the
+    // frequency range, so the scale stays put as f changes; the wave grows and
+    // shrinks against it (tallest at resonance). ---
+    actx.strokeStyle = 'rgba(74,222,128,0.5)'; actx.lineWidth = 1.5;
+    actx.beginPath(); actx.moveTo(g.x, midY - amp); actx.lineTo(g.x, midY + amp); actx.stroke();
+    actx.fillStyle = '#4ade80';
+    actx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'right'; actx.textBaseline = 'middle';
+    actx.fillText('+' + Apeak.toFixed(2), g.x - 8, midY - amp);
+    actx.fillText('0', g.x - 8, midY);
+    actx.fillText('\u2212' + Apeak.toFixed(2), g.x - 8, midY + amp);
+    // left title
+    actx.save();
+    actx.fillStyle = '#4ade80'; actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'center'; actx.textBaseline = 'middle';
+    actx.translate(g.x - 46, midY); actx.rotate(-Math.PI / 2);
+    actx.fillText('displacement, x (cm)', 0, 0);
+    actx.restore();
+
+    // --- RIGHT axis: driving force (N, blue), fixed ±F0 ---
+    var axR = g.x + gw;
+    actx.strokeStyle = 'rgba(138,180,248,0.5)'; actx.lineWidth = 1.5;
+    actx.beginPath(); actx.moveTo(axR, midY - amp); actx.lineTo(axR, midY + amp); actx.stroke();
+    actx.fillStyle = '#8ab4f8';
+    actx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'left'; actx.textBaseline = 'middle';
+    actx.fillText('+' + RES_F0_N.toFixed(2), axR + 8, midY - amp);
+    actx.fillText('0', axR + 8, midY);
+    actx.fillText('\u2212' + RES_F0_N.toFixed(2), axR + 8, midY + amp);
+    // right title
+    actx.save();
+    actx.fillStyle = '#8ab4f8'; actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'center'; actx.textBaseline = 'middle';
+    actx.translate(axR + 48, midY); actx.rotate(Math.PI / 2);
+    actx.fillText('driving force, F (N)', 0, 0);
+    actx.restore();
+    actx.textAlign = 'left'; actx.textBaseline = 'alphabetic';
+
+    // --- driving force wave (blue): F0 cos(2 pi f t), fixed amplitude ---
+    actx.strokeStyle = '#8ab4f8'; actx.lineWidth = 2.4;
+    actx.beginPath();
+    var i, N = Math.round(gw), started = false;
+    for (i = 0; i <= N; i++) {
+      var t1 = span * i / N;
+      var yF = midY - amp * Math.cos(2 * Math.PI * res_f * t1);
+      var x1 = g.x + (i / N) * gw;
+      if (!started) { actx.moveTo(x1, yF); started = true; } else { actx.lineTo(x1, yF); }
+    }
+    actx.stroke();
+
+    // --- displacement wave (green): amplitude tracks current A(f) on the fixed scale ---
+    actx.strokeStyle = '#4ade80'; actx.lineWidth = 2.4;
+    actx.beginPath();
+    started = false;
+    for (i = 0; i <= N; i++) {
+      var t2 = span * i / N;
+      var yX = midY - dispAmpPx * Math.cos(2 * Math.PI * res_f * t2 - phi);
+      var x2 = g.x + (i / N) * gw;
+      if (!started) { actx.moveTo(x2, yX); started = true; } else { actx.lineTo(x2, yX); }
+    }
+    actx.stroke();
+
+    // --- legend (top-left, clear of the wave tops) ---
+    actx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.textAlign = 'left'; actx.textBaseline = 'top';
+    actx.fillStyle = '#8ab4f8'; actx.fillText('\u2014 driving force', g.x + 6, g.y + 2);
+    actx.fillStyle = '#4ade80'; actx.fillText('\u2014 displacement', g.x + 120, g.y + 2);
+
+    // --- phase statement above the plot (lag only) ---
+    var deg = phi * 180 / Math.PI;
+    actx.textAlign = 'center'; actx.textBaseline = 'alphabetic';
+    actx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+    actx.fillStyle = '#e5e7eb';
+    actx.fillText('Displacement lags the driving force by ' + deg.toFixed(0) + '\u00b0', g.x + g.w / 2, g.y - 14);
+    actx.textAlign = 'left';
+  }
+
+  function drawGraphsWindow() {
+    if (!res_showGraphs) return;
+    if (res_graphsPreset === 'phase') drawGraphsPhase();
+    else if (res_graphsPreset === 'trace') drawGraphsTrace();
+    else drawGraphsAmp();
+  }
+
+  function setGraphsPreset(preset) {
+    res_graphsPreset = preset;
+    var btns = graphsTypeSelector.getElementsByClassName('graphs-type-btn');
+    var i;
+    for (i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-gtype') === preset);
+    }
+    if (res_showGraphs) requestAnimationFrame(drawGraphsWindow);
+  }
+
+  function setGraphsOpen(open) {
+    res_showGraphs = open;
+    graphsChk.checked = open;
+    if (open) {
+      graphsWindow.classList.add('open');
+      raiseWindow(graphsWindow);
+      requestAnimationFrame(drawGraphsWindow);
+    } else {
+      graphsWindow.classList.remove('open');
+    }
+  }
+
+  /* ---- Slider wiring (redraw immediately when paused) ---- */
+  kSlider.addEventListener('input', function (e) {
+    res_k = parseFloat(e.target.value); kVal.textContent = res_k.toFixed(1) + ' N/m';
+    updateReadout(); if (!res_running) drawFrame();
+  });
+  mSlider.addEventListener('input', function (e) {
+    res_m = parseFloat(e.target.value); mVal.textContent = res_m.toFixed(1) + ' kg';
+    updateReadout(); if (!res_running) drawFrame();
+  });
+  fSlider.addEventListener('input', function (e) {
+    res_f = parseFloat(e.target.value); fVal.textContent = res_f.toFixed(3) + ' Hz';
+    if (!res_running) { updateScrubberFromTime(); drawFrame(); }
+  });
+  gammaSlider.addEventListener('input', function (e) {
+    res_gamma = parseFloat(e.target.value);
+    gammaVal.innerHTML = res_gamma.toFixed(2) + ' s&#8315;&#185;';
+    if (!res_running) drawFrame();
+  });
+
+  /* ---- Checkbox wiring ---- */
+  f0Chk.addEventListener('change', function (e) {
+    res_showF0 = e.target.checked; if (!res_running) drawFrame();
+  });
+  curveChk.addEventListener('change', function (e) {
+    res_showCurve = e.target.checked; if (!res_running) drawFrame();
+  });
+  probesChk.addEventListener('change', function (e) {
+    res_showProbes = e.target.checked; if (!res_running) drawFrame();
+  });
+  dispChk.addEventListener('change', function (e) {
+    res_showDisp = e.target.checked; if (!res_running) drawFrame();
+  });
+  phaseChk.addEventListener('change', function (e) { setPhaseOpen(e.target.checked); });
+  phaseClose.addEventListener('click', function () { setPhaseOpen(false); });
+  phasePlayBtn.addEventListener('click', function () { playBtn.click(); });
+  phaseWindow.addEventListener('mousedown', function () { raiseWindow(phaseWindow); });
+  phaseWindow.addEventListener('touchstart', function () { raiseWindow(phaseWindow); }, { passive: true });
+  attachPopupDragResize(phaseWindow, phaseHeader, phaseResizeGrip, drawPhase);
+  window.addEventListener('resize', function () { if (res_showPhase) drawPhase(); });
+  graphsChk.addEventListener('change', function (e) { setGraphsOpen(e.target.checked); });
+  graphsClose.addEventListener('click', function () { setGraphsOpen(false); });
+  graphsWindow.addEventListener('mousedown', function () { raiseWindow(graphsWindow); });
+  graphsWindow.addEventListener('touchstart', function () { raiseWindow(graphsWindow); }, { passive: true });
+  attachPopupDragResize(graphsWindow, graphsHeader, graphsResizeGrip, drawGraphsWindow);
+  graphsTypeSelector.addEventListener('click', function (e) {
+    var t = e.target;
+    while (t && t !== graphsTypeSelector && !t.getAttribute('data-gtype')) t = t.parentNode;
+    if (t && t.getAttribute('data-gtype')) setGraphsPreset(t.getAttribute('data-gtype'));
+  });
+  window.addEventListener('resize', function () { if (res_showGraphs) drawGraphsWindow(); });
+
+  /* ---- Time scrubber ----
+     The window spans SCRUB_CYCLES drive periods. When paused the slider is
+     active and dragging it sets res_t; during play it acts as a live playhead.
+     At f = 0 there is no period, so we fall back to a fixed 4 s window. ---- */
+  function scrubWindow() {
+    if (res_f <= 1e-6) return 4.0;
+    return SCRUB_CYCLES / res_f;          // = SCRUB_CYCLES * period
+  }
+  function updateScrubberFromTime() {
+    var win = scrubWindow();
+    var frac = (win > 0) ? ((res_t % win) / win) : 0;
+    if (frac < 0) frac += 1;
+    timeSlider.value = Math.round(frac * 1000);
+    timeVal.textContent = (frac * win).toFixed(2) + ' s';
+  }
+  function setScrubberActive(on) {
+    if (on) scrubber.classList.add('active'); else scrubber.classList.remove('active');
+  }
+
+  /* ---- Play / Pause ---- */
+  function syncPhasePlayGlyph() {
+    phasePlayBtn.innerHTML = res_running ? '&#10074;&#10074;' : '&#9654;';
+  }
+  playBtn.addEventListener('click', function () {
+    res_running = !res_running;
+    if (res_running) {
+      res_lastFrame = performance.now();
+      playBtn.innerHTML = '&#10074;&#10074; Pause';
+      playBtn.classList.add('playing');
+      setScrubberActive(false);
+    } else {
+      playBtn.innerHTML = '&#9654; Play';
+      playBtn.classList.remove('playing');
+      setScrubberActive(true);
+      updateScrubberFromTime();
+    }
+    syncPhasePlayGlyph();
+  });
+
+  // Dragging the scrubber (only meaningful when paused) sets res_t within the
+  // two-period window and redraws the whole system at that instant.
+  timeSlider.addEventListener('input', function (e) {
+    if (res_running) { return; }
+    var win = scrubWindow();
+    var frac = parseFloat(e.target.value) / 1000;
+    res_t = frac * win;
+    timeVal.textContent = res_t.toFixed(2) + ' s';
+    drawFrame();
+    if (res_showPhase) drawPhase();
+    if (res_showGraphs) drawGraphsWindow();
+  });
+
+  /* ---- Hard Reset: restore all factory defaults ---- */
+  resetBtn.addEventListener('click', function () {
+    res_running = false;
+    playBtn.innerHTML = '&#9654; Play';
+    playBtn.classList.remove('playing');
+
+    res_k = RES_DEFAULTS.k;
+    res_m = RES_DEFAULTS.m;
+    res_f = RES_DEFAULTS.f;
+    res_gamma = RES_DEFAULTS.gamma;
+    res_t = 0;
+
+    kSlider.value = res_k;        kVal.textContent = res_k.toFixed(1) + ' N/m';
+    mSlider.value = res_m;        mVal.textContent = res_m.toFixed(1) + ' kg';
+    fSlider.value = res_f;        fVal.textContent = res_f.toFixed(3) + ' Hz';
+    gammaSlider.value = res_gamma; gammaVal.innerHTML = res_gamma.toFixed(2) + ' s&#8315;&#185;';
+
+    res_showF0 = true;    f0Chk.checked = true;
+    res_showCurve = true; curveChk.checked = true;
+    res_showProbes = false; probesChk.checked = false;
+    res_showDisp = false; dispChk.checked = false;
+    res_probeF1 = 0.10; res_probeDrag = 0;
+    setPhaseOpen(false);
+    setGraphsOpen(false);
+
+    syncPhasePlayGlyph();
+    setScrubberActive(true);
+    updateScrubberFromTime();
+    updateReadout();
+    drawFrame();
+  });
+
+  /* ---- Probe dragging on the main canvas (mouse + touch) ----
+     Probes are draggable only when paused, matching the suite. Touch handlers
+     use {passive:false} with a cancelable guard, and a generous hit halo. ---- */
+  function probePointerDown(cx, cy) {
+    if (!res_showProbes) return false;       // curve is static, so draggable even while playing
+    var p = canvasPoint(canvas, cx, cy);
+    var hit = probeHitHandle(p.x, p.y);
+    if (hit !== 0) { res_probeDrag = hit; return true; }
+    return false;
+  }
+  function probePointerMove(cx, cy) {
+    if (!res_probeDrag) return;
+    var p = canvasPoint(canvas, cx, cy);
+    res_probeF1 = probeXtoF(p.x);
+    drawFrame();
+  }
+  function probePointerUp() { res_probeDrag = 0; }
+
+  canvas.addEventListener('mousedown', function (e) {
+    if (probePointerDown(e.clientX, e.clientY)) e.preventDefault();
+  });
+  document.addEventListener('mousemove', function (e) {
+    if (res_probeDrag) probePointerMove(e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', probePointerUp);
+
+  canvas.addEventListener('touchstart', function (e) {
+    if (!(e.touches && e.touches.length > 0)) return;
+    var t = e.touches[0];
+    if (probePointerDown(t.clientX, t.clientY)) { if (e.cancelable) e.preventDefault(); }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function (e) {
+    if (!res_probeDrag) return;
+    if (!(e.touches && e.touches.length > 0)) return;
+    var t = e.touches[0];
+    probePointerMove(t.clientX, t.clientY);
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', probePointerUp);
+  canvas.addEventListener('touchcancel', probePointerUp);
+
+  /* ---- Cursor feedback: pointer over a probe handle when paused ---- */
+  canvas.addEventListener('mousemove', function (e) {
+    if (res_probeDrag) { canvas.style.cursor = 'ew-resize'; return; }
+    if (res_showProbes) {
+      var p = canvasPoint(canvas, e.clientX, e.clientY);
+      canvas.style.cursor = (probeHitHandle(p.x, p.y) !== 0) ? 'ew-resize' : 'default';
+    } else {
+      canvas.style.cursor = 'default';
+    }
+  });
+
+  /* ---- Animation loop ---- */
+  function loop() {
+    res_raf = requestAnimationFrame(loop);
+    var now = performance.now();
+    if (res_running) {
+      var dt = (now - res_lastFrame) / 1000;
+      if (dt > 0.1) dt = 0.1;       // clamp after stalls/tab hidden
+      res_t += dt;
+      updateScrubberFromTime();
+    }
+    res_lastFrame = now;
+    drawFrame();
+  }
+
+  /* ---- Tab lifecycle: register hooks so the router controls us ---- */
+  tabHooks.res.onEnter = function () {
+    updateReadout();
+    setScrubberActive(!res_running);
+    updateScrubberFromTime();
+    res_lastFrame = performance.now();
+    if (!res_raf) loop();
+  };
+  tabHooks.res.onLeave = function () {
+    res_running = false;
+    playBtn.innerHTML = '&#9654; Play';
+    playBtn.classList.remove('playing');
+    syncPhasePlayGlyph();
+    setPhaseOpen(false);
+    setGraphsOpen(false);
+    if (res_raf) { cancelAnimationFrame(res_raf); res_raf = null; }
+  };
+
+  // First paint of the (initially hidden) tab.
+  updateReadout();
+  drawFrame();
+})();
 
 
 // Initial entry into the default tab.
