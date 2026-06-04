@@ -2207,7 +2207,7 @@ window.closeHelpModal = closeHelpModal;
       var hp = probeHitHandle(cx, cy);
       if (hp !== 0) {
         shm_probeDrag = hp;
-        var tnew = probePxToT(cx);
+        var tnew = probeSnapT(probePxToT(cx));
         if (hp === 1) shm_probeT1 = tnew; else shm_probeT2 = tnew;
         drawFrame();
         return true;
@@ -2249,7 +2249,7 @@ window.closeHelpModal = closeHelpModal;
   }
   function dragMove(cx, cy) {
     if (shm_probeDrag !== 0) {
-      var tnew = probePxToT(cx);
+      var tnew = probeSnapT(probePxToT(cx));
       if (shm_probeDrag === 1) shm_probeT1 = tnew; else shm_probeT2 = tnew;
       drawFrame();
       return;
@@ -4217,6 +4217,21 @@ window.closeHelpModal = closeHelpModal;
     return t;
   }
   function probeHandleY() { return waveY + MAX_CM * cmToPx + 14; }
+  // Light magnetic snap to the physically meaningful points of the displayed
+  // curve: zeros (x = 0) and extremes (|x| = A, the peaks/troughs). All occur
+  // where the phase (omega t + eps) is a multiple of pi/2, so we snap the probe
+  // time to the nearest such phase if it is within a small time window.
+  function probeSnapT(t) {
+    var w = omega();
+    if (w <= 1e-9) return t;
+    var phi = (shm_showExplorer ? shm_explorerEps : 0);
+    var phase = w * t + phi;
+    var nearest = Math.round(phase / (Math.PI / 2)) * (Math.PI / 2);
+    var snapT = (nearest - phi) / w;
+    var SNAP_WIN = 0.25;
+    if (snapT >= 0 && snapT <= timeWindow() && Math.abs(snapT - t) <= SNAP_WIN) return snapT;
+    return t;
+  }
   function probeHitHandle(px, py) {
     var hy = probeHandleY();
     var r = 16;
