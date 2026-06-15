@@ -1941,16 +1941,18 @@ function rxBuildBetaWorking(rx) {
     }
     // electron-bookkeeping note
     if (bplus) {
-        h += '<div class="wk-note">In &beta;<sup>+</sup> decay a positron is created and the daughter atom has one fewer electron, ' +
-             'so using atomic masses we subtract <b>2m<sub>e</sub></b>.</div>';
+        h += '<div class="wk-note">In &beta;<sup>+</sup> decay a positron is created and the daughter atom has one fewer electron. ' +
+             'The positron has the same rest mass as the electron, so using atomic masses we subtract <b>2m<sub>e</sub></b> ' +
+             '(one for the created positron, one for the lost atomic electron).</div>';
     } else {
         h += '<div class="wk-note">In &beta;<sup>&minus;</sup> decay, using atomic masses, the emitted electron is already ' +
              'included because the daughter atom has one more electron than the parent. No extra electron term is needed.</div>';
     }
     // neutrino note
-    h += '<div class="wk-note">The energy released is shared as kinetic energy between the beta particle and the ' +
-         (bplus ? 'neutrino' : 'antineutrino') + ', which is why the beta particle emerges with a range of energies up to a ' +
-         'maximum of this value.</div>';
+    h += '<div class="wk-note">The energy released is shared as kinetic energy between the daughter nucleus, the beta ' +
+         'particle and the ' + (bplus ? 'neutrino' : 'antineutrino') + '. The daughter is far heavier, so its recoil takes ' +
+         'only a tiny share; most of the energy goes to the beta particle and the ' + (bplus ? 'neutrino' : 'antineutrino') + '. ' +
+         'Because that split varies, the beta particle emerges with a range of energies up to a maximum of this value.</div>';
     return h;
 }
 
