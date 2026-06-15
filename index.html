@@ -200,6 +200,11 @@ h1 {
 
 /* Working content styling (natural size; scaled as a whole) */
 .wk-title { font-size:22px; font-weight:700; color:#ffd24a; margin-bottom:14px; }
+.wk-title .rx-nuc { color:#ffd24a; display:inline-block; position:relative; margin-right:2px; }
+.wk-title .rx-pre { display:inline-block; width:0.78em; position:relative; height:1em; vertical-align:middle; }
+.wk-title .rx-a { position:absolute; right:0; top:-0.45em; font-size:0.46em; font-weight:700; }
+.wk-title .rx-z { position:absolute; right:0; bottom:-0.45em; font-size:0.46em; font-weight:700; }
+.wk-title .rx-coeff { margin-right:-0.3em; position:relative; z-index:1; }
 .wk-step { margin:0 0 14px 0; }
 .wk-label { font-size:15px; color:#9cc4f5; margin-bottom:3px; }
 .wk-math { font-size:18px; color:#eef4fb; line-height:1.5; font-variant-numeric:tabular-nums; }
@@ -1894,7 +1899,7 @@ function rxTotalBE(s) {
 
 function rxBuildWorking() {
     var rx = rxCurrent;
-    var head = '<div class="wk-title">' + rxPlainLabel(rx) + '</div>' +
+    var head = '<div class="wk-title">' + rxFullEqn(rx) + '</div>' +
                '<div class="wk-config">Question Style ' + rxConfig + ' &mdash; using only the data on the panel</div>';
     if (rx.type === 'beta') return head + rxBuildBetaWorking(rx);
     return head + (rxConfig === 1 ? rxBuildCurveWorking(rx) : rxBuildMassWorking(rx));
