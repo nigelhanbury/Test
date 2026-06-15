@@ -147,8 +147,8 @@ h1 {
 /* Working pop-out: backdrop disables everything behind; window is
    draggable + resizable; inner content auto-scales to fill the window. */
 .work-backdrop {
-    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55);
-    backdrop-filter:blur(2px); z-index:900;
+    display:none; position:fixed; inset:0; background:transparent;
+    z-index:900; pointer-events:none;
 }
 .work-backdrop.open { display:block; }
 .work-window {
@@ -214,6 +214,40 @@ h1 {
 }
 .const-sep td { border-top:1px solid rgba(255,255,255,0.18); padding-top:9px; }
 .const-note { margin-top:12px; font-size:0.8em; line-height:1.5; color:#8aa0ba; font-style:italic; }
+.const-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+.qstyle-panel { border:1px solid rgba(90,160,255,0.3); }
+.qstyle-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.qstyle-head h3 { margin:0; }
+.qstyle-prompt { margin:0; color:#eef4fb; font-size:0.98em; font-weight:600; line-height:1.45; }
+.answer-panel { border:1px solid rgba(90,160,255,0.3); }
+.answer-empty { color:#8aa0ba; font-size:0.9em; font-style:italic; }
+.answer-filled { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.answer-value { color:#ffe08a; font-weight:700; font-size:1.3em; }
+.answer-reveal-btn {
+    background:rgba(255,255,255,0.06); color:#cfe0f2; font-family:inherit;
+    border:1px dashed rgba(255,255,255,0.3); border-radius:8px;
+    padding:8px 18px; font-size:0.95em; font-style:italic; cursor:pointer; touch-action:manipulation;
+}
+.answer-reveal-btn:hover { color:#fff; border-color:rgba(255,255,255,0.5); }
+.answer-work-btn {
+    background:rgba(90,160,255,0.22); color:#cfe6ff; font-family:inherit;
+    border:1px solid rgba(90,160,255,0.6); border-radius:8px;
+    padding:7px 14px; font-size:0.92em; font-weight:600; cursor:pointer; touch-action:manipulation;
+}
+.answer-work-btn:hover { color:#fff; background:rgba(90,160,255,0.4); }
+.wk-config { color:#9cc4f5; font-size:0.85em; font-weight:600; margin:-2px 0 10px 0; }
+.config-toggle { display:inline-flex; border:1px solid rgba(90,160,255,0.35); border-radius:8px; overflow:hidden; }
+.config-btn {
+    background:transparent; color:#9cc4f5; border:none; cursor:pointer;
+    padding:4px 9px; font-size:0.75em; font-family:inherit; touch-action:manipulation;
+    border-right:1px solid rgba(90,160,255,0.25);
+}
+.config-btn:last-child { border-right:none; }
+.config-btn:hover { background:rgba(90,160,255,0.15); }
+.config-btn.active { background:rgba(90,160,255,0.4); color:#fff; font-weight:600; }
+.config-btn.disabled, .config-btn:disabled { opacity:0.4; cursor:not-allowed; color:#6b7d92; }
+.config-btn.disabled:hover, .config-btn:disabled:hover { background:transparent; }
+.qstyle-disabled-note { margin:8px 0 0 0; color:#ffb892; font-size:0.85em; line-height:1.45; }
 
 /* ---- Reactions tab ---- */
 .react-top { display:flex; align-items:center; gap:24px; margin-bottom:4px; flex-wrap:nowrap; }
@@ -264,12 +298,14 @@ h1 {
 .react-equation-line::-webkit-scrollbar { height:8px; }
 .react-equation-line::-webkit-scrollbar-thumb { background:rgba(90,160,255,0.4); border-radius:4px; }
 .react-equation-line .rx-nuc { color:#ffd24a; white-space:nowrap; display:inline-block; position:relative; margin-right:2px; }
+.rx-overline { border-top:0.09em solid currentColor; display:inline-block; line-height:1; padding-top:0.04em; }
 .react-equation-line .rx-pre { display:inline-block; width:0.78em; position:relative; height:1em; vertical-align:middle; }
 .react-equation-line .rx-a { position:absolute; right:0; top:-0.45em; font-size:0.46em; font-weight:700; }
 .react-equation-line .rx-z { position:absolute; right:0; bottom:-0.45em; font-size:0.46em; font-weight:700; }
 .react-equation-line .rx-coeff { margin-right:-0.3em; position:relative; z-index:1; }
 .rx-dd-item .rx-coeff, .rx-dd-label .rx-coeff { margin-right:-0.3em; position:relative; z-index:1; }
 .react-eqn-hint { font-size:0.5em; font-weight:400; color:#8aa0ba; font-style:italic; }
+.react-beta-note { margin:2px 0 10px 0; color:#9cc4f5; font-size:0.95em; font-style:italic; padding:0 6px; }
 .react-energy-term {
     cursor:pointer; display:inline-block; color:#9fb4cc; font-style:italic;
     font-size:0.92em; font-weight:600; padding:4px 18px;
@@ -301,8 +337,7 @@ h1 {
 .rx-tbl th:first-child { text-align:left; }
 .rx-tbl td { padding:5px 5px; font-size:0.82em; text-align:right; white-space:nowrap; }
 .rx-tbl td:first-child { text-align:left; font-weight:600; }
-.rx-tbl td.rx-tbl-name-reactant { color:#ffb892; }
-.rx-tbl td.rx-tbl-name-product { color:#9fe6c6; }
+.rx-tbl td.rx-tbl-name-reactant { color:#ffb892; }.rx-tbl td.rx-tbl-name-product { color:#9fe6c6; }
 .rx-tbl .rx-tbl-bea { color:#eef4fb; font-weight:600; }
 .react-canvas-wrap { position:relative; width:100%; max-width:1000px; }
 #reactCanvas { width:100%; display:block; }
@@ -359,6 +394,17 @@ h1 {
                 </div>
             </div>
             <div class="curve-side">
+                <div class="panel qstyle-panel">
+                    <div class="qstyle-head">
+                        <h3>Question style</h3>
+                        <div class="config-toggle" id="configToggle">
+                            <button class="config-btn" data-cfg="1" onclick="setConfig(1)">Style 1</button>
+                            <button class="config-btn" data-cfg="2" onclick="setConfig(2)">Style 2</button>
+                            <button class="config-btn" data-cfg="3" onclick="setConfig(3)">Style 3</button>
+                        </div>
+                    </div>
+                    <p class="qstyle-prompt">Using the information below, determine the binding energy per nucleon.</p>
+                </div>
                 <div class="panel">
                     <h3>Nuclide readout</h3>
                     <div class="readout-empty" id="readoutBody">
@@ -367,16 +413,12 @@ h1 {
                 </div>
                 <div class="panel">
                     <h3>Constants</h3>
-                    <table class="ro-table const-table">
-                        <tr><td class="ro-k">Proton mass, m<sub>p</sub></td><td class="ro-v-cell"><span class="ro-v">1.007276 u</span></td></tr>
-                        <tr><td class="ro-k">Neutron mass, m<sub>n</sub></td><td class="ro-v-cell"><span class="ro-v">1.008665 u</span></td></tr>
-                        <tr><td class="ro-k">Electron mass, m<sub>e</sub></td><td class="ro-v-cell"><span class="ro-v">0.000549 u</span></td></tr>
-                        <tr><td class="ro-k">1 u</td><td class="ro-v-cell"><span class="ro-v">931.5 MeV</span></td></tr>
-                        <tr class="const-sep"><td class="ro-k">1 u</td><td class="ro-v-cell"><span class="ro-v">1.660539 &times; 10<sup>&minus;27</sup> kg</span></td></tr>
-                        <tr><td class="ro-k">c</td><td class="ro-v-cell"><span class="ro-v">2.997925 &times; 10<sup>8</sup> m s<sup>&minus;1</sup></span></td></tr>
-                        <tr><td class="ro-k">1 eV</td><td class="ro-v-cell"><span class="ro-v">1.602177 &times; 10<sup>&minus;19</sup> J</span></td></tr>
-                    </table>
-                    <p class="const-note">Values shown are to high precision so both methods agree. In the exam, always use the values given in your data booklet, which are rounded and may give a slightly different final figure.</p>
+                    <table class="ro-table const-table" id="constTable"></table>
+                    <p class="const-note" id="constNote"></p>
+                </div>
+                <div class="panel answer-panel">
+                    <h3>Binding energy per nucleon</h3>
+                    <div id="answerBody" class="answer-empty">Select a nuclide on the curve, then reveal the answer.</div>
                 </div>
             </div>
         </div>
@@ -396,6 +438,7 @@ h1 {
                 <span class="react-eqn-hint">Choose a reaction to begin.</span>
             </div>
         </div>
+        <p class="react-beta-note" id="reactBetaNote" style="display:none;"></p>
         <div class="react-work-row">
             <div class="react-canvas-column">
                 <div class="react-canvas-wrap">
@@ -403,16 +446,27 @@ h1 {
                 </div>
             </div>
             <div class="react-side">
+                <div class="panel qstyle-panel">
+                    <div class="qstyle-head">
+                        <h3>Question style</h3>
+                        <div class="config-toggle" id="rxConfigToggle">
+                            <button class="config-btn" data-cfg="1" onclick="setRxConfig(1)">Style 1</button>
+                            <button class="config-btn" data-cfg="2" onclick="setRxConfig(2)">Style 2</button>
+                            <button class="config-btn" data-cfg="3" onclick="setRxConfig(3)">Style 3</button>
+                            <button class="config-btn" data-cfg="4" onclick="setRxConfig(4)">Style 4</button>
+                        </div>
+                    </div>
+                    <p class="qstyle-prompt">Using the information below, determine the energy released. Click <b>Energy</b> above to reveal the answer.</p>
+                    <p class="qstyle-disabled-note" id="rxStyleNote" style="display:none;"></p>
+                </div>
                 <div class="panel" id="reactTablePanel">
                     <h3>Binding energy per nucleon</h3>
                     <div id="reactTable" class="readout-empty">Select a reaction to list its isotopes.</div>
                 </div>
                 <div class="panel" id="reactConstPanel" style="display:none;">
                     <h3>Constants</h3>
-                    <table class="rx-tbl">
-                        <tr><td>Neutron mass</td><td class="rx-tbl-bea">1.008665 u</td></tr>
-                        <tr><td>1 u</td><td class="rx-tbl-bea">931.5 MeV</td></tr>
-                    </table>
+                    <table class="rx-tbl"></table>
+                    <p class="const-note" id="rxConstNote"></p>
                 </div>
             </div>
         </div>
@@ -434,7 +488,6 @@ h1 {
     <div class="work-header" id="workHeader">
         <span class="work-title">Working</span>
         <div class="work-header-right">
-            <button class="work-method-btn" id="workMethodBtn" onclick="toggleMethod()">Alternative method (E = mc&sup2;)</button>
             <button class="work-close" id="workClose" title="Close" onclick="closeWorking()">&times;</button>
         </div>
     </div>
@@ -452,7 +505,6 @@ h1 {
     <div class="work-header" id="rxWorkHeader">
         <span class="work-title">Working</span>
         <div class="work-header-right">
-            <button class="work-method-btn" id="rxWorkMethodBtn" onclick="rxToggleMethod()">Alternative method (mass defect)</button>
             <button class="work-close" id="rxWorkClose" title="Close" onclick="rxCloseWorking()">&times;</button>
         </div>
     </div>
@@ -569,7 +621,34 @@ var NUCLIDES = [
   {name:"Ba-143", sym:"Ba", Z:56, A:143, mAtom:142.9206890, role:"reaction"},
   {name:"Sr-95", sym:"Sr", Z:38, A:95, mAtom:94.9193580, role:"reaction"},
   {name:"Zr-104", sym:"Zr", Z:40, A:104, mAtom:103.9231944, role:"reaction"},
-  {name:"Xe-134", sym:"Xe", Z:54, A:134, mAtom:133.9053947, role:"reaction"}
+  {name:"Xe-134", sym:"Xe", Z:54, A:134, mAtom:133.9053947, role:"reaction"},
+  {name:"He-3b", sym:"He", Z:2, A:3, mAtom:3.016029322, role:"reaction"},
+  {name:"C-14", sym:"C", Z:6, A:14, mAtom:14.003241989, role:"reaction"},
+  {name:"N-14b", sym:"N", Z:7, A:14, mAtom:14.003074004, role:"reaction"},
+  {name:"P-32", sym:"P", Z:15, A:32, mAtom:31.973907274, role:"reaction"},
+  {name:"S-32", sym:"S", Z:16, A:32, mAtom:31.972071174, role:"reaction"},
+  {name:"Sr-90", sym:"Sr", Z:38, A:90, mAtom:89.907730, role:"reaction"},
+  {name:"Y-90", sym:"Y", Z:39, A:90, mAtom:89.907144, role:"reaction"},
+  {name:"Cs-137", sym:"Cs", Z:55, A:137, mAtom:136.907089, role:"reaction"},
+  {name:"Ba-137", sym:"Ba", Z:56, A:137, mAtom:136.905827, role:"reaction"},
+  {name:"I-131", sym:"I", Z:53, A:131, mAtom:130.906126, role:"reaction"},
+  {name:"Xe-131", sym:"Xe", Z:54, A:131, mAtom:130.905084, role:"reaction"},
+  {name:"Co-60", sym:"Co", Z:27, A:60, mAtom:59.933816, role:"reaction"},
+  {name:"Ni-60", sym:"Ni", Z:28, A:60, mAtom:59.930785, role:"reaction"},
+  {name:"K-40", sym:"K", Z:19, A:40, mAtom:39.963998, role:"reaction"},
+  {name:"Ca-40b", sym:"Ca", Z:20, A:40, mAtom:39.962590863, role:"reaction"},
+  {name:"C-11", sym:"C", Z:6, A:11, mAtom:11.011433, role:"reaction"},
+  {name:"B-11", sym:"B", Z:5, A:11, mAtom:11.009305, role:"reaction"},
+  {name:"N-13", sym:"N", Z:7, A:13, mAtom:13.005739, role:"reaction"},
+  {name:"C-13b", sym:"C", Z:6, A:13, mAtom:13.003354838, role:"reaction"},
+  {name:"O-15", sym:"O", Z:8, A:15, mAtom:15.003066, role:"reaction"},
+  {name:"N-15", sym:"N", Z:7, A:15, mAtom:15.000108898, role:"reaction"},
+  {name:"F-18", sym:"F", Z:9, A:18, mAtom:18.000937, role:"reaction"},
+  {name:"O-18b", sym:"O", Z:8, A:18, mAtom:17.999159613, role:"reaction"},
+  {name:"Na-22", sym:"Na", Z:11, A:22, mAtom:21.994437, role:"reaction"},
+  {name:"Ne-22", sym:"Ne", Z:10, A:22, mAtom:21.991385, role:"reaction"},
+  {name:"Mg-23", sym:"Mg", Z:12, A:23, mAtom:22.994124, role:"reaction"},
+  {name:"Na-23b", sym:"Na", Z:11, A:23, mAtom:22.989769282, role:"reaction"}
 ];
 
 // Verified reaction library (balanced; mass-defect and BE-curve routes agree).
@@ -592,7 +671,21 @@ var REACTIONS = [
   {type:"alpha", label:"Po-214 alpha decay", reactants:["Po-214"], products:["Pb-210","He-4"]},
   {type:"alpha", label:"Pu-238 alpha decay", reactants:["Pu-238"], products:["U-234","He-4"]},
   {type:"alpha", label:"Pu-239 alpha decay", reactants:["Pu-239"], products:["U-235","He-4"]},
-  {type:"alpha", label:"Am-241 alpha decay", reactants:["Am-241"], products:["Np-237","He-4"]}
+  {type:"alpha", label:"Am-241 alpha decay", reactants:["Am-241"], products:["Np-237","He-4"]},
+  {type:"beta", bplus:false, label:"H-3 beta-minus decay", reactants:["H-3"], products:["He-3b"]},
+  {type:"beta", bplus:false, label:"C-14 beta-minus decay", reactants:["C-14"], products:["N-14b"]},
+  {type:"beta", bplus:false, label:"P-32 beta-minus decay", reactants:["P-32"], products:["S-32"]},
+  {type:"beta", bplus:false, label:"Sr-90 beta-minus decay", reactants:["Sr-90"], products:["Y-90"]},
+  {type:"beta", bplus:false, label:"Cs-137 beta-minus decay", reactants:["Cs-137"], products:["Ba-137"]},
+  {type:"beta", bplus:false, label:"I-131 beta-minus decay", reactants:["I-131"], products:["Xe-131"]},
+  {type:"beta", bplus:false, label:"Co-60 beta-minus decay", reactants:["Co-60"], products:["Ni-60"]},
+  {type:"beta", bplus:false, label:"K-40 beta-minus decay", reactants:["K-40"], products:["Ca-40b"]},
+  {type:"beta", bplus:true, label:"C-11 beta-plus decay", reactants:["C-11"], products:["B-11"]},
+  {type:"beta", bplus:true, label:"N-13 beta-plus decay", reactants:["N-13"], products:["C-13b"]},
+  {type:"beta", bplus:true, label:"O-15 beta-plus decay", reactants:["O-15"], products:["N-15"]},
+  {type:"beta", bplus:true, label:"F-18 beta-plus decay", reactants:["F-18"], products:["O-18b"]},
+  {type:"beta", bplus:true, label:"Na-22 beta-plus decay", reactants:["Na-22"], products:["Ne-22"]},
+  {type:"beta", bplus:true, label:"Mg-23 beta-plus decay", reactants:["Mg-23"], products:["Na-23b"]}
 ];
 
 // ====================== PHYSICS CONSTANTS (WJEC) ======================
@@ -607,6 +700,79 @@ var U_TO_MEV = 931.5;   // WJEC conversion
 var U_KG = 1.660539e-27;     // 1 u in kg
 var C_SI = 2.997925e8;       // speed of light, m/s
 var EV_J = 1.602177e-19;     // 1 eV in joules (booklet gives this; MeV is derived)
+
+// ---- Data configuration (1, 2 or 3): controls which constants and mass units
+// are shown, forcing a single calculation route. ----
+//   Config 1: masses in u, 1 u = 931.5 MeV  (x931.5 route)
+//   Config 2: masses in u, plus u->kg, c, eV  (E=mc2 route from u)
+//   Config 3: masses in kg, plus c, eV        (E=mc2 route from kg)
+var config = 1;
+// Proton/neutron masses in kg (for Config 3).
+var MP_KG = MP * U_KG, MN_KG = MN * U_KG;
+
+function sci(value, sig) {
+    // format as m.mmm x 10^e using HTML sup
+    if (value === 0) return '0';
+    var exp = Math.floor(Math.log10(Math.abs(value)));
+    var mant = value / Math.pow(10, exp);
+    var mantStr = mant.toFixed(sig - 1);
+    return mantStr + ' &times; 10<sup>' + (exp < 0 ? '&minus;' + Math.abs(exp) : exp) + '</sup>';
+}
+
+function buildConstants() {
+    var t = document.getElementById('constTable');
+    var note = document.getElementById('constNote');
+    if (!t) return;
+    var rows = '';
+    function row(k, v) { return '<tr><td class="ro-k">' + k + '</td><td class="ro-v-cell"><span class="ro-v">' + v + '</span></td></tr>'; }
+    if (config === 1) {
+        rows += row('Proton mass, m<sub>p</sub>', MP.toFixed(6) + ' u');
+        rows += row('Neutron mass, m<sub>n</sub>', MN.toFixed(6) + ' u');
+        rows += row('Electron mass, m<sub>e</sub>', ME.toFixed(6) + ' u');
+        rows += row('1 u', '931.5 MeV');
+    } else if (config === 2) {
+        rows += row('Proton mass, m<sub>p</sub>', MP.toFixed(6) + ' u');
+        rows += row('Neutron mass, m<sub>n</sub>', MN.toFixed(6) + ' u');
+        rows += row('Electron mass, m<sub>e</sub>', ME.toFixed(6) + ' u');
+        rows += row('1 u', sci(U_KG, 7) + ' kg');
+        rows += row('c', sci(C_SI, 7) + ' m s<sup>&minus;1</sup>');
+        rows += row('1 eV', sci(EV_J, 7) + ' J');
+    } else {
+        rows += row('Proton mass, m<sub>p</sub>', sci(MP_KG, 7) + ' kg');
+        rows += row('Neutron mass, m<sub>n</sub>', sci(MN_KG, 7) + ' kg');
+        rows += row('Electron mass, m<sub>e</sub>', sci(ME * U_KG, 7) + ' kg');
+        rows += row('c', sci(C_SI, 7) + ' m s<sup>&minus;1</sup>');
+        rows += row('1 eV', sci(EV_J, 7) + ' J');
+    }
+    t.innerHTML = rows;
+    note.innerHTML = '';
+    // reflect active button on tab 1's toggle only
+    var btns = document.querySelectorAll('#configToggle .config-btn');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', parseInt(btns[i].getAttribute('data-cfg'), 10) === config);
+    }
+}
+
+function setConfig(n) {
+    config = n;
+    buildConstants();
+    if (selectedNuc) updateReadout(selectedNuc);    // refresh mass-unit display
+    if (workingOpen) document.getElementById('workInner').innerHTML = buildWorkingHTML(selectedNuc);
+}
+window.setConfig = setConfig;
+
+// Tab 2 has its own config (1-4); tab 1 uses `config` (1-3). They are independent.
+var rxConfig = 1;
+function setRxConfig(n) {
+    rxConfig = n;
+    if (typeof rxCurrent !== 'undefined' && rxCurrent) {
+        rxBuildTable();
+        if (typeof rxWorkOpen !== 'undefined' && rxWorkOpen) {
+            document.getElementById('rxWorkInner').innerHTML = rxBuildWorking();
+        }
+    }
+}
+window.setRxConfig = setRxConfig;
 
 // Element names keyed by Z (covers all elements in the nuclide table).
 var ELEMENT_NAME = {
@@ -1051,6 +1217,7 @@ function updateReadout(n) {
     if (!n) {
         el.className = 'readout-empty';
         el.innerHTML = 'Tap any point on the curve to see its details and work out its binding energy per nucleon.';
+        updateAnswer(null);
         return;
     }
     var d = deriveNuclide(n);
@@ -1061,9 +1228,31 @@ function updateReadout(n) {
         row('Protons, Z', n.Z) +
         row('Neutrons, N', d.N) +
         row('Nucleons, A', n.A) +
-        row('Atomic mass', fmt(n.mAtom, 6) + ' u') +
-        revealRow('BE / nucleon', 'bea', fmt(d.bea, 4) + ' MeV') +
+        row('Atomic mass', (config === 3 ? sci(n.mAtom * U_KG, 7) + ' kg' : fmt(n.mAtom, 6) + ' u')) +
         '</table>';
+    updateAnswer(n, d);
+}
+
+// The answer panel under the constants: masked button until revealed, then the
+// value plus a button to open the full working.
+function updateAnswer(n, d) {
+    var el = document.getElementById('answerBody');
+    if (!el) return;
+    if (!n) {
+        el.className = 'answer-empty';
+        el.innerHTML = 'Select a nuclide on the curve, then reveal the answer.';
+        return;
+    }
+    if (!d) d = deriveNuclide(n);
+    el.className = 'answer-filled';
+    if (revealed.bea) {
+        el.innerHTML =
+            '<div class="answer-value">' + fmt(d.bea, 4) + ' MeV</div>' +
+            '<button class="answer-work-btn" onclick="openWorking()">&#10530; Show working</button>';
+    } else {
+        el.innerHTML =
+            '<button class="answer-reveal-btn" onclick="revealValue(\'bea\')">Reveal answer</button>';
+    }
 }
 
 var selectionLocked = false;   // true once a point is clicked; glide won't override
@@ -1144,7 +1333,7 @@ var workingOpen = false;
 var workWindow = document.getElementById('workWindow');
 var workBackdrop = document.getElementById('workBackdrop');
 
-var workMethod = 'std';   // 'std' = x931.5 ; 'mc2' = E=mc^2
+// (Working route is driven by the global `config`; see buildWorkingHTML.)
 
 function wkStep(label, math, sub) {
     return '<div class="wk-step"><div class="wk-label">' + label + '</div>' +
@@ -1154,9 +1343,37 @@ function wkStep(label, math, sub) {
 
 function buildWorkingHTML(n) {
     var d = deriveNuclide(n);
-    var head = '<div class="wk-title">' + n.name + ' &nbsp;(Z = ' + n.Z + ', A = ' + n.A + ')</div>';
-    if (workMethod === 'std') return head + buildStdWorking(n, d);
-    return head + buildMc2Working(n, d);
+    var head = '<div class="wk-title">' + n.name + ' &nbsp;(Z = ' + n.Z + ', A = ' + n.A + ')</div>' +
+               '<div class="wk-config">Question Style ' + config + ' &mdash; using only the constants on the panel</div>';
+    if (config === 1) return head + buildStdWorking(n, d);
+    if (config === 2) return head + buildMc2Working(n, d);
+    return head + buildKgWorking(n, d);
+}
+
+// Config 3: masses in kg, E = mc^2 throughout (no u anywhere).
+function buildKgWorking(n, d) {
+    var mAtom_kg = n.mAtom * U_KG;
+    var mNuc_kg = mAtom_kg - n.Z * (ME * U_KG);
+    var mSep_kg = n.Z * MP_KG + d.N * MN_KG;
+    var dm_kg = mSep_kg - mNuc_kg;
+    var be_J = dm_kg * C_SI * C_SI;
+    var bea_J = be_J / n.A;
+    var bea_MeV = bea_J / EV_J / 1e6;
+    var h = '';
+    h += wkStep('Mass of nucleus  =  atomic mass &minus; (Z &times; electron mass)',
+        sci(mAtom_kg, 7) + ' &minus; (' + n.Z + ' &times; ' + sci(ME * U_KG, 7) + ')  =  <b>' + sci(mNuc_kg, 6) + ' kg</b>');
+    h += wkStep('Mass of separated nucleons  =  (Z &times; m<sub>p</sub>) + (N &times; m<sub>n</sub>)',
+        '(' + n.Z + ' &times; ' + sci(MP_KG, 7) + ') + (' + d.N + ' &times; ' + sci(MN_KG, 7) + ')  =  <b>' + sci(mSep_kg, 6) + ' kg</b>');
+    h += wkStep('Mass defect  &Delta;m  =  (separated nucleons) &minus; (nucleus)',
+        sci(mSep_kg, 6) + ' &minus; ' + sci(mNuc_kg, 6) + '  =  <b>' + sci(dm_kg, 4) + ' kg</b>');
+    h += wkStep('Binding energy  =  &Delta;m c&sup2;  =  &Delta;m &times; (2.997925 &times; 10<sup>8</sup>)&sup2;',
+        sci(dm_kg, 4) + ' &times; (2.997925 &times; 10<sup>8</sup>)&sup2;  =  <b>' + sci(be_J, 4) + ' J</b>');
+    h += wkStep('Binding energy per nucleon  =  BE &divide; A',
+        sci(be_J, 4) + ' &divide; ' + n.A + '  =  <b>' + sci(bea_J, 4) + ' J</b>');
+    h += wkStep('Convert to MeV  (&divide; 1.602177 &times; 10<sup>&minus;19</sup>, then &divide; 10<sup>6</sup>)',
+        sci(bea_J, 4) + ' &divide; 1.602177 &times; 10<sup>&minus;19</sup> &divide; 10<sup>6</sup>  =  <b>' + fmt(bea_MeV, 4) + ' MeV</b>');
+    h += '<div class="wk-answer">Binding energy per nucleon  =  ' + sci(bea_J, 4) + ' J  =  ' + fmt(bea_MeV, 4) + ' MeV</div>';
+    return h;
 }
 
 // Method 1: mass defect in u, x 931.5
@@ -1205,18 +1422,10 @@ function buildMc2Working(n, d) {
     h += wkStep('Convert to MeV  (&divide; 10<sup>6</sup>)',
         sci(bea_eV, 4) + ' &divide; 10<sup>6</sup>  =  <b>' + fmt(bea_MeV, 4) + ' MeV</b>');
     h += '<div class="wk-answer">Binding energy per nucleon  =  ' + sci(bea_J, 4) + ' J  =  ' + fmt(bea_MeV, 4) + ' MeV</div>';
-    h += '<div class="wk-note">If a question gives the masses in kg, find the mass defect in kg and go straight to E = &Delta;m c&sup2;, skipping the conversion line.</div>';
     return h;
 }
 
-function toggleMethod() {
-    workMethod = (workMethod === 'std') ? 'mc2' : 'std';
-    document.getElementById('workMethodBtn').innerHTML =
-        (workMethod === 'std') ? 'Alternative method (E = mc&sup2;)' : 'Standard method (&times; 931.5)';
-    document.getElementById('workInner').innerHTML = buildWorkingHTML(selectedNuc);
-    requestAnimationFrame(scaleWorking);
-}
-window.toggleMethod = toggleMethod;
+// (Calculation route is driven by the global config; no separate method toggle.)
 
 // Auto-scale the working content so it fills the window (text grows on resize).
 function scaleWorking() {
@@ -1241,8 +1450,6 @@ function scaleWorking() {
 
 function openWorking() {
     if (!selectedNuc) return;
-    workMethod = 'std';
-    document.getElementById('workMethodBtn').innerHTML = 'Alternative method (E = mc&sup2;)';
     document.getElementById('workInner').innerHTML = buildWorkingHTML(selectedNuc);
     workingOpen = true;
     workBackdrop.classList.add('open');
@@ -1366,6 +1573,9 @@ for (var qi = 0; qi < NUCLIDES.length; qi++) NUC_BY_NAME[NUCLIDES[qi].name] = NU
 
 var RX_NEUTRON = { name:'n', sym:'n', Z:0, A:1, mAtom:1.00866491590 };
 function rxSpecies(s) { return s === 'n' ? RX_NEUTRON : NUC_BY_NAME[s]; }
+// Display name: strip the internal "b" suffix used to duplicate curve species
+// for beta-decay reactions (e.g. "O-18b" -> "O-18").
+function rxDisp(sp) { return sp.name.replace(/b$/, ''); }
 
 // Unicode super/subscript digits for plain-text labels (dropdown options).
 var SUP = {'0':'\u2070','1':'\u00b9','2':'\u00b2','3':'\u00b3','4':'\u2074','5':'\u2075','6':'\u2076','7':'\u2077','8':'\u2078','9':'\u2079'};
@@ -1432,7 +1642,8 @@ function rxPopulateSelect() {
     var groups = [
         { type:'fission', label:'Fission' },
         { type:'fusion',  label:'Fusion' },
-        { type:'alpha',   label:'Alpha decay' }
+        { type:'alpha',   label:'Alpha decay' },
+        { type:'beta',    label:'Beta decay' }
     ];
     var html = '';
     for (var g = 0; g < groups.length; g++) {
@@ -1440,11 +1651,18 @@ function rxPopulateSelect() {
         for (var i = 0; i < REACTIONS.length; i++) {
             if (REACTIONS[i].type !== groups[g].type) continue;
             html += '<div class="rx-dd-item" onclick="rxPick(' + i + ')">' +
-                    rxSide(REACTIONS[i].reactants) + ' &rarr; ' + rxSide(REACTIONS[i].products) +
+                    rxFullEqn(REACTIONS[i]) +
                     '</div>';
         }
     }
     menu.innerHTML = html;
+}
+
+// Full equation string (RHS includes the beta particle and neutrino for beta decay).
+function rxFullEqn(rx) {
+    var rhs = rxSide(rx.products);
+    if (rx.type === 'beta') rhs += ' + ' + rxBetaParticle(rx);
+    return rxSide(rx.reactants) + ' &rarr; ' + rhs;
 }
 
 var rxDdOpen = false;
@@ -1458,8 +1676,7 @@ function rxDdClose() {
 }
 function rxPick(i) {
     rxDdClose();
-    document.getElementById('rxDdLabel').innerHTML =
-        rxSide(REACTIONS[i].reactants) + ' &rarr; ' + rxSide(REACTIONS[i].products);
+    document.getElementById('rxDdLabel').innerHTML = rxFullEqn(REACTIONS[i]);
     rxSelect(String(i));
 }
 window.rxDdToggle = rxDdToggle;
@@ -1483,9 +1700,31 @@ function rxSelect(idx) {
     }
     rxCurrent = REACTIONS[parseInt(idx, 10)];
     rxEnergyShown = false;
+    rxUpdateStyleAvailability();
     rxRenderEquation();
     rxBuildTable();
     rxDrawCurve();
+}
+
+// Beta decay has no binding-energy (curve) method: A does not change, so there is
+// no movement along the curve. Disable Style 1 and force a mass-defect style.
+function rxUpdateStyleAvailability() {
+    var isBeta = rxCurrent && rxCurrent.type === 'beta';
+    var btn1 = document.querySelector('#rxConfigToggle .config-btn[data-cfg="1"]');
+    var noteEl = document.getElementById('rxStyleNote');
+    if (btn1) {
+        btn1.disabled = isBeta;
+        btn1.classList.toggle('disabled', isBeta);
+    }
+    if (isBeta && rxConfig === 1) rxConfig = 2;   // move off the unavailable style
+    if (noteEl) {
+        if (isBeta) {
+            noteEl.style.display = 'block';
+            noteEl.innerHTML = 'Style 1 (binding-energy method) is not available for beta decay: the nucleon number A does not change, so there is no movement along the curve. Use a mass-defect style.';
+        } else {
+            noteEl.style.display = 'none';
+        }
+    }
 }
 
 // Side-panel table: each multi-nucleon isotope with its A and BE/A (4 dp),
@@ -1505,41 +1744,69 @@ function rxBuildTable() {
     rxBuildConstants();
 }
 
-// Constants panel: free-nucleon masses that appear in the reaction (these aren't
-// in the BE/A table since they're off the curve) plus the 1 u conversion.
+// Constants panel: config-driven. Shows the free-nucleon masses that appear in
+// the reaction (off the curve, so not in the BE/A table) plus the route constants
+// for the active config. Includes the Config 1/2/3 toggle.
 function rxBuildConstants() {
     var panel = document.getElementById('reactConstPanel');
+    var note = document.getElementById('rxConstNote');
+    // reflect active button on tab 2's style toggle (in the question-style card)
+    var qbtns = document.querySelectorAll('#rxConfigToggle .config-btn');
+    for (var q = 0; q < qbtns.length; q++) {
+        qbtns[q].classList.toggle('active', parseInt(qbtns[q].getAttribute('data-cfg'), 10) === rxConfig);
+    }
+    // Style 1 is the binding-energy (curve) method: uses only BE/A, no constants.
+    if (rxConfig === 1) {
+        panel.style.display = 'none';
+        return;
+    }
+    panel.style.display = 'block';
     var all = rxCurrent.reactants.concat(rxCurrent.products);
     var hasN = false, hasP = false;
     for (var i = 0; i < all.length; i++) {
         if (all[i] === 'n') hasN = true;
         if (all[i] === 'H-1') hasP = true;
     }
+    function mu(massU) { return rxConfig === 4 ? sci(massU * U_KG, 7) + ' kg' : massU.toFixed(6) + ' u'; }
     var rows = '';
-    if (hasN) rows += '<tr><td>Neutron mass</td><td class="rx-tbl-bea">1.008665 u</td></tr>';
-    if (hasP) rows += '<tr><td>Proton (&#185;&#8321;H) mass</td><td class="rx-tbl-bea">1.007825 u</td></tr>';
-    rows += '<tr><td>1 u</td><td class="rx-tbl-bea">931.5 MeV</td></tr>';
+    if (hasN) rows += '<tr><td>Neutron mass</td><td class="rx-tbl-bea">' + mu(MN) + '</td></tr>';
+    if (hasP) rows += '<tr><td>Proton (&#185;&#8321;H) mass</td><td class="rx-tbl-bea">' + mu(1.0078250319) + '</td></tr>';
+    if (rxCurrent.type === 'beta' && rxCurrent.bplus) {
+        rows += '<tr><td>Electron mass, m<sub>e</sub></td><td class="rx-tbl-bea">' + mu(ME) + '</td></tr>';
+    }
+    if (rxConfig === 2) {
+        rows += '<tr><td>1 u</td><td class="rx-tbl-bea">931.5 MeV</td></tr>';
+    } else if (rxConfig === 3) {
+        rows += '<tr><td>1 u</td><td class="rx-tbl-bea">' + sci(U_KG, 7) + ' kg</td></tr>';
+        rows += '<tr><td>c</td><td class="rx-tbl-bea">' + sci(C_SI, 7) + ' m s<sup>&minus;1</sup></td></tr>';
+        rows += '<tr><td>1 eV</td><td class="rx-tbl-bea">' + sci(EV_J, 7) + ' J</td></tr>';
+    } else {
+        rows += '<tr><td>c</td><td class="rx-tbl-bea">' + sci(C_SI, 7) + ' m s<sup>&minus;1</sup></td></tr>';
+        rows += '<tr><td>1 eV</td><td class="rx-tbl-bea">' + sci(EV_J, 7) + ' J</td></tr>';
+    }
+    if (note) note.innerHTML = '';
     panel.querySelector('table').innerHTML = rows;
-    panel.style.display = 'block';
 }
 function rxTableGroup(title, kind, list) {
     var seen = {}, rows = '';
+    var showMass = (rxConfig !== 1);   // mass-defect configs need atomic mass
+    var showBea = (rxConfig === 1);    // binding-energy rxConfig needs BE/A
     for (var i = 0; i < list.length; i++) {
         var s = list[i];
         if (seen[s]) continue; seen[s] = true;
         var sp = rxSpecies(s);
         if (sp.A === 1) continue;
         rows += '<tr>' +
-            '<td class="rx-tbl-name-' + kind + '">' + sp.name + '</td>' +
+            '<td class="rx-tbl-name-' + kind + '">' + rxDisp(sp) + '</td>' +
             '<td>' + sp.A + '</td>' +
-            '<td>' + fmt(sp.mAtom, 6) + ' u</td>' +
-            '<td class="rx-tbl-bea">' + fmt(sp.bea, 4) + ' MeV</td>' +
+            (showMass ? '<td>' + (rxConfig === 4 ? sci(sp.mAtom * U_KG, 7) + ' kg' : fmt(sp.mAtom, 6) + ' u') + '</td>' : '') +
+            (showBea ? '<td class="rx-tbl-bea">' + fmt(sp.bea, 4) + ' MeV</td>' : '') +
             '</tr>';
     }
     return '<div class="rx-tbl-group">' +
         '<div class="rx-tbl-group-label ' + kind + '">' + title + '</div>' +
         '<table class="rx-tbl">' +
-        '<tr><th>Isotope</th><th>A</th><th>Atomic mass</th><th>BE/A</th></tr>' +
+        '<tr><th>Isotope</th><th>A</th>' + (showMass ? '<th>Atomic mass</th>' : '') + (showBea ? '<th>BE/A</th>' : '') + '</tr>' +
         rows +
         '</table></div>';
 }
@@ -1554,16 +1821,50 @@ function rxRenderEquation() {
     } else {
         energy = '<span class="react-energy-term" onclick="rxRevealEnergy()">Energy</span>';
     }
+    var rhs = rxSide(rx.products);
+    if (rx.type === 'beta') rhs += ' &nbsp;+&nbsp; ' + rxBetaParticle(rx);
     document.getElementById('reactEquation').innerHTML =
-        rxSide(rx.reactants) + ' &nbsp;&rarr;&nbsp; ' + rxSide(rx.products) + ' &nbsp;+&nbsp; ' + energy;
+        rxSide(rx.reactants) + ' &nbsp;&rarr;&nbsp; ' + rhs + ' &nbsp;+&nbsp; ' + energy;
+    // For beta decay, state the neutrino-mass assumption up front, as part of the question.
+    var noteEl = document.getElementById('reactBetaNote');
+    if (noteEl) {
+        if (rx.type === 'beta') {
+            var nu = rx.bplus ? 'neutrino' : 'antineutrino';
+            noteEl.style.display = 'block';
+            noteEl.innerHTML = 'Assume the ' + nu + ' has negligible rest mass (of the order of 1 eV), ' +
+                'so it is taken as zero in the calculation.';
+        } else {
+            noteEl.style.display = 'none';
+        }
+    }
 }
 
-// Energy released (MeV): mass-defect route (= BE-curve route; verified equal).
+// Beta particle + (anti)neutrino as stacked notation for the equation RHS.
+function rxBetaParticle(rx) {
+    if (rx.bplus) {
+        // positron (0,+1)e and electron neutrino (nu)
+        return rxStacked('0', '+1', 'e') + ' &nbsp;+&nbsp; ' + rxStacked('0', '0', '&nu;');
+    }
+    // electron (0,-1)e and electron antineutrino (nu with overline)
+    return rxStacked('0', '&minus;1', 'e') + ' &nbsp;+&nbsp; ' + rxStacked('0', '0', '<span class="rx-overline">&nu;</span>');
+}
+
+// Build stacked A-over-Z notation for an arbitrary symbol (used for beta particle).
+function rxStacked(a, z, sym) {
+    return '<span class="rx-nuc"><span class="rx-pre">' +
+           '<span class="rx-a">' + a + '</span><span class="rx-z">' + z + '</span>' +
+           '</span><span class="rx-sym">' + sym + '</span></span>';
+}
+
+// Energy released (MeV). For beta-plus, two electron masses are subtracted because
+// a positron is created and the daughter atom has one fewer electron.
 function rxQ(rx) {
     var mr = 0, mp = 0, i;
     for (i = 0; i < rx.reactants.length; i++) mr += rxSpecies(rx.reactants[i]).mAtom;
     for (i = 0; i < rx.products.length; i++) mp += rxSpecies(rx.products[i]).mAtom;
-    return (mr - mp) * U_TO_MEV;
+    var dm = mr - mp;
+    if (rx.type === 'beta' && rx.bplus) dm -= 2 * ME;   // subtract 2 m_e for beta-plus
+    return dm * U_TO_MEV;
 }
 
 function rxRevealEnergy() {
@@ -1573,8 +1874,9 @@ function rxRevealEnergy() {
 window.rxRevealEnergy = rxRevealEnergy;
 
 // ---- Reactions working pop-out (duplicated from tab-1 pattern, rx namespace) ----
-var rxWorkMethod = 'curve';   // 'curve' = BE-curve sum ; 'mass' = mass defect
 var rxWorkOpen = false;
+// (Working route is driven by the global `config`: Config 1 = binding-energy method,
+//  Configs 2 and 3 = mass-defect method in u or kg.)
 var rxWorkWindow = document.getElementById('rxWorkWindow');
 var rxWorkBackdrop = document.getElementById('rxWorkBackdrop');
 
@@ -1592,8 +1894,59 @@ function rxTotalBE(s) {
 
 function rxBuildWorking() {
     var rx = rxCurrent;
-    var head = '<div class="wk-title">' + rxPlainLabel(rx) + '</div>';
-    return head + (rxWorkMethod === 'curve' ? rxBuildCurveWorking(rx) : rxBuildMassWorking(rx));
+    var head = '<div class="wk-title">' + rxPlainLabel(rx) + '</div>' +
+               '<div class="wk-config">Question Style ' + rxConfig + ' &mdash; using only the data on the panel</div>';
+    if (rx.type === 'beta') return head + rxBuildBetaWorking(rx);
+    return head + (rxConfig === 1 ? rxBuildCurveWorking(rx) : rxBuildMassWorking(rx));
+}
+
+// Beta decay working (Styles 2-4). beta-minus: Q = [M(parent) - M(daughter)] route.
+// beta-plus: Q = [M(parent) - M(daughter) - 2 m_e] route. Neutrino is taken massless.
+function rxBuildBetaWorking(rx) {
+    var par = rxSpecies(rx.reactants[0]);
+    var dau = rxSpecies(rx.products[0]);
+    var bplus = !!rx.bplus;
+    var h = '';
+    var dm_u;
+    h += rxWkStep('Mass of parent', rxDisp(par) + '  =  <b>' + fmt(par.mAtom, 6) + ' u</b>');
+    h += rxWkStep('Mass of daughter', rxDisp(dau) + '  =  <b>' + fmt(dau.mAtom, 6) + ' u</b>');
+    if (bplus) {
+        dm_u = par.mAtom - dau.mAtom - 2 * ME;
+        h += rxWkStep('Mass difference  &Delta;m  =  M(parent) &minus; M(daughter) &minus; 2m<sub>e</sub>',
+            fmt(par.mAtom, 6) + ' &minus; ' + fmt(dau.mAtom, 6) + ' &minus; (2 &times; ' + fmt(ME, 6) + ')  =  <b>' + fmt(dm_u, 6) + ' u</b>');
+    } else {
+        dm_u = par.mAtom - dau.mAtom;
+        h += rxWkStep('Mass difference  &Delta;m  =  M(parent) &minus; M(daughter)',
+            fmt(par.mAtom, 6) + ' &minus; ' + fmt(dau.mAtom, 6) + '  =  <b>' + fmt(dm_u, 6) + ' u</b>');
+    }
+    // energy conversion follows the active style (2 = x931.5, 3/4 = E=mc^2)
+    if (rxConfig === 2) {
+        h += rxWkStep('Energy released  =  &Delta;m &times; 931.5',
+            fmt(dm_u, 6) + ' &times; 931.5  =  <b>' + fmt(dm_u * 931.5, 3) + ' MeV</b>');
+        h += '<div class="wk-answer">Energy released  =  ' + fmt(dm_u * 931.5, 3) + ' MeV</div>';
+    } else {
+        var dm_kg = dm_u * U_KG, E_J = dm_kg * C_SI * C_SI, E_MeV = E_J / EV_J / 1e6;
+        h += rxWkStep('Convert &Delta;m to kilograms  (&times; 1.660539 &times; 10<sup>&minus;27</sup>)',
+            fmt(dm_u, 6) + ' &times; 1.660539 &times; 10<sup>&minus;27</sup>  =  <b>' + sci(dm_kg, 4) + ' kg</b>');
+        h += rxWkStep('Energy released  =  &Delta;m c&sup2;',
+            sci(dm_kg, 4) + ' &times; (2.997925 &times; 10<sup>8</sup>)&sup2;  =  <b>' + sci(E_J, 4) + ' J</b>');
+        h += rxWkStep('Convert to MeV  (&divide; 1.602177 &times; 10<sup>&minus;19</sup>, then &divide; 10<sup>6</sup>)',
+            sci(E_J, 4) + ' &divide; 1.602177 &times; 10<sup>&minus;19</sup> &divide; 10<sup>6</sup>  =  <b>' + fmt(E_MeV, 3) + ' MeV</b>');
+        h += '<div class="wk-answer">Energy released  =  ' + sci(E_J, 4) + ' J  =  ' + fmt(E_MeV, 3) + ' MeV</div>';
+    }
+    // electron-bookkeeping note
+    if (bplus) {
+        h += '<div class="wk-note">In &beta;<sup>+</sup> decay a positron is created and the daughter atom has one fewer electron, ' +
+             'so using atomic masses we subtract <b>2m<sub>e</sub></b>.</div>';
+    } else {
+        h += '<div class="wk-note">In &beta;<sup>&minus;</sup> decay, using atomic masses, the emitted electron is already ' +
+             'included because the daughter atom has one more electron than the parent. No extra electron term is needed.</div>';
+    }
+    // neutrino note
+    h += '<div class="wk-note">The energy released is shared as kinetic energy between the beta particle and the ' +
+         (bplus ? 'neutrino' : 'antineutrino') + ', which is why the beta particle emerges with a range of energies up to a ' +
+         'maximum of this value.</div>';
+    return h;
 }
 
 // Plain-text label for the working title (no stacked HTML).
@@ -1632,33 +1985,56 @@ function rxBuildCurveWorking(rx) {
     return h;
 }
 
-// Method 2: mass-defect route. Energy = (Sigma m_reactants - Sigma m_products) * 931.5.
+// Mass-defect route (Configs 2, 3, 4; Config 1 is the binding-energy method).
+//   Config 2: masses in u, Delta m x 931.5 -> MeV
+//   Config 3: masses in u, convert Delta m to kg, E = Delta m c^2 -> J -> MeV
+//   Config 4: masses in kg, E = Delta m c^2 -> J -> MeV
 function rxBuildMassWorking(rx) {
-    var h = '', i, sp, mr = 0, mp = 0, rt = [], pt = [];
-    for (i = 0; i < rx.reactants.length; i++) { sp = rxSpecies(rx.reactants[i]); mr += sp.mAtom; rt.push(fmt(sp.mAtom, 6)); }
-    for (i = 0; i < rx.products.length; i++) { sp = rxSpecies(rx.products[i]); mp += sp.mAtom; pt.push(fmt(sp.mAtom, 6)); }
-    var dm = mr - mp;
-    h += rxWkStep('Total mass of reactants', rt.join(' + ') + '  =  <b>' + fmt(mr, 6) + ' u</b>');
-    h += rxWkStep('Total mass of products', pt.join(' + ') + '  =  <b>' + fmt(mp, 6) + ' u</b>');
-    h += rxWkStep('Mass difference  &Delta;m  =  reactants &minus; products',
-        fmt(mr, 6) + ' &minus; ' + fmt(mp, 6) + '  =  <b>' + fmt(dm, 6) + ' u</b>');
-    h += rxWkStep('Energy released  =  &Delta;m &times; 931.5',
-        fmt(dm, 6) + ' &times; 931.5  =  <b>' + fmt(dm * 931.5, 2) + ' MeV</b>');
-    h += '<div class="wk-answer">Energy released  =  ' + fmt(dm * 931.5, 2) + ' MeV</div>';
-    h += '<div class="wk-note">Atomic masses are used directly. We do not need to work out ' +
+    var i, sp, mr = 0, mp = 0, rt = [], pt = [];
+    var kg = (rxConfig === 4);
+    for (i = 0; i < rx.reactants.length; i++) { sp = rxSpecies(rx.reactants[i]); mr += sp.mAtom; rt.push(kg ? sci(sp.mAtom * U_KG, 7) : fmt(sp.mAtom, 6)); }
+    for (i = 0; i < rx.products.length; i++) { sp = rxSpecies(rx.products[i]); mp += sp.mAtom; pt.push(kg ? sci(sp.mAtom * U_KG, 7) : fmt(sp.mAtom, 6)); }
+    var dm_u = mr - mp;
+    var note = '<div class="wk-note">Atomic masses are used directly. We do not need to work out ' +
          'nuclear masses because the proton number is the same on both sides, so the electron ' +
          'masses cancel out. This agrees with the binding-energy method, since the energy released ' +
          'equals the increase in total binding energy.</div>';
-    return h;
+    var h = '';
+    if (rxConfig === 4) {
+        var mr_kg = mr * U_KG, mp_kg = mp * U_KG, dm_kg4 = mr_kg - mp_kg;
+        var E_J4 = dm_kg4 * C_SI * C_SI, E_MeV4 = E_J4 / EV_J / 1e6;
+        h += rxWkStep('Total mass of reactants', rt.join(' + ') + '  =  <b>' + sci(mr_kg, 6) + ' kg</b>');
+        h += rxWkStep('Total mass of products', pt.join(' + ') + '  =  <b>' + sci(mp_kg, 6) + ' kg</b>');
+        h += rxWkStep('Mass difference  &Delta;m  =  reactants &minus; products',
+            sci(mr_kg, 6) + ' &minus; ' + sci(mp_kg, 6) + '  =  <b>' + sci(dm_kg4, 4) + ' kg</b>');
+        h += rxWkStep('Energy released  =  &Delta;m c&sup2;',
+            sci(dm_kg4, 4) + ' &times; (2.997925 &times; 10<sup>8</sup>)&sup2;  =  <b>' + sci(E_J4, 4) + ' J</b>');
+        h += rxWkStep('Convert to MeV  (&divide; 1.602177 &times; 10<sup>&minus;19</sup>, then &divide; 10<sup>6</sup>)',
+            sci(E_J4, 4) + ' &divide; 1.602177 &times; 10<sup>&minus;19</sup> &divide; 10<sup>6</sup>  =  <b>' + fmt(E_MeV4, 2) + ' MeV</b>');
+        h += '<div class="wk-answer">Energy released  =  ' + sci(E_J4, 4) + ' J  =  ' + fmt(E_MeV4, 2) + ' MeV</div>';
+        return h + note;
+    }
+    h += rxWkStep('Total mass of reactants', rt.join(' + ') + '  =  <b>' + fmt(mr, 6) + ' u</b>');
+    h += rxWkStep('Total mass of products', pt.join(' + ') + '  =  <b>' + fmt(mp, 6) + ' u</b>');
+    h += rxWkStep('Mass difference  &Delta;m  =  reactants &minus; products',
+        fmt(mr, 6) + ' &minus; ' + fmt(mp, 6) + '  =  <b>' + fmt(dm_u, 6) + ' u</b>');
+    if (rxConfig === 2) {
+        h += rxWkStep('Energy released  =  &Delta;m &times; 931.5',
+            fmt(dm_u, 6) + ' &times; 931.5  =  <b>' + fmt(dm_u * 931.5, 2) + ' MeV</b>');
+        h += '<div class="wk-answer">Energy released  =  ' + fmt(dm_u * 931.5, 2) + ' MeV</div>';
+    } else {
+        var dm_kg = dm_u * U_KG, E_J = dm_kg * C_SI * C_SI, E_MeV = E_J / EV_J / 1e6;
+        h += rxWkStep('Convert &Delta;m to kilograms  (&times; 1.660539 &times; 10<sup>&minus;27</sup>)',
+            fmt(dm_u, 6) + ' &times; 1.660539 &times; 10<sup>&minus;27</sup>  =  <b>' + sci(dm_kg, 4) + ' kg</b>');
+        h += rxWkStep('Energy released  =  &Delta;m c&sup2;',
+            sci(dm_kg, 4) + ' &times; (2.997925 &times; 10<sup>8</sup>)&sup2;  =  <b>' + sci(E_J, 4) + ' J</b>');
+        h += rxWkStep('Convert to MeV  (&divide; 1.602177 &times; 10<sup>&minus;19</sup>, then &divide; 10<sup>6</sup>)',
+            sci(E_J, 4) + ' &divide; 1.602177 &times; 10<sup>&minus;19</sup> &divide; 10<sup>6</sup>  =  <b>' + fmt(E_MeV, 2) + ' MeV</b>');
+        h += '<div class="wk-answer">Energy released  =  ' + sci(E_J, 4) + ' J  =  ' + fmt(E_MeV, 2) + ' MeV</div>';
+    }
+    return h + note;
 }
 
-function rxToggleMethod() {
-    rxWorkMethod = (rxWorkMethod === 'curve') ? 'mass' : 'curve';
-    document.getElementById('rxWorkMethodBtn').innerHTML =
-        (rxWorkMethod === 'curve') ? 'Alternative method (mass defect)' : 'Binding-energy method';
-    document.getElementById('rxWorkInner').innerHTML = rxBuildWorking();
-    requestAnimationFrame(rxScaleWorking);
-}
 function rxScaleWorking() {
     var body = document.getElementById('rxWorkBody');
     var scale = document.getElementById('rxWorkScale');
@@ -1673,8 +2049,6 @@ function rxScaleWorking() {
 }
 function rxOpenWorking() {
     if (!rxCurrent) return;
-    rxWorkMethod = 'curve';
-    document.getElementById('rxWorkMethodBtn').innerHTML = 'Alternative method (mass defect)';
     document.getElementById('rxWorkInner').innerHTML = rxBuildWorking();
     rxWorkOpen = true;
     rxWorkBackdrop.classList.add('open');
@@ -1688,7 +2062,6 @@ function rxCloseWorking() {
 }
 window.rxOpenWorking = rxOpenWorking;
 window.rxCloseWorking = rxCloseWorking;
-window.rxToggleMethod = rxToggleMethod;
 
 // Drag + resize for the rx working window (same pattern as tab 1).
 (function () {
@@ -1787,7 +2160,7 @@ function rxDrawCurve() {
     // BE/A value; labels go above by default, but when two markers are close (as
     // in alpha decay, parent and daughter near the same A and BE/A) one label is
     // placed above and the other below so they do not overlap.
-    if (rxCurrent) {
+    if (rxCurrent && rxCurrent.type !== 'beta') {
         var pts = [];
         rxCollect(rxCurrent.reactants, '#ff8c5a', pts);
         rxCollect(rxCurrent.products, '#5ad6a0', pts);
@@ -1919,6 +2292,7 @@ function switchTab(name) {
 }
 
 // initial render
+buildConstants();
 draw();
 </script>
 </body>
