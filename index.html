@@ -346,16 +346,18 @@ input[type="range"]:disabled { cursor: not-allowed; }
 .doodle-window.open { display: flex; }
 .doodle-header {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
     padding: 7px 10px;
     background: linear-gradient(135deg, #23233a, #1a1a2c);
     cursor: grab;
-    flex-wrap: wrap;
 }
 .doodle-header:active { cursor: grabbing; }
+.doodle-titlebar { display: flex; align-items: center; justify-content: space-between; }
 .doodle-title { color: #cdd6e6; font-weight: 700; font-size: 0.9em; white-space: nowrap; }
-.doodle-tools { display: flex; align-items: center; gap: 6px; flex: 1; flex-wrap: wrap; }
+.doodle-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.doodle-pensize { display: inline-flex; align-items: center; gap: 5px; }
+.doodle-pensize label { color: #9aa3b5; font-size: 0.78em; white-space: nowrap; }
 .doodle-swatch {
     width: 20px; height: 20px; border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.3); padding: 0; cursor: pointer;
@@ -371,16 +373,18 @@ input[type="range"]:disabled { cursor: not-allowed; }
 .doodle-tool.active { background: #4fc3f7; color: #10131c; border-color: #4fc3f7; }
 .doodle-tool-icon {
     display: inline-flex; align-items: center; justify-content: center;
-    padding: 2px 6px; color: #2a2a3a;
+    padding: 1px 6px; color: #2a2a3a;
 }
 .doodle-tool-icon svg { display: block; }
 .doodle-tool-icon.active { color: #10131c; }
 .doodle-thick { width: 80px; touch-action: none; }
 .doodle-close {
-    background: transparent; color: #cdd6e6; border: none;
-    font-size: 1.1em; cursor: pointer; padding: 0 4px;
+    background: rgba(255,255,255,0.08); color: #cdd6e6;
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+    font-size: 0.95em; cursor: pointer; padding: 2px 8px; line-height: 1;
     touch-action: manipulation;
 }
+.doodle-close:hover { background: rgba(231,76,60,0.6); border-color: rgba(231,76,60,0.8); }
 .doodle-body { flex: 1; min-height: 0; }
 #doodleCanvas {
     display: block; width: 100%; height: 100%; background: #f4f4f8;
@@ -390,10 +394,13 @@ input[type="range"]:disabled { cursor: not-allowed; }
     -webkit-touch-callout: none;
 }
 .doodle-resize-grip {
-    position: absolute; right: 0; bottom: 0; width: 18px; height: 18px;
-    cursor: nwse-resize; opacity: 0.6;
-    background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.5) 50%);
-    touch-action: none;
+    position: absolute; right: 0; bottom: 0; width: 22px; height: 22px;
+    cursor: nwse-resize; touch-action: none;
+    background:
+        linear-gradient(135deg, transparent 0 6px, rgba(20,20,20,0.7) 6px 7.5px, transparent 7.5px 11px, rgba(20,20,20,0.7) 11px 12.5px, transparent 12.5px 16px, rgba(20,20,20,0.7) 16px 17.5px, transparent 17.5px);
+    border-bottom-right-radius: 12px;
+    opacity: 0.7;
+    transition: opacity 0.15s;
 }
 .doodle-resize-grip:hover { opacity: 1; }
 .help-modal {
@@ -755,7 +762,10 @@ input[type="range"]:disabled { cursor: not-allowed; }
 <!-- ===================================================================== -->
 <div id="doodleWindow" class="doodle-window">
     <div class="doodle-header" id="doodleHeader">
-        <span class="doodle-title">&#9999;&#65039; Scribble pad</span>
+        <div class="doodle-titlebar">
+            <span class="doodle-title">&#9999;&#65039; Scribble pad</span>
+            <button class="doodle-close" onclick="DoodlePad.toggle()" title="Close" aria-label="Close">&#10005;</button>
+        </div>
         <div class="doodle-tools">
             <button class="doodle-swatch" data-color="#161616" style="background:#161616" title="Black"></button>
             <button class="doodle-swatch" data-color="#e74c3c" style="background:#e74c3c" title="Red"></button>
@@ -763,11 +773,13 @@ input[type="range"]:disabled { cursor: not-allowed; }
             <button class="doodle-swatch" data-color="#4fc3f7" style="background:#4fc3f7" title="Blue"></button>
             <button class="doodle-swatch" data-color="#ffb000" style="background:#ffb000" title="Orange"></button>
             <button class="doodle-swatch" data-color="#9b59b6" style="background:#9b59b6" title="Purple"></button>
-            <button class="doodle-tool doodle-tool-icon" id="doodleEraser" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g transform="rotate(-40 12 12)"><rect x="5" y="8.5" width="14" height="8" rx="1.6" fill="#ff8fab" stroke="currentColor" stroke-width="1.4"/><rect x="5" y="12.5" width="14" height="4" rx="0" fill="#dce3ee" stroke="currentColor" stroke-width="1.4"/><rect x="5" y="8.5" width="14" height="8" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/></g></svg></button>
-            <input type="range" id="doodleThickness" class="doodle-thick" min="1" max="24" value="3" title="Pen thickness">
+            <button class="doodle-tool doodle-tool-icon" id="doodleEraser" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" style="pointer-events:none"><g transform="rotate(-40 12 12)"><rect x="4" y="8" width="16" height="9" rx="1.8" fill="#ff8fab" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="12.5" width="16" height="4.5" fill="#dce3ee" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="8" width="16" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/></g></svg></button>
+            <span class="doodle-pensize">
+                <label for="doodleThickness">Pen size</label>
+                <input type="range" id="doodleThickness" class="doodle-thick" min="1" max="24" value="3" title="Pen size">
+            </span>
             <button class="doodle-tool" id="doodleClear" title="Clear all">Clear</button>
         </div>
-        <button class="doodle-close" onclick="DoodlePad.toggle()" title="Close">&#10005;</button>
     </div>
     <div class="doodle-body">
         <canvas id="doodleCanvas"></canvas>
@@ -788,6 +800,7 @@ const DoodlePad = (function () {
     let win, canvas, ctx;
     let color = '#161616';
     let thickness = 3;
+    const ERASER_WIDTH = 26;     // fixed, large enough to rub out writing; not tied to the pen slider
     let eraser = false;
     let strokes = [];            // persisted in memory: {color, width, erase, pts:[{x,y}]}
     let current = null;
@@ -919,7 +932,8 @@ const DoodlePad = (function () {
             activePointerId = e.pointerId;
             drawing = true;
             const p = localPoint(e.clientX, e.clientY);
-            current = { color: color, width: thickness, erase: eraser, pts: [p] };
+            const strokeWidth = eraser ? ERASER_WIDTH : thickness;
+            current = { color: color, width: strokeWidth, erase: eraser, pts: [p] };
             try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
             e.preventDefault();
         }, { passive: false });
