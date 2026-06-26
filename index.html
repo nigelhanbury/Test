@@ -339,6 +339,9 @@ input[type="range"]:disabled { cursor: not-allowed; }
     flex-direction: column;
     overflow: hidden;
     touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;   /* stop the iOS copy/paste callout on hold */
 }
 .doodle-window.open { display: flex; }
 .doodle-header {
@@ -379,7 +382,13 @@ input[type="range"]:disabled { cursor: not-allowed; }
     touch-action: manipulation;
 }
 .doodle-body { flex: 1; min-height: 0; }
-#doodleCanvas { display: block; width: 100%; height: 100%; background: #f4f4f8; }
+#doodleCanvas {
+    display: block; width: 100%; height: 100%; background: #f4f4f8;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
 .doodle-resize-grip {
     position: absolute; right: 0; bottom: 0; width: 18px; height: 18px;
     cursor: nwse-resize; opacity: 0.6;
@@ -893,6 +902,15 @@ const DoodlePad = (function () {
     }
 
     function initDrawing() {
+        // Belt-and-braces against the iOS Safari selection / copy-paste callout
+        // that otherwise steals stylus strokes: cancel the selection and context
+        // menu events on the canvas, and swallow raw touch events (we draw via
+        // pointer events instead).
+        canvas.addEventListener('selectstart', function (e) { e.preventDefault(); });
+        canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        canvas.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+        canvas.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
         // Pointer events give us Pencil vs touch and pressure for free, and let
         // us reject the palm by locking to a single pointer once drawing starts.
         canvas.addEventListener('pointerdown', function (e) {
