@@ -766,7 +766,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
             <button class="doodle-swatch" data-gcolor="#2ecc71" style="background:#2ecc71" title="Green"></button>
             <button class="doodle-swatch" data-gcolor="#4fc3f7" style="background:#4fc3f7" title="Blue"></button>
             <button class="doodle-tool doodle-tool-icon" id="graphsEraser" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="pointer-events:none"><g transform="rotate(-40 12 12)"><rect x="4" y="8" width="16" height="9" rx="1.8" fill="#ff8fab" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="12.5" width="16" height="4.5" fill="#dce3ee" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="8" width="16" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/></g></svg></button>
-            <span class="doodle-pensize"><label for="graphsThickness">Pen size</label><input type="range" id="graphsThickness" class="doodle-thick" min="1" max="24" value="3" title="Pen size"></span>
+            <span class="doodle-pensize"><label for="graphsThickness">Pen size</label><input type="range" id="graphsThickness" class="doodle-thick" min="0.5" max="3" step="0.1" value="3" title="Pen size"></span>
             <button class="doodle-tool" id="graphsAnnotateClear" title="Clear annotations">Clear</button>
         </span>
     </div>
@@ -824,7 +824,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
             <button class="doodle-tool doodle-tool-icon" id="doodleEraser" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" style="pointer-events:none"><g transform="rotate(-40 12 12)"><rect x="4" y="8" width="16" height="9" rx="1.8" fill="#ff8fab" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="12.5" width="16" height="4.5" fill="#dce3ee" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="8" width="16" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/></g></svg></button>
             <span class="doodle-pensize">
                 <label for="doodleThickness">Pen size</label>
-                <input type="range" id="doodleThickness" class="doodle-thick" min="1" max="24" value="3" title="Pen size">
+                <input type="range" id="doodleThickness" class="doodle-thick" min="0.5" max="3" step="0.1" value="3" title="Pen size">
             </span>
             <button class="doodle-tool" id="doodleClear" title="Clear all">Clear</button>
         </div>
