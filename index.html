@@ -530,7 +530,40 @@ input[type="range"]:disabled { cursor: not-allowed; }
     flex: 1;
     min-height: 0;
     display: flex;
+    position: relative;
 }
+.graphs-stage {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+.graphs-stage > canvas {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+}
+.graphs-annotate-canvas {
+    pointer-events: none;          /* transparent to clicks until annotate mode is on */
+    touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.graphs-annotate-canvas.active { pointer-events: auto; }
+.graphs-annotate-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px 0;
+    flex-wrap: wrap;
+}
+.graphs-annotate-toggle {
+    background: rgba(255,255,255,0.1); color: #cdd6e6;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 6px;
+    padding: 4px 10px; font-size: 0.82em; cursor: pointer;
+    touch-action: manipulation;
+}
+.graphs-annotate-toggle.active { background: #4fc3f7; color: #10131c; border-color: #4fc3f7; }
+.graphs-annotate-tools { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* When annotate mode is on, mark the graph window so it's visually obvious. */
+.graphs-window.annotating .graphs-body { box-shadow: inset 0 0 0 2px rgba(79,195,247,0.7); }
 .graphs-strip {
     display: flex;
     align-items: center;
@@ -725,12 +758,27 @@ input[type="range"]:disabled { cursor: not-allowed; }
         </div>
         <button class="graphs-close" onclick="closeGraphsModal()" title="Close">&#10005;</button>
     </div>
+    <div class="graphs-annotate-bar" id="graphsAnnotateBar">
+        <button class="graphs-annotate-toggle" id="graphsAnnotateToggle" onclick="GraphAnnotate.toggle()" title="Draw on the graph">&#9999;&#65039; Annotate</button>
+        <span class="graphs-annotate-tools" id="graphsAnnotateTools" style="display:none;">
+            <button class="doodle-swatch" data-gcolor="#161616" style="background:#161616" title="Black"></button>
+            <button class="doodle-swatch" data-gcolor="#e74c3c" style="background:#e74c3c" title="Red"></button>
+            <button class="doodle-swatch" data-gcolor="#2ecc71" style="background:#2ecc71" title="Green"></button>
+            <button class="doodle-swatch" data-gcolor="#4fc3f7" style="background:#4fc3f7" title="Blue"></button>
+            <button class="doodle-tool doodle-tool-icon" id="graphsEraser" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="pointer-events:none"><g transform="rotate(-40 12 12)"><rect x="4" y="8" width="16" height="9" rx="1.8" fill="#ff8fab" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="12.5" width="16" height="4.5" fill="#dce3ee" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="8" width="16" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/></g></svg></button>
+            <span class="doodle-pensize"><label for="graphsThickness">Pen size</label><input type="range" id="graphsThickness" class="doodle-thick" min="1" max="24" value="3" title="Pen size"></span>
+            <button class="doodle-tool" id="graphsAnnotateClear" title="Clear annotations">Clear</button>
+        </span>
+    </div>
     <div class="graphs-strip" id="graphsStrip" style="display:none;">
         <input type="checkbox" id="showCurrentUnder" onchange="toggleCurrentUnder()">
         <label for="showCurrentUnder">Show current underneath (I = |dQ/dt|), with tangent</label>
     </div>
     <div class="graphs-body">
-        <canvas id="graphsModalCanvas"></canvas>
+        <div class="graphs-stage" id="graphsStage">
+            <canvas id="graphsModalCanvas"></canvas>
+            <canvas id="graphsAnnotateCanvas" class="graphs-annotate-canvas"></canvas>
+        </div>
     </div>
     <div class="graphs-scrub-row" id="graphsScrubRow" style="display:none;">
         <span class="graphs-scrub-label">Scrub time</span>
@@ -1035,6 +1083,202 @@ const DoodlePad = (function () {
 
     return { toggle: toggle };
 })();
+
+/* =====================================================================
+   Graph annotation overlay. A transparent canvas sitting over the graph
+   plotting area. Toggled by an Annotate button; while on, it captures
+   stylus/mouse strokes and suspends graph interaction. Each graph preset
+   keeps its OWN annotations: switching preset swaps the visible set, and
+   returning to a graph restores exactly what was drawn on it. Marks
+   persist across window close/reopen - clearing is the user's
+   responsibility (and clears only the current graph). Namespaced
+   GraphAnnotate. Reuses the scribble pad's pointer / palm-rejection.
+   ===================================================================== */
+const GraphAnnotate = (function () {
+    let canvas, ctx, win, body, toggleBtn, tools;
+    let on = false;
+    let color = '#161616';
+    let thickness = 3;
+    const ERASER_WIDTH = 22;
+    let eraser = false;
+    const strokesByGraph = {};   // { graphType: [strokes] } - per-preset annotations
+    let graphKey = 'q';          // which preset's annotations are currently shown
+    let strokes = [];            // reference to strokesByGraph[graphKey]
+    let current = null;
+    let drawing = false;
+    let activePointerId = null;
+    let dpr = 1;
+
+    function storeFor(key) {
+        if (!strokesByGraph[key]) strokesByGraph[key] = [];
+        return strokesByGraph[key];
+    }
+
+    function el(id) { return document.getElementById(id); }
+
+    function init() {
+        canvas = el('graphsAnnotateCanvas');
+        win = el('graphsWindow');
+        body = win ? win.querySelector('.graphs-body') : null;
+        toggleBtn = el('graphsAnnotateToggle');
+        tools = el('graphsAnnotateTools');
+        if (!canvas || !win) return;
+        ctx = canvas.getContext('2d');
+
+        // Tool wiring.
+        const swatches = tools.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.addEventListener('click', function () {
+                color = s.getAttribute('data-gcolor');
+                eraser = false;
+                el('graphsEraser').classList.remove('active');
+                setActiveSwatch();
+            });
+        });
+        el('graphsEraser').addEventListener('click', function () {
+            eraser = !eraser;
+            el('graphsEraser').classList.toggle('active', eraser);
+            setActiveSwatch();
+        });
+        el('graphsThickness').addEventListener('input', function (e) {
+            thickness = parseFloat(e.target.value);
+        });
+        el('graphsAnnotateClear').addEventListener('click', function () {
+            strokes.length = 0;          // clear only the current graph's annotations
+            repaint();
+        });
+        strokes = storeFor(graphKey);
+        setActiveSwatch();
+        initDrawing();
+    }
+
+    /* Called when the graph preset changes, so each graph shows its own marks. */
+    function setGraph(key) {
+        // finish any in-progress stroke into the outgoing graph first
+        if (current && current.pts.length) strokes.push(current);
+        current = null;
+        graphKey = key;
+        strokes = storeFor(key);
+        repaint();
+    }
+
+    function setActiveSwatch() {
+        const swatches = tools.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.classList.toggle('active', !eraser && s.getAttribute('data-gcolor') === color);
+        });
+    }
+
+    function toggle() {
+        on = !on;
+        toggleBtn.classList.toggle('active', on);
+        tools.style.display = on ? 'inline-flex' : 'none';
+        canvas.classList.toggle('active', on);
+        win.classList.toggle('annotating', on);
+        if (on) resize();
+    }
+
+    function isOn() { return on; }
+
+    // Size the overlay backing store to its CSS box and repaint stored strokes.
+    function resize() {
+        if (!canvas) return;
+        dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width < 5 || rect.height < 5) return;
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        repaint();
+    }
+
+    function repaint() {
+        if (!ctx) return;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);   // transparent overlay
+        for (let i = 0; i < strokes.length; i++) drawStroke(strokes[i]);
+        if (current) drawStroke(current);
+    }
+
+    function drawStroke(s) {
+        if (!s.pts.length) return;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = s.width;
+        if (s.erase) {
+            // True erase on a transparent layer: cut the pixels out.
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = 'rgba(0,0,0,1)';
+        } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = s.color;
+        }
+        ctx.beginPath();
+        ctx.moveTo(s.pts[0].x, s.pts[0].y);
+        if (s.pts.length === 1) {
+            ctx.lineTo(s.pts[0].x + 0.01, s.pts[0].y + 0.01);
+        } else {
+            for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i].x, s.pts[i].y);
+        }
+        ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function localPoint(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function initDrawing() {
+        canvas.addEventListener('selectstart', function (e) { e.preventDefault(); });
+        canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        canvas.addEventListener('touchstart', function (e) { if (on) e.preventDefault(); }, { passive: false });
+        canvas.addEventListener('touchmove', function (e) { if (on) e.preventDefault(); }, { passive: false });
+
+        canvas.addEventListener('pointerdown', function (e) {
+            if (!on) return;
+            if (e.pointerType === 'touch' && activePointerId !== null) return;
+            activePointerId = e.pointerId;
+            drawing = true;
+            const p = localPoint(e.clientX, e.clientY);
+            current = { color: color, width: eraser ? ERASER_WIDTH : thickness, erase: eraser, pts: [p] };
+            try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('pointermove', function (e) {
+            if (!drawing || e.pointerId !== activePointerId) return;
+            let evs = [e];
+            if (e.getCoalescedEvents) {
+                const c = e.getCoalescedEvents();
+                if (c && c.length) evs = c;
+            }
+            for (let i = 0; i < evs.length; i++) current.pts.push(localPoint(evs[i].clientX, evs[i].clientY));
+            repaint();
+            e.preventDefault();
+        }, { passive: false });
+
+        function endStroke(e) {
+            if (e.pointerId !== activePointerId) return;
+            if (current && current.pts.length) strokes.push(current);
+            current = null;
+            drawing = false;
+            activePointerId = null;
+            try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+        canvas.addEventListener('pointerup', endStroke, { passive: false });
+        canvas.addEventListener('pointercancel', endStroke, { passive: false });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    return { toggle: toggle, isOn: isOn, resize: resize, repaint: repaint, setGraph: setGraph };
+})();
+
 
 </script>
 
@@ -2216,7 +2460,10 @@ function openGraphsModal() {
             graphsState.positioned = true;
         }
     }
-    requestAnimationFrame(drawGraphsModal);
+    requestAnimationFrame(function () {
+        drawGraphsModal();
+        if (typeof GraphAnnotate !== "undefined") GraphAnnotate.resize();   // keep annotation overlay aligned
+    });
 }
 
 function closeGraphsModal() {
@@ -2238,6 +2485,7 @@ function setGraphType(type) {
     const isCharge = (type === 'q');
     if (strip) strip.style.display = isCharge ? 'flex' : 'none';
     updateGraphScrubVisibility();
+    if (typeof GraphAnnotate !== "undefined") GraphAnnotate.setGraph(type);
     if (graphsState.open) drawGraphsModal();
 }
 
@@ -2814,6 +3062,7 @@ function initGraphsWindow() {
             win.style.width = newW + 'px';
             win.style.height = newH + 'px';
             if (graphsState.open) drawGraphsModal();
+            if (typeof GraphAnnotate !== "undefined") GraphAnnotate.resize();
         };
         const endResize = () => { graphsState.windowResize.active = false; };
 
