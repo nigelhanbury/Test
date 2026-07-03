@@ -1423,8 +1423,7 @@ const CircuitAnnotate = (function () {
     let strokes = [];            // persists until the user clears
     let current = null;
     let drawing = false;
-    let activePointerId = null;
-    let lastTouchTime = 0;       // synthetic-mouse suppression (matches circuit handlers)
+    let activePointerId = null;  // the single pointer we draw with (palm rejection)
 
     function el(id) { return document.getElementById(id); }
 
@@ -1518,66 +1517,51 @@ const CircuitAnnotate = (function () {
         ctx.globalCompositeOperation = 'source-over';
     }
 
-    function startStroke(clientX, clientY) {
-        drawing = true;
-        const p = bufPos(clientX, clientY);
-        current = { color: color, width: eraser ? ERASER_WIDTH : thickness, erase: eraser, pts: [p] };
-    }
-    function extendStroke(clientX, clientY) {
-        if (!drawing) return;
-        current.pts.push(bufPos(clientX, clientY));
-        repaint();
-    }
-    function endStroke() {
-        if (current && current.pts.length) strokes.push(current);
-        current = null;
-        drawing = false;
-        activePointerId = null;
-    }
-
     function initDrawing() {
-        // Belt-and-braces against the iOS selection callout on the overlay.
+        // Match GraphAnnotate exactly: pointer events with a single active
+        // pointer id, rejecting extra touches (palm) while one is down, and
+        // ignoring touch input when it isn't the active pointer. This is what
+        // stops a resting palm/finger from spraying strokes.
         canvas.addEventListener('selectstart', function (e) { if (on) e.preventDefault(); });
         canvas.addEventListener('contextmenu', function (e) { if (on) e.preventDefault(); });
+        canvas.addEventListener('touchstart', function (e) { if (on) e.preventDefault(); }, { passive: false });
+        canvas.addEventListener('touchmove', function (e) { if (on) e.preventDefault(); }, { passive: false });
 
-        // Mouse (with synthetic-mouse suppression after touch, like the circuit).
-        canvas.addEventListener('mousedown', function (e) {
+        canvas.addEventListener('pointerdown', function (e) {
             if (!on) return;
-            if (Date.now() - lastTouchTime < 350) return;
-            startStroke(e.clientX, e.clientY);
+            // Reject additional touches while a stroke is already in progress
+            // (a resting palm arrives as a second touch pointer).
+            if (e.pointerType === 'touch' && activePointerId !== null) return;
+            activePointerId = e.pointerId;
+            drawing = true;
+            const p = bufPos(e.clientX, e.clientY);
+            current = { color: color, width: eraser ? ERASER_WIDTH : thickness, erase: eraser, pts: [p] };
+            try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
             e.preventDefault();
-        });
-        window.addEventListener('mousemove', function (e) {
-            if (!on || !drawing) return;
-            extendStroke(e.clientX, e.clientY);
-            e.preventDefault();
-        });
-        window.addEventListener('mouseup', function () {
-            if (on && drawing) endStroke();
-        });
+        }, { passive: false });
 
-        // Touch (finger + Pencil). Overlay has touch-action:none, so we also
-        // preventDefault to stop scrolling; single active touch = palm rejection.
-        canvas.addEventListener('touchstart', function (e) {
-            if (!on) return;
-            lastTouchTime = Date.now();
-            const t = e.touches[0];
-            startStroke(t.clientX, t.clientY);
+        canvas.addEventListener('pointermove', function (e) {
+            if (!drawing || e.pointerId !== activePointerId) return;
+            let evs = [e];
+            if (e.getCoalescedEvents) {
+                const c = e.getCoalescedEvents();
+                if (c && c.length) evs = c;
+            }
+            for (let i = 0; i < evs.length; i++) current.pts.push(bufPos(evs[i].clientX, evs[i].clientY));
+            repaint();
             e.preventDefault();
         }, { passive: false });
-        canvas.addEventListener('touchmove', function (e) {
-            if (!on || !drawing) return;
-            lastTouchTime = Date.now();
-            const t = e.touches[0];
-            extendStroke(t.clientX, t.clientY);
-            e.preventDefault();
-        }, { passive: false });
-        canvas.addEventListener('touchend', function (e) {
-            if (!on) return;
-            lastTouchTime = Date.now();
-            if (drawing) { endStroke(); e.preventDefault(); }
-        }, { passive: false });
-        canvas.addEventListener('touchcancel', function () { if (on && drawing) endStroke(); });
+
+        function endStroke(e) {
+            if (e.pointerId !== activePointerId) return;
+            if (current && current.pts.length) strokes.push(current);
+            current = null;
+            drawing = false;
+            activePointerId = null;
+            try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+        canvas.addEventListener('pointerup', endStroke, { passive: false });
+        canvas.addEventListener('pointercancel', endStroke, { passive: false });
     }
 
     if (document.readyState === 'loading') {
