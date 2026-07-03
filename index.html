@@ -12,7 +12,7 @@
    tap delay and routes Pencil as a pointer. (Matches DC Circuit Builder.) */
 input, button, label, select,
 .checkbox-row, .slider-row,
-.tab-btn, .help-btn, .help-close,
+.tab-btn, .help-btn, .close-btn, .tab-help-btn,
 .switch-btn, .graphs-btn, .graphs-type-btn {
     touch-action: manipulation;
 }
@@ -83,6 +83,28 @@ h1 {
     color: #ffaa44;
     border-color: rgba(255,170,68,0.7);
     box-shadow: 0 0 20px rgba(255,170,68,0.25);
+}
+.tab-help-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(52,211,153,0.18);
+    border: 1px solid rgba(52,211,153,0.4);
+    color: #34d399;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: -4px;
+    align-self: center;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.tab-help-btn:hover {
+    background: rgba(52,211,153,0.4);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(52,211,153,0.4);
 }
 
 .tab-page { display: none; }
@@ -260,6 +282,49 @@ input[type="range"]:disabled { cursor: not-allowed; }
 .reading-value.energy { color: #f1c40f; }
 .reading-value.tau { color: #ffaa44; }
 
+/* Display-options bar sitting directly under the canvas (matches DC kit). */
+.display-options {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 10px 15px;
+    margin-top: 10px;
+    background: linear-gradient(135deg, rgba(30,30,60,0.6), rgba(20,20,40,0.7));
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.opt-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 10px 6px 8px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.opt-group-label {
+    font-size: 0.7em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1px;
+    user-select: none;
+}
+
+/* Three-way Value / Symbol / Hide selector (matches DC Construction Kit). */
+.label-mode-select {
+    background: #1a1a2e;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 1px 2px;
+    font-size: 0.72em;
+    cursor: pointer;
+    outline: none;
+    min-width: 62px;
+}
+.label-mode-select option { background: #1a1a2e; color: #ccc; }
+.checkbox-row span { font-size: 0.78em; white-space: nowrap; }
+
 /* Checkbox rows */
 .checkbox-row {
     display: flex;
@@ -285,20 +350,6 @@ input[type="range"]:disabled { cursor: not-allowed; }
 }
 .action-btn:hover { background: linear-gradient(135deg, rgba(255,170,68,0.45), rgba(255,136,0,0.35)); }
 
-/* Depth note popups */
-.note-box {
-    margin-top: 6px;
-    padding: 10px 12px;
-    background: rgba(79,195,247,0.08);
-    border: 1px solid rgba(79,195,247,0.25);
-    border-radius: 8px;
-    color: #bcd;
-    font-size: 0.8em;
-    line-height: 1.5;
-    display: none;
-}
-.note-box.show { display: block; }
-.note-box b { color: #4fc3f7; }
 
 .help-btn {
     background: transparent;
@@ -312,16 +363,16 @@ input[type="range"]:disabled { cursor: not-allowed; }
 .help-btn:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
 
 /* Help modal */
-.help-overlay {
+.help-modal-overlay {
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.7);
-    z-index: 1000;
+    z-index: 2000;
     justify-content: center;
     align-items: center;
+    backdrop-filter: blur(3px);
 }
-.help-overlay.show { display: flex; }
 
 /* ===================================================================== */
 /* SELF-CONTAINED SCRIBBLE PAD styles (lift with the HTML + JS module).   */
@@ -404,30 +455,36 @@ input[type="range"]:disabled { cursor: not-allowed; }
 }
 .doodle-resize-grip:hover { opacity: 1; }
 .help-modal {
-    background: linear-gradient(135deg, #1a1a2e, #16162a);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 16px;
+    background: linear-gradient(135deg, #1a2540 0%, #0f1525 100%);
+    border: 1px solid rgba(52,211,153,0.3);
+    border-radius: 12px;
     max-width: 560px;
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
-    padding: 24px;
-    box-shadow: 0 0 60px rgba(0,0,0,0.6);
+    padding: 20px 25px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
-.help-modal h2 { color: #ffaa44; font-size: 1.2em; margin-bottom: 14px; }
-.help-modal h4 { color: #4fc3f7; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 6px; }
-.help-modal p { color: #bbb; font-size: 0.88em; line-height: 1.6; margin-bottom: 6px; }
-.help-close {
-    display: block;
-    margin: 18px auto 0;
-    padding: 8px 32px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,170,68,0.5);
-    background: transparent;
-    color: #ffaa44;
+.help-modal h2 {
+    color: #34d399;
+    margin: 0 0 15px 0;
+    font-size: 1.3em;
+    border-bottom: 1px solid rgba(52,211,153,0.2);
+    padding-bottom: 10px;
+}
+.help-modal h3 { color: #80c0a0; margin: 15px 0 8px 0; font-size: 1em; }
+.help-modal p { color: #b0c0d0; margin: 6px 0; font-size: 0.9em; line-height: 1.5; }
+.help-modal .key { color: #facc15; font-weight: 600; }
+.help-modal .close-btn {
+    float: right;
+    background: none;
+    border: none;
+    color: #ff6666;
+    font-size: 20px;
     cursor: pointer;
-    font-size: 0.9em;
+    padding: 0 5px;
 }
+.help-modal .close-btn:hover { color: #ff9999; }
 
 /* ===== Floating graphs window (Projectiles style) ===== */
 .graphs-window {
@@ -606,6 +663,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
 
     <div class="tab-bar">
         <button class="tab-btn active" id="tabBtn1" onclick="showTab(1)">Charge / Discharge</button>
+        <button class="tab-help-btn" onclick="openHelp()" title="Help">?</button>
         <button class="tab-btn" id="tabBtn2" onclick="showTab(2)">Build Your Own</button>
     </div>
 
@@ -617,9 +675,69 @@ input[type="range"]:disabled { cursor: not-allowed; }
                     <div class="canvas-hint">Set <b>R</b>, <b>C</b> and <b>V</b>, then throw the switch. Open <b>Graphs</b> for Q, V, I and energy against time.</div>
                     <button class="graphs-btn" id="graphsBtn" onclick="openGraphsModal()" title="Show charge / discharge graphs">&#128200; Graphs</button>
                     <button class="graphs-btn" id="voltmeterBtn" onclick="addVoltmeterT1()" title="Drop a voltmeter, then drag its probes onto the circuit">&#128268; Voltmeter</button>
+                    <button class="graphs-btn" id="energyMeterBtn" onclick="addEnergyMeterT1()" title="Drop an energy meter, then touch its probe on the cell, capacitor or a resistor">&#9889; Energy</button>
                     <button class="graphs-btn" id="doodleBtn" onclick="DoodlePad.toggle()" title="Open a scribble pad to write or sketch with a stylus">&#9999;&#65039; Scribble</button>
                 </div>
                 <canvas id="canvas1" width="640" height="460"></canvas>
+                <div class="display-options">
+                    <div class="opt-group">
+                        <div class="opt-group-label">Resistors</div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#e67e22">R&#8321; (charge)</span>
+                            <select id="dispRtop" class="label-mode-select" style="color:#e67e22" onchange="onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#e67e22">R&#8322; (discharge)</span>
+                            <select id="dispRbot" class="label-mode-select" style="color:#e67e22" onchange="onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="opt-group">
+                        <div class="opt-group-label">Capacitor</div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#4fc3f7">Capacitance C</span>
+                            <select id="dispC" class="label-mode-select" style="color:#4fc3f7" onchange="onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#4fc3f7">Charge Q</span>
+                            <select id="dispQ" class="label-mode-select" style="color:#4fc3f7" onchange="onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="opt-group">
+                        <div class="opt-group-label">Dynamics</div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#00ff88">Current I</span>
+                            <select id="dispI" class="label-mode-select" style="color:#00ff88" onchange="onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#ffaa44">Time constant &tau;</span>
+                            <select id="dispTau" class="label-mode-select" style="color:#ffaa44" onchange="onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="controls">
@@ -679,59 +797,9 @@ input[type="range"]:disabled { cursor: not-allowed; }
                             <span class="reading-label">Time constant &tau; = RC</span>
                             <span class="reading-value tau" id="tauOut">10.0 s</span>
                         </div>
-                        <div class="reading-row">
-                            <span class="reading-label">Charge Q</span>
-                            <span class="reading-value charge" id="qOut">0 &micro;C</span>
-                        </div>
-                        <div class="reading-row">
-                            <span class="reading-label">Capacitor voltage V<sub>C</sub></span>
-                            <span class="reading-value voltage" id="vcOut">0.00 V</span>
-                        </div>
-                        <div class="reading-row">
-                            <span class="reading-label">Current I</span>
-                            <span class="reading-value current" id="iOut">0.00 mA</span>
-                        </div>
-                        <div class="reading-row">
-                            <span class="reading-label">Energy stored &frac12;CV&sup2;</span>
-                            <span class="reading-value energy" id="eOut">0.00 mJ</span>
-                        </div>
                     </div>
                 </div>
 
-                <div class="panel">
-                    <h3>Depth Notes (opt-in)</h3>
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="noteAsymptote" onchange="toggleNote('Asymptote')">
-                        <label for="noteAsymptote">It never quite fills up</label>
-                    </div>
-                    <div class="note-box" id="boxAsymptote">
-                        <b>The curve is asymptotic.</b> The charge approaches Q&#8320; = CV but never actually reaches it. After one &tau; it is 63% charged; after 5&tau; about 99%, close enough to call full in the lab, but never exactly full.
-                    </div>
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="noteCurrent" onchange="toggleNote('Current')">
-                        <label for="noteCurrent">Current is backwards from intuition</label>
-                    </div>
-                    <div class="note-box" id="boxCurrent">
-                        <b>Current is largest at the start.</b> When the capacitor is empty it opposes the supply least, so current is maximum (I&#8320; = V/R) at t = 0. As it fills, it pushes back harder and the current falls to zero.
-                    </div>
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="noteIdeal" onchange="toggleNote('Ideal')">
-                        <label for="noteIdeal">This is an idealised model</label>
-                    </div>
-                    <div class="note-box" id="boxIdeal">
-                        <b>Idealised, on purpose.</b> Real capacitors leak a little charge, real wires have resistance, and dielectrics are not perfect. The single-exponential model is excellent for A-level work, but it is a model, not the whole truth.
-                    </div>
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="noteDecay" onchange="toggleNote('Decay')">
-                        <label for="noteDecay">Same maths as radioactive decay</label>
-                    </div>
-                    <div class="note-box" id="boxDecay">
-                        <b>A familiar shape.</b> RC discharge follows the same exponential law as radioactive decay. The time constant &tau; = RC plays the role the decay constant does for nuclei; the half-life here is t&#189; = &tau; ln2. Different physics, identical mathematics.
-                    </div>
-                    <div class="btn-row" style="margin-top:10px;">
-                        <button class="help-btn" onclick="openHelp()" style="flex:1;">How to use this tab</button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -789,18 +857,29 @@ input[type="range"]:disabled { cursor: not-allowed; }
 </div>
 
 <!-- Help modal -->
-<div class="help-overlay" id="helpOverlay">
+<div id="helpModalOverlay" class="help-modal-overlay" onclick="if(event.target===this)closeHelp()">
     <div class="help-modal">
-        <h2>Charge / Discharge Instrument</h2>
-        <p>A fixed RC circuit: a supply, a resistor, a two-way switch and a capacitor.</p>
-        <h4>What to do</h4>
-        <p>Set R, C and V with the sliders. The time constant &tau; = RC updates live.</p>
-        <p>Throw the switch to <b>Charge</b> and watch charge build on the plates while the current arrows fade. Switch to <b>Discharge</b> to send the charge back through the resistor. <b>Isolate</b> freezes the capacitor in its current state.</p>
-        <h4>The graphs</h4>
-        <p>Open the floating Graphs window for charge, voltage, current and energy against time. The vertical dashed line marks one time constant &tau;, where charging reaches 63% and discharging falls to 37%. Drag the window by its header; resize from the corner.</p>
-        <h4>Tip</h4>
-        <p>Turn on the depth notes for the ideas students most often get wrong: the asymptote, the backwards current, and the link to radioactive decay.</p>
-        <button class="help-close" onclick="closeHelp()">Got it</button>
+        <button class="close-btn" onclick="closeHelp()">&times;</button>
+        <h2>Capacitor Charge &amp; Discharge &mdash; Help</h2>
+        <h3>What You See</h3>
+        <p>A circuit with a supply, two resistors, a two-way switch and a capacitor. <span class="key">R&#8321;</span> is in the charging path and <span class="key">R&#8322;</span> is in the discharging path, so each can set its own time constant. You can view the movement of the free electrons around the circuit, and a green arrow shows the direction and magnitude of the conventional current.</p>
+        <h3>Controls</h3>
+        <p><span class="key">R&#8321;, R&#8322;, C, V</span> &mdash; set the two resistances, the capacitance and the supply voltage with the sliders. The time constant updates live.</p>
+        <p><span class="key">Charge / Isolate / Discharge</span> &mdash; throw the switch to watch the capacitor charge through R&#8321;, discharge through R&#8322;, or isolate it from the circuit so it holds its charge.</p>
+        <p><span class="key">Reset</span> &mdash; empty the capacitor and return to the start.</p>
+        <h3>The exponential change</h3>
+        <p>While charging, the charge and the potential difference across the capacitor increase towards their final values while the current decays exponentially towards zero; discharging is an exponential decay of all three. The change is fast at first and slows as it goes, approaching the final value asymptotically. After one time constant a charging capacitor has reached about 63% of its final charge and potential difference; after one time constant a discharging capacitor has fallen to about 37% of its initial charge, potential difference and current. Once the change is effectively complete a <span class="key">Review</span> slider appears &mdash; drag it to move through the run at any point, forwards or back.</p>
+        <h3>Graphs</h3>
+        <p><span class="key">Graphs</span> &mdash; open a floating window plotting charge, voltage, current or energy against time, plus a charge-against-voltage view. The dashed line marks one time constant. On the charge graph you can show the current underneath with a moving tangent, and a scrubber links a point on the curve to its slope. Drag the window by its header; resize from the corner.</p>
+        <h3>Meters</h3>
+        <p><span class="key">Voltmeter</span> &mdash; drop it on, then drag its two probes onto the circuit to read a potential difference. <span class="key">Energy</span> &mdash; drop it on and touch its probe to the cell, capacitor or a resistor to read the energy supplied, stored or dissipated.</p>
+        <p><span class="key">Removing an instrument</span> &mdash; double-tap the body of a voltmeter or energy meter to take it off the circuit.</p>
+        <h3>Display options</h3>
+        <p>The various display options under the drawing canvas let you choose, for each quantity, whether to show its <span class="key">Value</span>, just its <span class="key">Symbol</span>, or to <span class="key">Hide</span> it altogether. When a quantity is set to show only its symbol, tapping that symbol on the circuit reveals its value &mdash; useful for interactive teaching, where students predict a value before it is shown.</p>
+        <h3>Extras</h3>
+        <p><span class="key">Scribble</span> &mdash; a floating pad to write or sketch on. <span class="key">Annotate</span> (in the Graphs window) &mdash; draw over a graph; each graph keeps its own marks.</p>
+        <h3>Touch</h3>
+        <p>Drag probes, meters, windows, sliders and the switch with a finger or Apple Pencil exactly as with a mouse.</p>
     </div>
 </div>
 
@@ -1298,15 +1377,8 @@ function showTab(n) {
     document.getElementById('tabBtn2').classList.toggle('active', n === 2);
 }
 
-/* ---------- Depth note toggles ---------- */
-function toggleNote(key) {
-    const cb = document.getElementById('note' + key);
-    const box = document.getElementById('box' + key);
-    box.classList.toggle('show', cb.checked);
-}
-
-function openHelp() { document.getElementById('helpOverlay').classList.add('show'); }
-function closeHelp() { document.getElementById('helpOverlay').classList.remove('show'); }
+function openHelp() { document.getElementById('helpModalOverlay').style.display = 'flex'; }
+function closeHelp() { document.getElementById('helpModalOverlay').style.display = 'none'; }
 
 /* =========================================================================
    TAB 1 STATE
@@ -1326,6 +1398,8 @@ const T1 = {
     mode: 'isolate',
     q: 0,
     qAtModeStart: 0,
+    _bankSupplied: 0,   // energy supplied by the cell in earlier segments of this phase
+    _bankDiss: 0,       // energy dissipated in the resistor in earlier segments of this phase
     t: 0,
     lastFrame: 0,
     histWindow: 50,
@@ -1404,8 +1478,50 @@ function setVariableSlidersLocked(locked) {
 }
 
 function refreshSliderLock() {
+    // Lock the R, C and V sliders when:
+    //  (a) a run is actively in progress (charging/discharging, not yet settled), or
+    //  (b) the scrubber is being used at any instant BEFORE the end of the run.
+    // While scrubbing back through the run, the displayed state is a
+    // reconstructed past instant, so changing a parameter there would restart the
+    // transient from a scrubbed-back charge and jump confusingly. At the very end
+    // of the scrub (slider at max) the scrubbed state equals the live settled
+    // state, so parameters are editable again - that's the "what if" case.
     const running = (T1.mode === 'charge' || T1.mode === 'discharge') && !T1.settled;
-    setVariableSlidersLocked(running);
+    const scrubbingBeforeEnd = T1.scrubbing && (T1._lastScrubVal != null) && (T1._lastScrubVal < 1000);
+    setVariableSlidersLocked(running || scrubbingBeforeEnd);
+}
+
+/* ---------- Display modes (Value / Symbol / Hide) ----------
+   Mirrors the DC Construction Kit's three-way label selector. Each quantity can
+   show its numeric value, just its symbol, or nothing. When a quantity is not in
+   'value' mode, its slider-value readout is hidden too, so the number can't be
+   read off the slider. Tapping a hidden/symbol label on the canvas reveals its
+   value briefly (also as in the DC kit). */
+const DISP = { rtop: 'value', rbot: 'value', c: 'value', i: 'value', tau: 'value', q: 'value' };
+const revealed = { rtop: false, rbot: false, c: false, i: false, tau: false, q: false };
+
+function onDisplayModeChange() {
+    DISP.rtop = document.getElementById('dispRtop').value;
+    DISP.rbot = document.getElementById('dispRbot').value;
+    DISP.c    = document.getElementById('dispC').value;
+    DISP.i    = document.getElementById('dispI').value;
+    DISP.tau  = document.getElementById('dispTau').value;
+    DISP.q    = document.getElementById('dispQ').value;
+    // Selecting 'value' clears any temporary reveal for that quantity.
+    for (const k of ['rtop', 'rbot', 'c', 'i', 'tau', 'q']) {
+        if (DISP[k] === 'value') revealed[k] = false;
+    }
+    readSliders();                 // refresh slider-value visibility
+    updateReadings(presentValues());
+    drawCircuit(presentValues());
+}
+
+/* What to display for a quantity: its formatted value, its symbol, or ''. A
+   temporary reveal (from tapping the canvas label) forces the value. */
+function dispText(key, valueStr, symbolStr) {
+    if (DISP[key] === 'value' || revealed[key]) return valueStr;
+    if (DISP[key] === 'symbol') return symbolStr;
+    return '';
 }
 
 /* ---------- Read sliders ---------- */
@@ -1414,28 +1530,87 @@ function readSliders() {
     T1.Rbot = sliderToR(parseFloat(document.getElementById('rBotSlider').value));
     T1.C = sliderToC(parseFloat(document.getElementById('cSlider').value));
     T1.V = sliderToV(parseFloat(document.getElementById('vSlider').value));
-    document.getElementById('rTopVal').innerHTML = fmtR(T1.Rtop);
-    document.getElementById('rBotVal').innerHTML = fmtR(T1.Rbot);
-    document.getElementById('cVal').innerHTML = fmtC(T1.C);
+    // Slider value readouts respect the display mode: shown in 'value' mode, or
+    // when that quantity has been revealed by tapping its canvas label. (Voltage
+    // always shows - it isn't one of the hideable quantities.)
+    const showR = (k) => (DISP[k] === 'value' || revealed[k]);
+    document.getElementById('rTopVal').innerHTML = showR('rtop') ? fmtR(T1.Rtop) : '';
+    document.getElementById('rBotVal').innerHTML = showR('rbot') ? fmtR(T1.Rbot) : '';
+    document.getElementById('cVal').innerHTML = showR('c') ? fmtC(T1.C) : '';
     document.getElementById('vVal').innerHTML = T1.V.toFixed(2) + ' V';
-    // Charge and discharge have independent time constants now (R_top vs
-    // R_bottom). Show both. History window tracks the active mode's tau.
+    // Time constants (charge and discharge). Shown per the tau display mode.
     const tauC = T1.Rtop * T1.C;
     const tauD = T1.Rbot * T1.C;
-    document.getElementById('tauOut').innerHTML =
-        'charge ' + fmtTau(tauC) + ' &bull; discharge ' + fmtTau(tauD);
+    const tauEl = document.getElementById('tauOut');
+    if (DISP.tau === 'value' || revealed.tau) {
+        tauEl.innerHTML = 'charge ' + fmtTau(tauC) + ' &bull; discharge ' + fmtTau(tauD);
+    } else if (DISP.tau === 'symbol') {
+        tauEl.innerHTML = '&tau;';
+    } else {
+        tauEl.innerHTML = '';
+    }
     const tauActive = (T1.mode === 'discharge') ? tauD : tauC;
     T1.histWindow = Math.max(SETTLE_TAUS * tauActive, 1e-6);
 }
 
 function onValuesChanged() {
-    T1.qAtModeStart = T1.q;
+    // Remember the target-defining parameters before the change. The steady
+    // state depends only on C and V (Q0 = C*V, V_C -> V); the resistances set
+    // the RATE (tau = RC) but never the final state. So if the circuit has
+    // already settled and only a resistance changed, there is no disequilibrium
+    // to resolve - the charge, voltage and (zero) current are unchanged, and we
+    // must NOT restart a spurious transient. Changing C or V does move the
+    // target, so that correctly starts a new transient.
+    const oldC = T1.C;
+    const oldV = T1.V;
+    const oldQ = T1.q;
+
+    // Peek at whether the target (C or V) is about to change, without disturbing
+    // the current parameters yet.
+    const newC = sliderToC(parseFloat(document.getElementById('cSlider').value));
+    const newV = sliderToV(parseFloat(document.getElementById('vSlider').value));
+    const targetChanged = (newC !== oldC) || (newV !== oldV);
+    const wasSettled = T1.settled;
+
+    if (wasSettled && !targetChanged) {
+        // Resistance-only change on a settled circuit: nothing readjusts. Update
+        // displays (tau etc.) but keep the settled state, scrubber and charge.
+        readSliders();
+        T1.q = oldQ;
+        if (graphsState.open) drawGraphsModal();
+        drawCircuit(presentValues());
+        return;
+    }
+
+    // A genuine new transient begins. Bank the ending segment's energy using the
+    // OLD parameters (still in T1) before we read the new ones.
+    bankCurrentSegmentEnergy();
     readSliders();
+    T1.qAtModeStart = T1.q;
     T1.t = 0;
     T1.settled = false;
     T1.scrubbing = false;
     showScrubber(false);
+    refreshSliderLock();
     if (graphsState.open) drawGraphsModal();
+    drawCircuit(presentValues());
+}
+
+/* Add the current segment's supplied/dissipated energy (measured with the
+   present parameters, from qAtModeStart to the current q) into the banks. */
+function bankCurrentSegmentEnergy() {
+    const C = T1.C;
+    const q = T1.q;
+    const q0 = T1.qAtModeStart;
+    if (T1.mode === 'charge') {
+        const supplied = T1.V * (q - q0);
+        const dStored = (q * q - q0 * q0) / (2 * C);
+        T1._bankSupplied += supplied;
+        T1._bankDiss += (supplied - dStored);
+    } else if (T1.mode === 'discharge') {
+        T1._bankDiss += (q0 * q0 - q * q) / (2 * C);
+        // cell supplies nothing during discharge
+    }
 }
 
 /* ---------- Review scrubber ---------- */
@@ -1505,6 +1680,7 @@ function applyScrub(sliderVal) {
 
     const pv = presentValues();
     updateReadings(pv);
+    refreshSliderLock();
     drawCircuit(pv);
     if (graphsState.open) drawGraphsModal();
 }
@@ -1512,6 +1688,10 @@ function applyScrub(sliderVal) {
 /* ---------- Mode (two-way switch) ---------- */
 function setMode(m) {
     T1.qAtModeStart = T1.q;
+    // Throwing the switch starts a new charge/discharge phase, so the cumulative
+    // energy tallies reset to zero.
+    T1._bankSupplied = 0;
+    T1._bankDiss = 0;
     T1.mode = m;
     document.getElementById('swCharge').classList.toggle('active', m === 'charge');
     document.getElementById('swIsolate').classList.toggle('active', m === 'isolate');
@@ -1601,10 +1781,11 @@ function presentValues() {
 }
 
 function updateReadings(pv) {
-    document.getElementById('qOut').innerHTML = fmtQ(pv.q);
-    document.getElementById('vcOut').innerHTML = pv.vc.toFixed(2) + ' V';
-    document.getElementById('iOut').innerHTML = fmtI(pv.i);
-    document.getElementById('eOut').innerHTML = fmtE(pv.e);
+    // The per-quantity live readings (Q, V_C, I, energy) have moved off the panel:
+    // voltage is measured with the voltmeter, energy with the energy meter, and
+    // Q/I are shown on the canvas under the Display selectors. Only the time
+    // constant remains on the panel, refreshed in readSliders(). Nothing to do
+    // here now, but the function is kept as the central "values changed" hook.
 }
 
 /* =========================================================================
@@ -1824,18 +2005,22 @@ function drawResistorSymLabelled(cx, cy, horizontal, label) {
     ctx1.lineWidth = 3;
     if (horizontal) {
         ctx1.strokeRect(cx - bodyLen / 2, cy - 11, bodyLen, 22);
-        ctx1.fillStyle = color;
-        ctx1.font = 'bold 13px Arial';
-        ctx1.textAlign = 'center';
-        ctx1.textBaseline = 'middle';
-        ctx1.fillText(label, cx, cy - 24);
+        if (label) {
+            ctx1.fillStyle = color;
+            ctx1.font = 'bold 13px Arial';
+            ctx1.textAlign = 'center';
+            ctx1.textBaseline = 'middle';
+            ctx1.fillText(label, cx, cy - 24);
+        }
     } else {
         ctx1.strokeRect(cx - 11, cy - bodyLen / 2, 22, bodyLen);
-        ctx1.fillStyle = color;
-        ctx1.font = 'bold 13px Arial';
-        ctx1.textAlign = 'left';
-        ctx1.textBaseline = 'middle';
-        ctx1.fillText(label, cx + 18, cy);
+        if (label) {
+            ctx1.fillStyle = color;
+            ctx1.font = 'bold 13px Arial';
+            ctx1.textAlign = 'left';
+            ctx1.textBaseline = 'middle';
+            ctx1.fillText(label, cx + 18, cy);
+        }
     }
 }
 
@@ -2109,8 +2294,10 @@ function drawCapacitorSymV(cx, cy, pv) {
     ctx1.font = 'bold 13px Arial';
     ctx1.textAlign = 'center';
     ctx1.textBaseline = 'middle';
-    ctx1.fillText(fmtC(T1.C), cx, cy + plateHalf + 16);
-    ctx1.fillText(fmtQ(pv.q), cx, cy - plateHalf - 16);
+    const cText = dispText('c', fmtC(T1.C), 'C');
+    const qText = dispText('q', fmtQ(pv.q), 'Q');
+    if (cText) ctx1.fillText(cText, cx, cy + plateHalf + 16);
+    if (qText) ctx1.fillText(qText, cx, cy - plateHalf - 16);
 
     // charge symbols stacked vertically on each plate, count ~ stored charge
     const Q0 = T1.C * T1.V;
@@ -2154,12 +2341,15 @@ function drawCurrentArrows(pv) {
     const py = ay - OFFSET;
     drawCurrentArrowAbsolute(px, py, angle);
 
-    // Instantaneous current value just above the arrow.
-    ctx1.fillStyle = '#00ff88';
-    ctx1.font = 'bold 13px Arial';
-    ctx1.textAlign = 'center';
-    ctx1.textBaseline = 'bottom';
-    ctx1.fillText('I = ' + fmtI(Math.abs(pv.i)), px, py - 12);
+    // Instantaneous current label, respecting the display mode.
+    const iText = dispText('i', 'I = ' + fmtI(Math.abs(pv.i)), 'I');
+    if (iText) {
+        ctx1.fillStyle = '#00ff88';
+        ctx1.font = 'bold 13px Arial';
+        ctx1.textAlign = 'center';
+        ctx1.textBaseline = 'bottom';
+        ctx1.fillText(iText, px, py - 12);
+    }
 }
 
 /* Matches DC_Construction_Kit.drawCurrentArrowAbsolute: arrowLen 18,
@@ -2260,8 +2450,8 @@ function drawCircuit(pv) {
     // ---- Components ----
     drawBatterySym(L.battX, L.oT);
     drawCapacitorSymV(L.capX, L.midY, pv);                 // vertical-plate capacitor
-    drawResistorSymLabelled(L.oL, L.resTopY, false, fmtR(T1.Rtop));   // R_top value, vertical on left rail
-    drawResistorSymLabelled(L.resBotX, L.oB, true, fmtR(T1.Rbot));    // R_bottom value, horizontal on bottom rail
+    drawResistorSymLabelled(L.oL, L.resTopY, false, dispText('rtop', fmtR(T1.Rtop), 'R\u2081'));   // R_top, vertical on left rail
+    drawResistorSymLabelled(L.resBotX, L.oB, true, dispText('rbot', fmtR(T1.Rbot), 'R\u2082'));    // R_bottom, horizontal on bottom rail
     drawTwoWaySwitch(L.swX, L.swY);
 
     // "Conventional current, I" label near the middle branch
@@ -2284,24 +2474,31 @@ function drawCircuit(pv) {
         const m = meterDrag.meter;
         const tx = (meterDrag.part === 'p1') ? m.x1 : m.x2;
         const ty = (meterDrag.part === 'p1') ? m.y1 : m.y2;
-        const hit = findWireSnap(tx, ty);
+        const hit = (m.kind === 'energy') ? findComponentSnap(tx, ty) : findWireSnap(tx, ty);
         if (hit) {
+            const hx = (m.kind === 'energy') ? hit.cx : hit.x;
+            const hy = (m.kind === 'energy') ? hit.cy : hit.y;
             ctx1.save();
             ctx1.beginPath();
-            ctx1.arc(hit.x, hit.y, 9, 0, Math.PI * 2);
+            ctx1.arc(hx, hy, (m.kind === 'energy') ? 26 : 9, 0, Math.PI * 2);
             ctx1.lineWidth = 3;
-            ctx1.strokeStyle = 'rgba(120,200,255,0.95)';
-            ctx1.shadowColor = 'rgba(120,200,255,0.9)';
+            ctx1.strokeStyle = (m.kind === 'energy') ? 'rgba(120,255,170,0.95)' : 'rgba(120,200,255,0.95)';
+            ctx1.shadowColor = ctx1.strokeStyle;
             ctx1.shadowBlur = 10;
             ctx1.stroke();
             ctx1.restore();
         }
     }
 
-    // ---- Voltmeters on top of everything ----
+    // ---- Meters on top of everything ----
     for (const m of T1.meters) {
-        m.voltage = meterReading(m, pv);
-        drawVoltmeterT1(m);
+        if (m.kind === 'energy') {
+            m.energy = energyForComponent(m.component);
+            drawEnergyMeterT1(m);
+        } else {
+            m.voltage = meterReading(m, pv);
+            drawVoltmeterT1(m);
+        }
     }
 }
 
@@ -2369,6 +2566,68 @@ function drawVoltmeterT1(m) {
 
     drawProbeHandleT1(m.x1, m.y1, '#cc4422', '#ff6644', a1);
     drawProbeHandleT1(m.x2, m.y2, '#222', '#444', a2);
+}
+
+/* Energy meter: green-faced, single probe. Shows the accumulated energy at the
+   touched component with an auto label (supplied / stored / dissipated). */
+function drawEnergyMeterT1(m) {
+    const bodyX = m.bodyX, bodyY = m.bodyY;
+    const bodyWidth = 56, bodyHeight = 64;
+    const connX = bodyX, connY = bodyY + bodyHeight / 2 + 5;
+    const probeHandleHeight = 50;
+    const a1 = 0;
+    const p1TopX = m.x1 + Math.sin(a1) * probeHandleHeight;
+    const p1TopY = m.y1 - Math.cos(a1) * probeHandleHeight;
+
+    drawCableLeadT1(p1TopX, p1TopY, connX, connY, '#0a5d2c', '#13a04f', '#3fe07f', false);
+
+    ctx1.save();
+    ctx1.fillStyle = '#1a1a1a';
+    ctx1.strokeStyle = '#000';
+    ctx1.lineWidth = 2;
+    ctx1.beginPath();
+    ctx1.roundRect(bodyX - bodyWidth / 2 - 5, bodyY - bodyHeight / 2 - 5, bodyWidth + 10, bodyHeight + 15, 12);
+    ctx1.fill();
+    ctx1.stroke();
+
+    const faceGrad = ctx1.createLinearGradient(bodyX, bodyY - bodyHeight / 2, bodyX, bodyY + bodyHeight / 2);
+    faceGrad.addColorStop(0, '#5ee08a');
+    faceGrad.addColorStop(0.5, '#34c46d');
+    faceGrad.addColorStop(1, '#23a558');
+    ctx1.fillStyle = faceGrad;
+    ctx1.beginPath();
+    ctx1.roundRect(bodyX - bodyWidth / 2, bodyY - bodyHeight / 2, bodyWidth, bodyHeight, 8);
+    ctx1.fill();
+
+    ctx1.fillStyle = '#0c2a18';
+    ctx1.font = 'bold 11px Arial';
+    ctx1.textAlign = 'center';
+    ctx1.textBaseline = 'middle';
+    ctx1.fillText('Energy', bodyX, bodyY - 20);
+    // auto label (supplied / stored / dissipated)
+    ctx1.font = 'bold 9px Arial';
+    ctx1.fillText(m.compLabel ? m.compLabel : '--', bodyX, bodyY - 8);
+
+    ctx1.fillStyle = '#f8f8f8';
+    ctx1.strokeStyle = '#999';
+    ctx1.lineWidth = 1;
+    ctx1.beginPath();
+    ctx1.roundRect(bodyX - 26, bodyY + 2, 52, 20, 3);
+    ctx1.fill();
+    ctx1.stroke();
+
+    const e = m.energy;
+    const disp = (isNaN(e) || m.component === null) ? '--' : fmtEnergy(e);
+    ctx1.fillStyle = '#111';
+    ctx1.font = 'bold 12px monospace';
+    ctx1.fillText(disp, bodyX, bodyY + 12);
+    ctx1.restore();
+
+    // single socket
+    ctx1.fillStyle = '#2ecc71'; ctx1.strokeStyle = '#13802f'; ctx1.lineWidth = 2;
+    ctx1.beginPath(); ctx1.arc(connX, connY, 6, 0, Math.PI * 2); ctx1.fill(); ctx1.stroke();
+
+    drawProbeHandleT1(m.x1, m.y1, '#1a8f48', '#3fe07f', a1);
 }
 
 function drawCableLeadT1(probeX, probeY, meterX, meterY, darkColor, midColor, lightColor, isRed) {
@@ -3149,6 +3408,65 @@ function canvasPos(clientX, clientY) {
     };
 }
 
+/* Energy meter display: fixed in millijoules for a stable, comparable reading. */
+function fmtEnergy(joules) {
+    return (joules * 1e3).toFixed(2) + ' mJ';
+}
+
+/* Energy accumulated up to the present instant for a given component, as an
+   exact closed form of the present charge state (so it reads correctly while
+   scrubbing). Components: 'cell', 'cap', 'r1' (R_top, charge path), 'r2'
+   (R_bottom, discharge path). Returns NaN if the probe isn't on a component.
+     Charging:  cell supplies Vq ; cap stores q^2/2C ; R1 dissipates Vq - q^2/2C.
+     Discharge: cap stores q^2/2C ; R2 dissipates (q0^2 - q^2)/2C ; cell 0.
+     Isolate:   cap stores q^2/2C ; everything else 0. */
+function energyForComponent(component) {
+    if (!component) return NaN;
+    const C = T1.C;
+    const q = T1.q;
+    const q0 = T1.qAtModeStart;                 // charge at the start of this phase
+    const stored = (q * q) / (2 * C);           // absolute energy now held by the cap
+    if (component === 'cap') return stored;
+    if (T1.mode === 'charge') {
+        // Energies for the current segment measured from its start (q0); add the
+        // energy banked from earlier segments of this phase so the meter shows a
+        // continuous running total across parameter changes.
+        const supplied = T1.V * (q - q0);
+        const dStored = (q * q - q0 * q0) / (2 * C);
+        if (component === 'cell') return T1._bankSupplied + supplied;
+        if (component === 'r1') return T1._bankDiss + (supplied - dStored);  // integral I^2 R dt >= 0
+        if (component === 'r2') return 0;                    // not in the charge loop
+        return NaN;
+    }
+    if (T1.mode === 'discharge') {
+        if (component === 'r2') return T1._bankDiss + (q0 * q0 - q * q) / (2 * C);  // dissipated in R_bottom
+        if (component === 'cell') return 0;                          // cell not in discharge loop
+        if (component === 'r1') return 0;
+        return NaN;
+    }
+    // isolate
+    if (component === 'cell' || component === 'r1' || component === 'r2') return 0;
+    return NaN;
+}
+
+/* Snap an energy probe to the nearest component body (cell / capacitor / the
+   two resistors). Returns {x, y, component, label} or null. */
+function findComponentSnap(x, y) {
+    const L = LAY;
+    const targets = [
+        { component: 'cell', label: 'supplied',   cx: L.battX,   cy: L.oT },
+        { component: 'cap',  label: 'stored',     cx: L.capX,    cy: L.midY },
+        { component: 'r1',   label: 'dissipated', cx: L.oL,      cy: L.resTopY },
+        { component: 'r2',   label: 'dissipated', cx: L.resBotX, cy: L.oB }
+    ];
+    let best = null, bestD = 55;   // snap radius
+    for (const t of targets) {
+        const d = Math.hypot(x - t.cx, y - t.cy);
+        if (d < bestD) { bestD = d; best = t; }
+    }
+    return best;
+}
+
 function addVoltmeterT1() {
     const L = LAY;
     T1._meterSeq++;
@@ -3157,11 +3475,30 @@ function addVoltmeterT1() {
     const by = 120;
     const m = {
         id: T1._meterSeq,
+        kind: 'volt',
         bodyX: bx, bodyY: by,
         x1: bx - 26, y1: by + 110,   // red probe tip
         x2: bx + 26, y2: by + 110,   // black probe tip
         redNode: null, blackNode: null,
         voltage: NaN
+    };
+    T1.meters.push(m);
+    if (T1.scrubbing) repaintNow();
+}
+
+/* Energy meter: single probe, auto-detects the component it touches and shows
+   the energy accumulated there at the present instant (smart µJ/mJ/J units). */
+function addEnergyMeterT1() {
+    T1._meterSeq++;
+    const bx = 250 + (T1.meters.length * 26);
+    const by = 120;
+    const m = {
+        id: T1._meterSeq,
+        kind: 'energy',
+        bodyX: bx, bodyY: by,
+        x1: bx, y1: by + 110,        // single probe tip
+        component: null, compLabel: null,
+        energy: NaN
     };
     T1.meters.push(m);
     if (T1.scrubbing) repaintNow();
@@ -3183,16 +3520,18 @@ function meterHit(x, y) {
     const BODY_W = 60, BODY_H = 75;
     for (let i = T1.meters.length - 1; i >= 0; i--) {
         const m = T1.meters[i];
-        // Probe 1 (red): handle centre is above the tip along the handle angle.
+        // Probe 1 (red / single): handle centre is above the tip along the angle.
         const c1x = m.x1 + Math.sin(a1) * handleHeight / 2;
         const c1y = m.y1 - Math.cos(a1) * handleHeight / 2;
         if (Math.hypot(x - c1x, y - c1y) < 25 || Math.hypot(x - m.x1, y - m.y1) < 15)
             return { meter: m, part: 'p1' };
-        // Probe 2 (black).
-        const c2x = m.x2 + Math.sin(a2) * handleHeight / 2;
-        const c2y = m.y2 - Math.cos(a2) * handleHeight / 2;
-        if (Math.hypot(x - c2x, y - c2y) < 25 || Math.hypot(x - m.x2, y - m.y2) < 15)
-            return { meter: m, part: 'p2' };
+        // Probe 2 (black) - voltmeter only.
+        if (m.kind !== 'energy') {
+            const c2x = m.x2 + Math.sin(a2) * handleHeight / 2;
+            const c2y = m.y2 - Math.cos(a2) * handleHeight / 2;
+            if (Math.hypot(x - c2x, y - c2y) < 25 || Math.hypot(x - m.x2, y - m.y2) < 15)
+                return { meter: m, part: 'p2' };
+        }
         // Body.
         if (x > m.bodyX - BODY_W / 2 && x < m.bodyX + BODY_W / 2 &&
             y > m.bodyY - BODY_H / 2 && y < m.bodyY + BODY_H / 2) return { meter: m, part: 'body' };
@@ -3202,6 +3541,12 @@ function meterHit(x, y) {
 
 /* Snap a probe tip to the nearest point on any wire; sets the meter's node. */
 function snapProbe(m, part, x, y) {
+    if (m.kind === 'energy') {
+        const hit = findComponentSnap(x, y);
+        if (hit) { m.x1 = hit.cx; m.y1 = hit.cy; m.component = hit.component; m.compLabel = hit.label; }
+        else { m.x1 = x; m.y1 = y; m.component = null; m.compLabel = null; }
+        return;
+    }
     const hit = findWireSnap(x, y);
     if (hit) {
         if (part === 'p1') { m.x1 = hit.x; m.y1 = hit.y; m.redNode = hit.node; }
@@ -3216,7 +3561,11 @@ const meterDrag = { active: false, meter: null, part: null, offX: 0, offY: 0, la
 
 function meterDown(x, y) {
     const hit = meterHit(x, y);
-    if (!hit) return false;
+    if (!hit) {
+        // Not on a meter: maybe a tap to reveal a hidden/symbol label (as in the
+        // DC kit). Returns true if a reveal was toggled so the tap is consumed.
+        return labelRevealHit(x, y);
+    }
     meterDrag.active = true;
     meterDrag.meter = hit.meter;
     meterDrag.part = hit.part;
@@ -3230,6 +3579,34 @@ function meterDown(x, y) {
     T1.meters = T1.meters.filter(mm => mm !== hit.meter).concat(hit.meter);
     if (T1.scrubbing) repaintNow();
     return true;
+}
+
+/* Tap-to-reveal: if a quantity is in symbol/hide mode and its on-canvas label
+   region is tapped, briefly reveal its value (tap again to hide). Mirrors the
+   DC kit's revealedResistanceLabels / revealedCurrentLabels behaviour. */
+function labelRevealHit(x, y) {
+    const L = LAY;
+    const plateHalf = 34;   // matches the capacitor plate half-height used when drawing
+    // The current label sits on the middle branch, just above the current arrow.
+    const iLabelX = (L.capX + 8 + L.nodeR) / 2;
+    const iLabelY = L.midY - 16 - 12;   // OFFSET (16) above wire, then label 12 above arrow
+    const regions = [
+        { key: 'rtop', cx: L.oL,      cy: L.resTopY,                 r: 45 },
+        { key: 'rbot', cx: L.resBotX, cy: L.oB,                      r: 45 },
+        { key: 'c',    cx: L.capX,    cy: L.midY + plateHalf + 16,   r: 36 },
+        { key: 'q',    cx: L.capX,    cy: L.midY - plateHalf - 16,   r: 36 },
+        { key: 'i',    cx: iLabelX,   cy: iLabelY,                   r: 48 }
+    ];
+    for (const rg of regions) {
+        if (DISP[rg.key] === 'value') continue;    // already showing value
+        if (Math.hypot(x - rg.cx, y - rg.cy) <= rg.r) {
+            revealed[rg.key] = !revealed[rg.key];
+            readSliders();                 // reflect reveal on the matching slider value
+            drawCircuit(presentValues());
+            return true;
+        }
+    }
+    return false;
 }
 
 /* Repaint the current frame on demand. The live tick loop idles while the
@@ -3327,10 +3704,6 @@ function initTab1() {
     readSliders();
     setMode('isolate');
     initGraphsWindow();
-
-    document.getElementById('helpOverlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('helpOverlay')) closeHelp();
-    });
 
     requestAnimationFrame(tick);
 }
