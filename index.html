@@ -166,6 +166,31 @@ canvas#canvas1 {
     user-select: none;
     width: 100%;
 }
+.circuit-stage { position: relative; }
+.circuit-annotate-canvas {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    border-radius: 15px;
+    pointer-events: none;           /* transparent to input until annotate mode is on */
+    touch-action: none;             /* safe: separate fixed overlay, not the auto-fit circuit canvas */
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.circuit-annotate-canvas.active { pointer-events: auto; }
+.circuit-stage.annotating canvas#canvas1 { box-shadow: inset 0 0 0 3px rgba(79,195,247,0.8), inset 0 0 50px rgba(0,0,0,0.5); }
+.circuit-canvas-wrap { position: relative; }
+/* Annotate palette sits above the circuit (own row), so it never obscures it. */
+.circuit-annotate-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    background: rgba(15,18,30,0.82);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 6px 10px;
+}
 
 /* Controls sit to the RIGHT of the canvas, top-aligned. */
 .controls {
@@ -679,7 +704,24 @@ input[type="range"]:disabled { cursor: not-allowed; }
                     <button class="graphs-btn" id="energyMeterBtn" onclick="addEnergyMeterT1()" title="Drop an energy meter, then touch its probe on the cell, capacitor or a resistor">&#9889; Energy</button>
                     <button class="graphs-btn" id="doodleBtn" onclick="DoodlePad.toggle()" title="Open a scribble pad to write or sketch with a stylus">&#9999;&#65039; Scribble</button>
                 </div>
-                <canvas id="canvas1" width="640" height="460"></canvas>
+                <div class="circuit-stage" id="circuitStage">
+                    <div class="circuit-annotate-bar" id="circuitAnnotateBar">
+                        <button class="graphs-annotate-toggle" id="caToggle" onclick="CircuitAnnotate.toggle()" title="Draw on the circuit">&#9999;&#65039; Annotate</button>
+                        <span class="graphs-annotate-tools" id="caToolsExpanded" style="display:none;">
+                            <button class="doodle-swatch" data-cacolor="#ffffff" style="background:#ffffff" title="White"></button>
+                            <button class="doodle-swatch" data-cacolor="#e74c3c" style="background:#e74c3c" title="Red"></button>
+                            <button class="doodle-swatch" data-cacolor="#2ecc71" style="background:#2ecc71" title="Green"></button>
+                            <button class="doodle-swatch" data-cacolor="#ffd166" style="background:#ffd166" title="Yellow"></button>
+                            <button class="doodle-tool doodle-tool-icon" id="caEraser" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="pointer-events:none"><g transform="rotate(-40 12 12)"><rect x="4" y="8" width="16" height="9" rx="1.8" fill="#ff8fab" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="12.5" width="16" height="4.5" fill="#dce3ee" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="8" width="16" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/></g></svg></button>
+                            <span class="doodle-pensize"><label for="caThickness">Pen size</label><input type="range" id="caThickness" class="doodle-thick" min="0.5" max="3" step="0.1" value="2" title="Pen size"></span>
+                            <button class="doodle-tool" id="caClear" title="Clear annotations">Clear</button>
+                        </span>
+                    </div>
+                    <div class="circuit-canvas-wrap">
+                        <canvas id="canvas1" width="640" height="460"></canvas>
+                        <canvas id="circuitAnnotateCanvas" width="640" height="460" class="circuit-annotate-canvas"></canvas>
+                    </div>
+                </div>
                 <div class="display-options">
                     <div class="opt-group">
                         <div class="opt-group-label">Resistors</div>
@@ -1358,6 +1400,195 @@ const GraphAnnotate = (function () {
 
     return { toggle: toggle, isOn: isOn, resize: resize, repaint: repaint, setGraph: setGraph };
 })();
+
+/* =====================================================================
+   Circuit annotation overlay. A transparent canvas sitting exactly over
+   the main circuit canvas (same 640x460 buffer, same CSS width:100%
+   scaling), so strokes line up with the circuit one-to-one. An Annotate
+   toggle (pinned inside the canvas, top-left) turns it on: the overlay
+   then captures all input, so the circuit's own handlers (meters, probe
+   snap, switch, tap-to-reveal, double-tap remove) are naturally inert
+   until annotate mode is exited. Strokes persist through animation and
+   switch changes until the user clears them. Mirrors GraphAnnotate, but
+   maps coordinates into the 640x460 buffer like canvasPos() and uses the
+   same synthetic-mouse suppression window as the circuit handlers.
+   ===================================================================== */
+const CircuitAnnotate = (function () {
+    let canvas, ctx, stage, toggleBtn, tools;
+    let on = false;
+    let color = '#ffffff';
+    let thickness = 2;
+    const ERASER_WIDTH = 22;
+    let eraser = false;
+    let strokes = [];            // persists until the user clears
+    let current = null;
+    let drawing = false;
+    let activePointerId = null;
+    let lastTouchTime = 0;       // synthetic-mouse suppression (matches circuit handlers)
+
+    function el(id) { return document.getElementById(id); }
+
+    function init() {
+        canvas = el('circuitAnnotateCanvas');
+        stage = el('circuitStage');
+        toggleBtn = el('caToggle');
+        tools = el('caToolsExpanded');
+        if (!canvas || !stage) return;
+        ctx = canvas.getContext('2d');
+
+        const swatches = tools.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.addEventListener('click', function () {
+                color = s.getAttribute('data-cacolor');
+                eraser = false;
+                el('caEraser').classList.remove('active');
+                setActiveSwatch();
+            });
+        });
+        el('caEraser').addEventListener('click', function () {
+            eraser = !eraser;
+            el('caEraser').classList.toggle('active', eraser);
+            setActiveSwatch();
+        });
+        el('caThickness').addEventListener('input', function (e) {
+            thickness = parseFloat(e.target.value);
+        });
+        el('caClear').addEventListener('click', function () {
+            strokes = [];
+            repaint();
+        });
+        setActiveSwatch();
+        initDrawing();
+    }
+
+    function setActiveSwatch() {
+        const swatches = tools.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.classList.toggle('active', !eraser && s.getAttribute('data-cacolor') === color);
+        });
+    }
+
+    function toggle() {
+        on = !on;
+        toggleBtn.classList.toggle('active', on);
+        tools.style.display = on ? 'flex' : 'none';
+        canvas.classList.toggle('active', on);
+        stage.classList.toggle('annotating', on);
+    }
+
+    function isOn() { return on; }
+
+    /* Map client coords into the 640x480 buffer, exactly like the circuit's
+       canvasPos() so annotations register where the circuit is drawn. */
+    function bufPos(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    function repaint() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);   // transparent overlay
+        for (let i = 0; i < strokes.length; i++) drawStroke(strokes[i]);
+        if (current) drawStroke(current);
+    }
+
+    function drawStroke(s) {
+        if (!s.pts.length) return;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = s.width;
+        if (s.erase) {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = 'rgba(0,0,0,1)';
+        } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = s.color;
+        }
+        ctx.beginPath();
+        ctx.moveTo(s.pts[0].x, s.pts[0].y);
+        if (s.pts.length === 1) {
+            ctx.lineTo(s.pts[0].x + 0.01, s.pts[0].y + 0.01);
+        } else {
+            for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i].x, s.pts[i].y);
+        }
+        ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function startStroke(clientX, clientY) {
+        drawing = true;
+        const p = bufPos(clientX, clientY);
+        current = { color: color, width: eraser ? ERASER_WIDTH : thickness, erase: eraser, pts: [p] };
+    }
+    function extendStroke(clientX, clientY) {
+        if (!drawing) return;
+        current.pts.push(bufPos(clientX, clientY));
+        repaint();
+    }
+    function endStroke() {
+        if (current && current.pts.length) strokes.push(current);
+        current = null;
+        drawing = false;
+        activePointerId = null;
+    }
+
+    function initDrawing() {
+        // Belt-and-braces against the iOS selection callout on the overlay.
+        canvas.addEventListener('selectstart', function (e) { if (on) e.preventDefault(); });
+        canvas.addEventListener('contextmenu', function (e) { if (on) e.preventDefault(); });
+
+        // Mouse (with synthetic-mouse suppression after touch, like the circuit).
+        canvas.addEventListener('mousedown', function (e) {
+            if (!on) return;
+            if (Date.now() - lastTouchTime < 350) return;
+            startStroke(e.clientX, e.clientY);
+            e.preventDefault();
+        });
+        window.addEventListener('mousemove', function (e) {
+            if (!on || !drawing) return;
+            extendStroke(e.clientX, e.clientY);
+            e.preventDefault();
+        });
+        window.addEventListener('mouseup', function () {
+            if (on && drawing) endStroke();
+        });
+
+        // Touch (finger + Pencil). Overlay has touch-action:none, so we also
+        // preventDefault to stop scrolling; single active touch = palm rejection.
+        canvas.addEventListener('touchstart', function (e) {
+            if (!on) return;
+            lastTouchTime = Date.now();
+            const t = e.touches[0];
+            startStroke(t.clientX, t.clientY);
+            e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener('touchmove', function (e) {
+            if (!on || !drawing) return;
+            lastTouchTime = Date.now();
+            const t = e.touches[0];
+            extendStroke(t.clientX, t.clientY);
+            e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener('touchend', function (e) {
+            if (!on) return;
+            lastTouchTime = Date.now();
+            if (drawing) { endStroke(); e.preventDefault(); }
+        }, { passive: false });
+        canvas.addEventListener('touchcancel', function () { if (on && drawing) endStroke(); });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    return { toggle: toggle, isOn: isOn, repaint: repaint };
+})();
+
 
 
 </script>
@@ -2412,6 +2643,10 @@ const LAY = {
 
 function drawCircuit(pv) {
     ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+    drawCircuitBody(pv);
+}
+
+function drawCircuitBody(pv) {
     const wc = '#5a7fb0';
     const L = LAY;
     const g = switchGeom(L.swX, L.swY);
