@@ -916,7 +916,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
         <p><span class="key">Graphs</span> &mdash; open a floating window plotting charge, voltage, current or energy against time, plus a charge-against-voltage view. The dashed line marks one time constant. On the charge graph you can show the current underneath with a moving tangent, and a scrubber links a point on the curve to its slope. Drag the window by its header; resize from the corner.</p>
         <h3>Meters</h3>
         <p><span class="key">Voltmeter</span> &mdash; drop it on, then drag its two probes onto the circuit to read a potential difference. <span class="key">Energy</span> &mdash; drop it on and touch its probe to the cell, capacitor or a resistor to read the energy supplied, stored or dissipated.</p>
-        <p><span class="key">Removing an instrument</span> &mdash; double-tap the body of a voltmeter or energy meter to take it off the circuit.</p>
+        <p><span class="key">Removing an instrument</span> &mdash; press and hold the body of a voltmeter or energy meter for a moment (or right-click on a computer) to take it off the circuit.</p>
         <h3>Display options</h3>
         <p>The various display options under the drawing canvas let you choose, for each quantity, whether to show its <span class="key">Value</span>, just its <span class="key">Symbol</span>, or to <span class="key">Hide</span> it altogether. When a quantity is set to show only its symbol, tapping that symbol on the circuit reveals its value &mdash; useful for interactive teaching, where students predict a value before it is shown.</p>
         <h3>Extras</h3>
@@ -3874,31 +3874,71 @@ window.addEventListener('mouseup', () => { if (meterDrag.active) meterUp(); });
 
 // Touch (finger + Pencil). Canvas keeps no touch-action:none (auto-fit), so we
 // preventDefault here instead.
+// Long-press on a meter body removes it, matching the DC Construction Kit
+// (600ms hold = right-click delete; cancelled if the finger moves >10px so a
+// drag never deletes). Double-tap and right-click are kept as alternatives.
+let meterLongPressTimer = null;
+let meterLongPressStart = null;
+let meterLongPressId = null;
+
+function clearMeterLongPress() {
+    if (meterLongPressTimer) { clearTimeout(meterLongPressTimer); meterLongPressTimer = null; }
+    meterLongPressStart = null;
+    meterLongPressId = null;
+}
+
 canvas1.addEventListener('touchstart', (e) => {
     meterDrag.lastTouchTime = Date.now();
+    if (e.touches.length !== 1) { clearMeterLongPress(); return; }   // multi-touch defence
     const t = e.touches[0];
     const p = canvasPos(t.clientX, t.clientY);
+    // Arm a long-press delete if the touch landed on a meter body.
+    const hit = meterHit(p.x, p.y);
+    if (hit && hit.part === 'body') {
+        meterLongPressStart = { x: t.clientX, y: t.clientY };
+        meterLongPressId = hit.meter.id;
+        meterLongPressTimer = setTimeout(() => {
+            removeMeter(meterLongPressId);
+            clearMeterLongPress();
+            meterDrag.active = false;   // abandon any drag that had begun
+        }, 600);
+    }
     if (meterDown(p.x, p.y)) e.preventDefault();
 }, { passive: false });
 canvas1.addEventListener('touchmove', (e) => {
-    if (!meterDrag.active) return;
     meterDrag.lastTouchTime = Date.now();
+    if (e.touches.length !== 1) return;
     const t = e.touches[0];
+    // Cancel the long-press if the finger moved more than 10px (it's a drag).
+    if (meterLongPressStart) {
+        const d = Math.hypot(t.clientX - meterLongPressStart.x, t.clientY - meterLongPressStart.y);
+        if (d > 10) clearMeterLongPress();
+    }
+    if (!meterDrag.active) return;
     const p = canvasPos(t.clientX, t.clientY);
     meterMove(p.x, p.y);
     e.preventDefault();
 }, { passive: false });
 canvas1.addEventListener('touchend', (e) => {
     meterDrag.lastTouchTime = Date.now();
+    clearMeterLongPress();
     if (meterDrag.active) { meterUp(); e.preventDefault(); }
 }, { passive: false });
-canvas1.addEventListener('touchcancel', () => { if (meterDrag.active) meterUp(); });
+canvas1.addEventListener('touchcancel', () => { clearMeterLongPress(); if (meterDrag.active) meterUp(); });
 
-// Double-click / double-tap a meter body to remove it.
+// Double-click / double-tap a meter body to remove it (kept as an alternative).
 canvas1.addEventListener('dblclick', (e) => {
     const p = canvasPos(e.clientX, e.clientY);
     const hit = meterHit(p.x, p.y);
     if (hit && hit.part === 'body') removeMeter(hit.meter.id);
+});
+
+// Right-click (desktop) / long-press context menu on a meter body removes it,
+// matching the DC kit's onRightClick delete.
+canvas1.addEventListener('contextmenu', (e) => {
+    const p = canvasPos(e.clientX, e.clientY);
+    const hit = meterHit(p.x, p.y);
+    if (hit && hit.part === 'body') { removeMeter(hit.meter.id); e.preventDefault(); }
 });
 
 /* =========================================================================
