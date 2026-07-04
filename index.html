@@ -5038,14 +5038,36 @@ function T2hit(x, y) {
                 y > it.bodyY - bh / 2 - 5 && y < it.bodyY + bh / 2 + 10) return { item: it, part: 'body' };
             continue;
         }
-        // Cell EMF label (draggable; DC kit 20px).
-        if (it.type === 'cell' && it._emfLabel &&
-            Math.hypot(x - it._emfLabel.x, y - it._emfLabel.y) < 20) return { item: it, part: 'emflabel' };
-        // Capacitor labels (draggable; DC kit uses 20px). Checked before the
-        // wiper/endpoints so the labels can be grabbed where they sit.
+        // Cell EMF label (draggable; live position from offset, DC kit 20px).
+        if (it.type === 'cell') {
+            var emx = (it.x1 + it.x2) / 2, emy = (it.y1 + it.y2) / 2;
+            var eOX = (it.labelOffsetX != null) ? it.labelOffsetX : 0;
+            var eOY = (it.labelOffsetY != null) ? it.labelOffsetY : 26;
+            if (Math.hypot(x - (emx + eOX), y - (emy + eOY - 12 * 0.35)) < 20)
+                return { item: it, part: 'emflabel' };
+        }
+        // Capacitor labels (draggable; DC kit computes label pos live from the
+        // offset in the hit test, so it never depends on a prior draw or on the
+        // item being selected). Hit radius 20px, centred on the glyphs' visual
+        // middle (see the draw code) via a small upward shift.
         if (it.type === 'capacitor' || it.type === 'varCapacitor') {
-            if (it._qLabel && Math.hypot(x - it._qLabel.x, y - it._qLabel.y) < 20) return { item: it, part: 'qlabel' };
-            if (it._cLabel && Math.hypot(x - it._cLabel.x, y - it._cLabel.y) < 20) return { item: it, part: 'clabel' };
+            var mcx = (it.x1 + it.x2) / 2, mcy = (it.y1 + it.y2) / 2;
+            // Q label (above): shown unless hidden. Symbol mode uses 20px font.
+            if (T2DISP.q !== 'hide') {
+                var qOX = (it.qLabelOffX != null) ? it.qLabelOffX : 0;
+                var qOY = (it.qLabelOffY != null) ? it.qLabelOffY : -34;
+                var qFontH = (T2DISP.q === 'symbol' && !T2revealQ[it.id]) ? 20 : 11;
+                if (Math.hypot(x - (mcx + qOX), y - (mcy + qOY - qFontH * 0.35)) < 20)
+                    return { item: it, part: 'qlabel' };
+            }
+            // C label (below): always shown unless hidden.
+            if (T2DISP.c !== 'hide') {
+                var cOX = (it.cLabelOffX != null) ? it.cLabelOffX : 0;
+                var cOY = (it.cLabelOffY != null) ? it.cLabelOffY : 32;
+                var cFontH = (T2DISP.c === 'symbol' && !T2revealC[it.id]) ? 20 : 12;
+                if (Math.hypot(x - (mcx + cOX), y - (mcy + cOY - cFontH * 0.35)) < 20)
+                    return { item: it, part: 'clabel' };
+            }
         }
         // Variable capacitor wiper handle (AC kit: within 18px of _wiperX/_wiperY).
         if (it.type === 'varCapacitor' && it._wiperX !== undefined &&
@@ -5100,12 +5122,28 @@ function T2down(x, y) {
     var hit = T2hit(x, y);
     if (hit) {
         T2.selectedId = hit.item.id;
-        // For a label drag, record the grab offset so the label doesn't jump.
-        var lab = (hit.part === 'clabel') ? hit.item._cLabel :
-                  (hit.part === 'qlabel') ? hit.item._qLabel :
-                  (hit.part === 'emflabel') ? hit.item._emfLabel : null;
+        // For a label drag, record the grab offset from the label's draw anchor,
+        // computed live from the item's offsets (matches the hit test; no
+        // dependence on a prior draw).
+        var anchorX = 0, anchorY = 0, haveLab = false;
+        if (hit.part === 'clabel' || hit.part === 'qlabel') {
+            var lmx = (hit.item.x1 + hit.item.x2) / 2, lmy = (hit.item.y1 + hit.item.y2) / 2;
+            if (hit.part === 'clabel') {
+                anchorX = lmx + ((hit.item.cLabelOffX != null) ? hit.item.cLabelOffX : 0);
+                anchorY = lmy + ((hit.item.cLabelOffY != null) ? hit.item.cLabelOffY : 32);
+            } else {
+                anchorX = lmx + ((hit.item.qLabelOffX != null) ? hit.item.qLabelOffX : 0);
+                anchorY = lmy + ((hit.item.qLabelOffY != null) ? hit.item.qLabelOffY : -34);
+            }
+            haveLab = true;
+        } else if (hit.part === 'emflabel') {
+            var emx2 = (hit.item.x1 + hit.item.x2) / 2, emy2 = (hit.item.y1 + hit.item.y2) / 2;
+            anchorX = emx2 + ((hit.item.labelOffsetX != null) ? hit.item.labelOffsetX : 0);
+            anchorY = emy2 + ((hit.item.labelOffsetY != null) ? hit.item.labelOffsetY : 26);
+            haveLab = true;
+        }
         T2._drag = { id: hit.item.id, part: hit.part, ox: x, oy: y, sx: x, sy: y,
-                     ldx: lab ? (x - lab.x) : 0, ldy: lab ? (y - lab.y) : 0 };
+                     ldx: haveLab ? (x - anchorX) : 0, ldy: haveLab ? (y - anchorY) : 0 };
         // A tap on a switch body toggles it (DC kit). We defer the toggle to
         // pointer-up so a body drag still moves the switch.
         T2._switchTapId = (hit.item.type === 'switch' && hit.part === 'body') ? hit.item.id : null;
@@ -5599,11 +5637,14 @@ function T2drawItem(it, selected) {
         it._cLabel = null;
         if (cText) {
             ctx2.fillStyle = '#4fc3f7'; ctx2.textAlign = 'center';
-            ctx2.font = cIsSymbol ? 'bold 20px Arial' : 'bold 12px Arial';
+            var cFont = cIsSymbol ? 20 : 12;
+            ctx2.font = 'bold ' + cFont + 'px Arial';
             var clx = midX + cOffX, cly = midY + cOffY;
             ctx2.fillText(cText, clx, cly);
             var cw = ctx2.measureText(cText).width;
-            it._cLabel = { x: clx, y: cly, w: Math.max(cw, 20), h: cIsSymbol ? 24 : 16 };
+            // Hit-centre on the glyphs' visual middle (baseline minus ~0.35*font),
+            // so the label is grabbed where it is seen, not below it.
+            it._cLabel = { x: clx, y: cly - cFont * 0.35, bx: clx, by: cly, w: Math.max(cw, 20), h: cIsSymbol ? 24 : 16 };
         }
         // Charge label above the capacitor: Value 'Q = ...', Symbol 'Q' (large), hidden.
         it._qLabel = null;
@@ -5612,11 +5653,12 @@ function T2drawItem(it, selected) {
             var qText = T2dispText('q', it.id, 'Q = ' + T2fmtQ(it._solvedQ), 'Q');
             if (qText) {
                 ctx2.fillStyle = '#ffd166'; ctx2.textAlign = 'center';
-                ctx2.font = qIsSymbol ? 'bold 20px Arial' : 'bold 11px Arial';
+                var qFont = qIsSymbol ? 20 : 11;
+                ctx2.font = 'bold ' + qFont + 'px Arial';
                 var qlx = midX + qOffX, qly = midY + qOffY;
                 ctx2.fillText(qText, qlx, qly);
                 var qw = ctx2.measureText(qText).width;
-                it._qLabel = { x: qlx, y: qly, w: Math.max(qw, 20), h: qIsSymbol ? 24 : 16 };
+                it._qLabel = { x: qlx, y: qly - qFont * 0.35, bx: qlx, by: qly, w: Math.max(qw, 20), h: qIsSymbol ? 24 : 16 };
             }
         }
     }
