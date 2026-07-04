@@ -347,6 +347,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
     cursor: pointer;
     outline: none;
     min-width: 62px;
+    touch-action: manipulation;
 }
 .label-mode-select option { background: #1a1a2e; color: #ccc; }
 .checkbox-row span { font-size: 0.78em; white-space: nowrap; }
@@ -387,6 +388,18 @@ input[type="range"]:disabled { cursor: not-allowed; }
     cursor: pointer;
 }
 .help-btn:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+
+/* Tab 2 help button - round green ? (wave-motion style). */
+.build-help-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; margin-left: 6px; vertical-align: middle;
+    border-radius: 50%;
+    background: rgba(46,204,113,0.15);
+    border: 1px solid rgba(46,204,113,0.6);
+    color: #2ecc71; font-size: 0.85em; font-weight: 700; cursor: pointer;
+    touch-action: manipulation;
+}
+.build-help-btn:hover { background: rgba(46,204,113,0.3); color: #fff; }
 
 /* Help modal */
 .help-modal-overlay {
@@ -463,7 +476,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
 }
 .doodle-close:hover { background: rgba(231,76,60,0.6); border-color: rgba(231,76,60,0.8); }
 .doodle-body { flex: 1; min-height: 0; }
-#doodleCanvas {
+#doodleCanvas, #doodleCanvas2 {
     display: block; width: 100%; height: 100%; background: #f4f4f8;
     touch-action: none;
     -webkit-user-select: none;
@@ -680,6 +693,140 @@ input[type="range"]:disabled { cursor: not-allowed; }
     padding: 40px;
     text-align: center;
 }
+
+/* ===== Build Your Own (tab 2) - layout & palette match DC Construction Kit ===== */
+.build-area { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.build-canvas-wrap { position: relative; flex: 1 1 auto; min-width: 500px; }
+.build-controls { width: 300px; flex: 0 0 auto; }
+.components-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 0 0 10px 0;
+}
+.palette-note {
+    font-size: 0.72em; color: #889; line-height: 1.5; margin: 8px 0 0;
+}
+.build-inspector { color: #aab; font-size: 0.85em; line-height: 1.7; }
+.build-inspector .insp-title { font-weight: 700; font-size: 1.05em; }
+.build-inspector .insp-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.build-inspector label { color: #99a; }
+.build-inspector input[type="number"] {
+    width: 84px; background: #1a1a2e; color: #4fc3f7;
+    border: 1px solid #4fc3f7; border-radius: 5px; padding: 3px 5px;
+    font-size: 0.95em; touch-action: manipulation;
+}
+.build-inspector .insp-btn {
+    margin-top: 8px; padding: 5px 12px; border-radius: 6px;
+    background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.5);
+    color: #6ee7a0; cursor: pointer; font-size: 0.9em; touch-action: manipulation;
+}
+.build-inspector .insp-note { color: #778; font-size: 0.9em; margin-top: 8px; font-style: italic; }
+/* Range slider: touch-action none so a Pencil drag moves the thumb, not scroll.
+   Placed after the manipulation rules to win the cascade. */
+.build-inspector input[type="range"].insp-slider { touch-action: none; }
+.build-action {
+    display: block; width: 100%;
+    padding: 9px 10px; border-radius: 8px;
+    background: rgba(255,150,50,0.12);
+    border: 1px solid rgba(255,150,50,0.45);
+    color: #ffb366; font-size: 0.85em; cursor: pointer;
+    touch-action: manipulation;
+}
+.build-action:hover { border-color: rgba(255,150,50,0.7); }
+.drag-component {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 6px 8px 6px;
+    border-radius: 10px;
+    cursor: grab;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+.drag-component:active { cursor: grabbing; }
+.drag-component:hover { transform: scale(1.05); }
+.component-icon { width: 50px; height: 30px; margin-bottom: 8px; }
+.component-label { font-size: 0.75em; color: #ccc; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+
+.drag-component.battery {
+    background: linear-gradient(135deg, rgba(46,204,113,0.3), rgba(39,174,96,0.2));
+    border: 2px solid rgba(46,204,113,0.5);
+    box-shadow: 0 4px 15px rgba(46,204,113,0.3);
+}
+.drag-component.battery:hover { box-shadow: 0 6px 25px rgba(46,204,113,0.5); }
+.drag-component.capacitor, .drag-component.varCapacitor {
+    background: linear-gradient(135deg, rgba(79,195,247,0.3), rgba(41,128,185,0.2));
+    border: 2px solid rgba(79,195,247,0.5);
+    box-shadow: 0 4px 20px rgba(79,195,247,0.3);
+}
+.drag-component.capacitor:hover, .drag-component.varCapacitor:hover { box-shadow: 0 6px 30px rgba(79,195,247,0.5); }
+.drag-component.switch {
+    background: linear-gradient(135deg, rgba(155,89,182,0.3), rgba(142,68,173,0.2));
+    border: 2px solid rgba(155,89,182,0.5);
+    box-shadow: 0 4px 20px rgba(155,89,182,0.3);
+}
+.drag-component.switch:hover { box-shadow: 0 6px 30px rgba(155,89,182,0.5); }
+.drag-component.wire {
+    background: linear-gradient(135deg, rgba(52,152,219,0.3), rgba(41,128,185,0.2));
+    border: 2px solid rgba(52,152,219,0.5);
+    box-shadow: 0 4px 20px rgba(52,152,219,0.3);
+}
+.drag-component.wire:hover { box-shadow: 0 6px 30px rgba(52,152,219,0.5); }
+.drag-component.voltmeter {
+    background: linear-gradient(135deg, rgba(255,107,157,0.3), rgba(255,77,136,0.2));
+    border: 2px solid rgba(255,107,157,0.5);
+    box-shadow: 0 4px 20px rgba(255,107,157,0.3);
+}
+.drag-component.voltmeter:hover { box-shadow: 0 6px 30px rgba(255,107,157,0.5); }
+.drag-component.energy {
+    background: linear-gradient(135deg, rgba(46,204,113,0.3), rgba(39,174,96,0.2));
+    border: 2px solid rgba(46,204,113,0.5);
+    box-shadow: 0 4px 20px rgba(46,204,113,0.3);
+}
+.drag-component.energy:hover { box-shadow: 0 6px 30px rgba(46,204,113,0.5); }
+.drag-component.selected { outline: 3px solid #ffd166; outline-offset: 1px; }
+.drag-component.disabled {
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+    cursor: default !important;
+    filter: grayscale(0.7);
+    transform: none !important;
+}
+
+.build-canvas-wrap { position: relative; }
+/* Tab-2 annotation stage: the overlay canvas stacks exactly on canvas2. */
+.build-canvas-stage { position: relative; }
+.build-canvas-stage.annotating canvas#canvas2 { box-shadow: inset 0 0 0 3px rgba(79,195,247,0.8), inset 0 0 50px rgba(0,0,0,0.5); }
+.build-annotate-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    background: rgba(15,18,30,0.82);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 6px 10px;
+}
+canvas#canvas2 {
+    background: linear-gradient(180deg, #0a0a1f 0%, #151530 100%);
+    border-radius: 15px;
+    display: block;
+    width: 100%;
+    border: 2px solid rgba(255,200,100,0.4);
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 0 30px rgba(255,150,50,0.2);
+    -webkit-user-select: none; user-select: none;
+}
+.build-hint {
+    position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
+    color: rgba(255,255,255,0.45); font-size: 0.85em; pointer-events: none;
+    text-align: center; width: 90%;
+}
 </style>
 </head>
 <body>
@@ -691,6 +838,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
         <button class="tab-btn active" id="tabBtn1" onclick="showTab(1)">Charge / Discharge</button>
         <button class="tab-help-btn" onclick="openHelp()" title="Help">?</button>
         <button class="tab-btn" id="tabBtn2" onclick="showTab(2)">Build Your Own</button>
+        <button class="tab-help-btn" onclick="openBuildHelp()" title="Help">?</button>
     </div>
 
     <!-- ============ TAB 1 ============ -->
@@ -849,9 +997,121 @@ input[type="range"]:disabled { cursor: not-allowed; }
 
     <!-- ============ TAB 2 (scaffold placeholder) ============ -->
     <div class="tab-page" id="page2">
-        <div class="scaffold-msg">
-            Build Your Own (steady-state) is under construction.<br>
-            This tab will let you drag capacitors, resistors, batteries, switches and voltmeters onto a canvas and read the settled-state voltages, charges and stored energy.
+        <p class="tab-blurb" style="margin:0 0 10px;">Drag a component from the palette onto the canvas. Drag its endpoints to rotate, resize or wire it to others; long-press (or right-click) a component to delete it. Build any arrangement of cells and capacitors, then read potential difference and stored energy with the instruments. In the settled state a capacitor is fully charged and carries no current, so this tab is about potential difference, charge and energy &mdash; not current.</p>
+        <div class="build-area">
+            <div class="build-canvas-wrap">
+                <div class="build-annotate-bar" id="buildAnnotateBar2">
+                    <button class="graphs-annotate-toggle" id="caToggle2" onclick="T2Annotate.toggle()" title="Draw on the circuit">&#9999;&#65039; Annotate</button>
+                    <span class="graphs-annotate-tools" id="caToolsExpanded2" style="display:none;">
+                        <button class="doodle-swatch" data-cacolor="#ffffff" style="background:#ffffff" title="White"></button>
+                        <button class="doodle-swatch" data-cacolor="#e74c3c" style="background:#e74c3c" title="Red"></button>
+                        <button class="doodle-swatch" data-cacolor="#2ecc71" style="background:#2ecc71" title="Green"></button>
+                        <button class="doodle-swatch" data-cacolor="#ffd166" style="background:#ffd166" title="Yellow"></button>
+                        <button class="doodle-tool doodle-tool-icon" id="caEraser2" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="pointer-events:none"><g transform="rotate(-40 12 12)"><rect x="4" y="8" width="16" height="9" rx="1.8" fill="#ff8fab" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="12.5" width="16" height="4.5" fill="#dce3ee" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="8" width="16" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/></g></svg></button>
+                        <span class="doodle-pensize"><label for="caThickness2">Pen size</label><input type="range" id="caThickness2" class="doodle-thick" min="0.5" max="3" step="0.1" value="2" title="Pen size"></span>
+                        <button class="doodle-tool" id="caClear2" title="Clear annotations">Clear</button>
+                    </span>
+                    <button class="graphs-btn" id="doodleBtn2" onclick="DoodlePad2.toggle()" title="Open a scribble pad to write or sketch with a stylus" style="margin-left:auto;">&#9999;&#65039; Scribble</button>
+                </div>
+                <div class="build-canvas-stage" id="buildStage2">
+                    <canvas id="canvas2" width="720" height="500"></canvas>
+                    <canvas id="canvas2AnnotateCanvas" width="720" height="500" class="circuit-annotate-canvas"></canvas>
+                </div>
+                <div class="build-hint" id="buildHint">Drag a component from the palette on the right onto the canvas.</div>
+                <div class="display-options" style="margin-top:10px;">
+                    <div class="opt-group">
+                        <div class="opt-group-label">Capacitor labels</div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#4fc3f7">Capacitance C</span>
+                            <select id="dispBuildC" class="label-mode-select" style="color:#4fc3f7" onchange="T2onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#ffd166">Charge Q</span>
+                            <select id="dispBuildQ" class="label-mode-select" style="color:#ffd166" onchange="T2onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="build-controls">
+                <div class="panel">
+                    <h3>Components</h3>
+                    <div class="components-grid" id="buildPalette">
+                        <div class="drag-component battery" data-btype="cell">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <line x1="5" y1="15" x2="18" y2="15" stroke="#2ecc71" stroke-width="3"/>
+                                <line x1="18" y1="5" x2="18" y2="25" stroke="#2ecc71" stroke-width="3"/>
+                                <line x1="25" y1="10" x2="25" y2="20" stroke="#2ecc71" stroke-width="3"/>
+                                <line x1="25" y1="15" x2="45" y2="15" stroke="#2ecc71" stroke-width="3"/>
+                            </svg>
+                            <span class="component-label">Cell</span>
+                        </div>
+                        <div class="drag-component capacitor" data-btype="capacitor">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <line x1="5" y1="15" x2="21" y2="15" stroke="#4fc3f7" stroke-width="3"/>
+                                <line x1="21" y1="4" x2="21" y2="26" stroke="#4fc3f7" stroke-width="3"/>
+                                <line x1="29" y1="4" x2="29" y2="26" stroke="#4fc3f7" stroke-width="3"/>
+                                <line x1="29" y1="15" x2="45" y2="15" stroke="#4fc3f7" stroke-width="3"/>
+                            </svg>
+                            <span class="component-label">Capacitor</span>
+                        </div>
+                        <div class="drag-component varCapacitor" data-btype="varCapacitor">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <line x1="5" y1="18" x2="21" y2="18" stroke="#4fc3f7" stroke-width="3"/>
+                                <line x1="21" y1="9" x2="21" y2="27" stroke="#4fc3f7" stroke-width="3"/>
+                                <line x1="29" y1="9" x2="29" y2="27" stroke="#4fc3f7" stroke-width="3"/>
+                                <line x1="29" y1="18" x2="45" y2="18" stroke="#4fc3f7" stroke-width="3"/>
+                                <line x1="25" y1="2" x2="25" y2="11" stroke="#fff" stroke-width="1.8"/>
+                                <polygon points="25,13 21,5 29,5" fill="#fff"/>
+                            </svg>
+                            <span class="component-label">Var Capacitor</span>
+                        </div>
+                        <div class="drag-component switch" data-btype="switch">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <line x1="5" y1="15" x2="15" y2="15" stroke="#9b59b6" stroke-width="3"/>
+                                <circle cx="15" cy="15" r="2.5" fill="#9b59b6"/>
+                                <line x1="15" y1="15" x2="33" y2="6" stroke="#9b59b6" stroke-width="3"/>
+                                <circle cx="35" cy="15" r="2.5" fill="#9b59b6"/>
+                                <line x1="35" y1="15" x2="45" y2="15" stroke="#9b59b6" stroke-width="3"/>
+                            </svg>
+                            <span class="component-label">Switch</span>
+                        </div>
+                        <div class="drag-component wire" data-btype="wire">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <line x1="5" y1="15" x2="45" y2="15" stroke="#3498db" stroke-width="3"/>
+                            </svg>
+                            <span class="component-label">Wire</span>
+                        </div>
+                        <div class="drag-component voltmeter" data-btype="voltmeter">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <circle cx="25" cy="15" r="11" fill="none" stroke="#ff6b9d" stroke-width="2.5"/>
+                                <text x="25" y="20" font-size="13" fill="#ff6b9d" text-anchor="middle" font-weight="bold">V</text>
+                            </svg>
+                            <span class="component-label">Voltmeter</span>
+                        </div>
+                        <div class="drag-component energy" data-btype="energy">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <circle cx="25" cy="15" r="11" fill="none" stroke="#2ecc71" stroke-width="2.5"/>
+                                <text x="25" y="20" font-size="13" fill="#2ecc71" text-anchor="middle" font-weight="bold">E</text>
+                            </svg>
+                            <span class="component-label">Energy</span>
+                        </div>
+                    </div>
+                    <p class="palette-note">Drag onto the canvas. Drag endpoints to rotate, resize or wire. Drag a label to move it. Long-press to delete a component &mdash; deleting resets the circuit&rsquo;s charge and delivered energy, since you&rsquo;re reconfiguring.</p>
+                    <button class="build-action" id="buildReset" onclick="T2resetCharge()" title="Clear all charge and energy" style="margin-top:10px;">&#8635; Reset charge &amp; energy</button>
+                </div>
+                <div class="panel" id="buildInspectorPanel" style="margin-top:12px;">
+                    <h3>Inspector</h3>
+                    <div id="buildInspector" class="build-inspector">Tap a component to edit it.</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -926,6 +1186,34 @@ input[type="range"]:disabled { cursor: not-allowed; }
     </div>
 </div>
 
+<div id="buildHelpModalOverlay" class="help-modal-overlay" onclick="if(event.target===this)closeBuildHelp()">
+    <div class="help-modal">
+        <button class="close-btn" onclick="closeBuildHelp()">&times;</button>
+        <h2>Build Your Own &mdash; Help</h2>
+        <h3>What this tab is for</h3>
+        <p>Build any arrangement of cells and capacitors and read the potential difference, charge and stored energy once the circuit has settled. In the settled state a capacitor is fully charged and no current flows, so this tab is about charge and energy rather than current. There are no resistors: they only affect how long charging takes, never the final settled state.</p>
+        <h3>Building a circuit</h3>
+        <p><span class="key">Drag</span> a component from the palette onto the canvas. Drag an <span class="key">endpoint</span> to rotate or resize it, or onto another endpoint to wire the two together &mdash; a blue dot marks where three or more ends join. Only one cell is allowed; the cell tile greys out once one is placed.</p>
+        <p><span class="key">Long-press</span> a component (or right-click on a computer) to delete it. Deleting resets the circuit&rsquo;s charge and delivered energy, since removing a part means you are reconfiguring.</p>
+        <h3>Components</h3>
+        <p><span class="key">Cell</span> &mdash; the supply; set its EMF in the inspector, and press <span class="key">r</span> to reverse its polarity. <span class="key">Capacitor</span> &mdash; set its capacitance and, for a source-free circuit, an initial charge. <span class="key">Variable capacitor</span> &mdash; drag the arrow on its body to change the capacitance live. <span class="key">Switch</span> &mdash; tap its body to open or close it. <span class="key">Wire</span> &mdash; a zero-resistance link.</p>
+        <h3>The switch and trapped charge</h3>
+        <p>Closing a switch completes a path so charge can flow; opening it strands whatever charge is already on an isolated capacitor, which then holds that charge. Connect a charged capacitor to an empty one and the charge shares between them, settling at a common voltage &mdash; the total stored energy falls, as it does in a real circuit.</p>
+        <h3>The inspector</h3>
+        <p>Tap a component to select it; its editable properties appear in the <span class="key">Inspector</span> panel, along with the settled voltage and charge for a capacitor. Changes take effect at once.</p>
+        <h3>Meters</h3>
+        <p><span class="key">Voltmeter</span> &mdash; drop it on, then drag its two probes onto the circuit to read a potential difference; the reading follows the probe polarity, so swapping the probes reverses its sign. <span class="key">Energy</span> &mdash; touch its probe to a capacitor to read the energy stored in it, or to the cell to read the energy the cell has delivered. Rotate a probe by its handle to swing it clear of anything underneath, and move a meter by its body. Long-press a meter to remove it.</p>
+        <h3>Energy delivered</h3>
+        <p>The energy the cell has delivered is the work it has done pushing charge into the circuit. It rises as capacitors charge, and falls if charge flows back into the cell &mdash; for instance when you reduce a connected capacitor&rsquo;s value. Charge stranded by an open switch still counts, because it has not returned to the cell.</p>
+        <h3>Display options</h3>
+        <p>The options under the canvas let you choose, for the capacitance and the charge, whether to show the <span class="key">Value</span>, just the <span class="key">Symbol</span>, or to <span class="key">Hide</span> it. In symbol mode, tapping the symbol on the circuit reveals its value &mdash; useful when you want students to predict a value first. Drag any label to reposition it.</p>
+        <h3>Reset</h3>
+        <p><span class="key">Reset charge &amp; energy</span> &mdash; empties every capacitor and clears the delivered-energy total, without changing the circuit you have built.</p>
+        <h3>Touch</h3>
+        <p>Drag components, endpoints, probes, meters, wiper arrows and labels with a finger or Apple Pencil exactly as with a mouse.</p>
+    </div>
+</div>
+
 <!-- ===================================================================== -->
 <!-- SELF-CONTAINED SCRIBBLE / DOODLE PAD  (lift this block + its CSS + JS  -->
 <!-- module into any app; namespaced 'doodle' / DoodlePad, no dependencies) -->
@@ -955,6 +1243,33 @@ input[type="range"]:disabled { cursor: not-allowed; }
         <canvas id="doodleCanvas"></canvas>
     </div>
     <div class="doodle-resize-grip" id="doodleResizeGrip" title="Drag to resize"></div>
+</div>
+
+<div id="doodleWindow2" class="doodle-window">
+    <div class="doodle-header" id="doodleHeader2">
+        <div class="doodle-titlebar">
+            <span class="doodle-title">&#9999;&#65039; Scribble pad</span>
+            <button class="doodle-close" onclick="DoodlePad2.toggle()" title="Close" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="doodle-tools">
+            <button class="doodle-swatch" data-color="#161616" style="background:#161616" title="Black"></button>
+            <button class="doodle-swatch" data-color="#e74c3c" style="background:#e74c3c" title="Red"></button>
+            <button class="doodle-swatch" data-color="#2ecc71" style="background:#2ecc71" title="Green"></button>
+            <button class="doodle-swatch" data-color="#4fc3f7" style="background:#4fc3f7" title="Blue"></button>
+            <button class="doodle-swatch" data-color="#ffb000" style="background:#ffb000" title="Orange"></button>
+            <button class="doodle-swatch" data-color="#9b59b6" style="background:#9b59b6" title="Purple"></button>
+            <button class="doodle-tool doodle-tool-icon" id="doodleEraser2" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" style="pointer-events:none"><g transform="rotate(-40 12 12)"><rect x="4" y="8" width="16" height="9" rx="1.8" fill="#ff8fab" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="12.5" width="16" height="4.5" fill="#dce3ee" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="8" width="16" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/></g></svg></button>
+            <span class="doodle-pensize">
+                <label for="doodleThickness">Pen size</label>
+                <input type="range" id="doodleThickness2" class="doodle-thick" min="0.5" max="3" step="0.1" value="3" title="Pen size">
+            </span>
+            <button class="doodle-tool" id="doodleClear2" title="Clear all">Clear</button>
+        </div>
+    </div>
+    <div class="doodle-body">
+        <canvas id="doodleCanvas2"></canvas>
+    </div>
+    <div class="doodle-resize-grip" id="doodleResizeGrip2" title="Drag to resize"></div>
 </div>
 
 <script>
@@ -1141,6 +1456,247 @@ const DoodlePad = (function () {
     function initDragResize() {
         const header = el('doodleHeader');
         const grip = el('doodleResizeGrip');
+
+        const startDrag = function (cx, cy) {
+            const r = win.getBoundingClientRect();
+            drag.active = true; drag.sx = cx; drag.sy = cy; drag.left = r.left; drag.top = r.top;
+        };
+        const moveDrag = function (cx, cy) {
+            if (!drag.active) return;
+            let nl = drag.left + (cx - drag.sx);
+            let nt = drag.top + (cy - drag.sy);
+            nl = Math.max(-(win.offsetWidth - 80), Math.min(window.innerWidth - 80, nl));
+            nt = Math.max(0, Math.min(window.innerHeight - 40, nt));
+            win.style.left = nl + 'px';
+            win.style.top = nt + 'px';
+        };
+        const endDrag = function () { drag.active = false; };
+
+        header.addEventListener('mousedown', function (e) {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+            startDrag(e.clientX, e.clientY); e.preventDefault();
+        });
+        document.addEventListener('mousemove', function (e) { if (drag.active) moveDrag(e.clientX, e.clientY); });
+        document.addEventListener('mouseup', endDrag);
+        header.addEventListener('touchstart', function (e) {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+            const t = e.touches[0]; startDrag(t.clientX, t.clientY); e.preventDefault();
+        }, { passive: false });
+        document.addEventListener('touchmove', function (e) {
+            if (drag.active) { const t = e.touches[0]; moveDrag(t.clientX, t.clientY); e.preventDefault(); }
+        }, { passive: false });
+        document.addEventListener('touchend', endDrag);
+        document.addEventListener('touchcancel', endDrag);
+
+        const startRez = function (cx, cy) {
+            const r = win.getBoundingClientRect();
+            rez.active = true; rez.sx = cx; rez.sy = cy; rez.w = r.width; rez.h = r.height;
+        };
+        const moveRez = function (cx, cy) {
+            if (!rez.active) return;
+            let nw = Math.max(360, Math.min(window.innerWidth - 30, rez.w + (cx - rez.sx)));
+            let nh = Math.max(260, Math.min(window.innerHeight - 30, rez.h + (cy - rez.sy)));
+            win.style.width = nw + 'px';
+            win.style.height = nh + 'px';
+            resizeCanvas();
+        };
+        const endRez = function () { rez.active = false; };
+
+        grip.addEventListener('mousedown', function (e) { startRez(e.clientX, e.clientY); e.preventDefault(); e.stopPropagation(); });
+        document.addEventListener('mousemove', function (e) { if (rez.active) moveRez(e.clientX, e.clientY); });
+        document.addEventListener('mouseup', endRez);
+        grip.addEventListener('touchstart', function (e) { const t = e.touches[0]; startRez(t.clientX, t.clientY); e.preventDefault(); e.stopPropagation(); }, { passive: false });
+        document.addEventListener('touchmove', function (e) { if (rez.active) { const t = e.touches[0]; moveRez(t.clientX, t.clientY); e.preventDefault(); } }, { passive: false });
+        document.addEventListener('touchend', endRez);
+        document.addEventListener('touchcancel', endRez);
+    }
+
+    // Initialise once the DOM is ready.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    return { toggle: toggle };
+})();
+
+/* ---- Tab-2 duplicate: independent scribble pad (own ids, cannot affect tab 1) ---- */
+const DoodlePad2 = (function () {
+    let win, canvas, ctx;
+    let color = '#161616';
+    let thickness = 3;
+    const ERASER_WIDTH = 26;     // fixed, large enough to rub out writing; not tied to the pen slider
+    let eraser = false;
+    let strokes = [];            // persisted in memory: {color, width, erase, pts:[{x,y}]}
+    let current = null;
+    let drawing = false;
+    let activePointerId = null;  // restrict to one pointer (palm rejection)
+    let dpr = 1;
+    const drag = { active: false, sx: 0, sy: 0, left: 0, top: 0 };
+    const rez = { active: false, sx: 0, sy: 0, w: 0, h: 0 };
+
+    function el(id) { return document.getElementById(id); }
+
+    function init() {
+        win = el('doodleWindow2');
+        canvas = el('doodleCanvas2');
+        if (!win || !canvas) return;
+        ctx = canvas.getContext('2d');
+
+        // Colour swatches.
+        const swatches = win.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.addEventListener('click', function () {
+                color = s.getAttribute('data-color');
+                eraser = false;
+                el('doodleEraser2').classList.remove('active');
+                setActiveSwatch();
+            });
+        });
+        // Eraser.
+        el('doodleEraser2').addEventListener('click', function () {
+            eraser = !eraser;
+            el('doodleEraser2').classList.toggle('active', eraser);
+            setActiveSwatch();
+        });
+        // Thickness.
+        el('doodleThickness2').addEventListener('input', function (e) {
+            thickness = parseFloat(e.target.value);
+        });
+        // Clear.
+        el('doodleClear2').addEventListener('click', function () {
+            strokes = [];
+            repaint();
+        });
+
+        setActiveSwatch();
+        initDrawing();
+        initDragResize();
+        window.addEventListener('resize', function () { if (win.classList.contains('open')) resizeCanvas(); });
+    }
+
+    function setActiveSwatch() {
+        const swatches = win.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.classList.toggle('active', !eraser && s.getAttribute('data-color') === color);
+        });
+    }
+
+    function toggle() {
+        if (!win) return;
+        const open = win.classList.toggle('open');
+        if (open) {
+            // Size the backing store to the element and repaint stored strokes.
+            requestAnimationFrame(function () { resizeCanvas(); });
+        }
+    }
+
+    function resizeCanvas() {
+        dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width < 10 || rect.height < 10) return;
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        repaint();
+    }
+
+    function repaint() {
+        if (!ctx) return;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        ctx.fillStyle = '#f4f4f8';
+        ctx.fillRect(0, 0, rect.width, rect.height);
+        for (let i = 0; i < strokes.length; i++) drawStroke(strokes[i]);
+        if (current) drawStroke(current);
+    }
+
+    function drawStroke(s) {
+        if (!s.pts.length) return;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = s.width;
+        if (s.erase) {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = '#f4f4f8';   // opaque surface, so erase = paint background
+        } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = s.color;
+        }
+        ctx.beginPath();
+        ctx.moveTo(s.pts[0].x, s.pts[0].y);
+        if (s.pts.length === 1) {
+            // a dot
+            ctx.lineTo(s.pts[0].x + 0.01, s.pts[0].y + 0.01);
+        } else {
+            for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i].x, s.pts[i].y);
+        }
+        ctx.stroke();
+    }
+
+    function localPoint(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function initDrawing() {
+        // Belt-and-braces against the iOS Safari selection / copy-paste callout
+        // that otherwise steals stylus strokes: cancel the selection and context
+        // menu events on the canvas, and swallow raw touch events (we draw via
+        // pointer events instead).
+        canvas.addEventListener('selectstart', function (e) { e.preventDefault(); });
+        canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        canvas.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+        canvas.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+        // Pointer events give us Pencil vs touch and pressure for free, and let
+        // us reject the palm by locking to a single pointer once drawing starts.
+        canvas.addEventListener('pointerdown', function (e) {
+            // If a stylus is in use, ignore touch (palm) pointers.
+            if (e.pointerType === 'touch' && activePointerId !== null) return;
+            activePointerId = e.pointerId;
+            drawing = true;
+            const p = localPoint(e.clientX, e.clientY);
+            const strokeWidth = eraser ? ERASER_WIDTH : thickness;
+            current = { color: color, width: strokeWidth, erase: eraser, pts: [p] };
+            try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('pointermove', function (e) {
+            if (!drawing || e.pointerId !== activePointerId) return;
+            // Use coalesced events for smooth high-rate Pencil strokes.
+            let evs = [e];
+            if (e.getCoalescedEvents) {
+                const c = e.getCoalescedEvents();
+                if (c && c.length) evs = c;
+            }
+            for (let i = 0; i < evs.length; i++) {
+                current.pts.push(localPoint(evs[i].clientX, evs[i].clientY));
+            }
+            repaint();
+            e.preventDefault();
+        }, { passive: false });
+
+        function endStroke(e) {
+            if (e.pointerId !== activePointerId) return;
+            if (current && current.pts.length) strokes.push(current);
+            current = null;
+            drawing = false;
+            activePointerId = null;
+            try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+        canvas.addEventListener('pointerup', endStroke, { passive: false });
+        canvas.addEventListener('pointercancel', endStroke, { passive: false });
+        canvas.addEventListener('pointerleave', function (e) {
+            // keep drawing only while captured; capture handles off-canvas moves
+        });
+    }
+
+    function initDragResize() {
+        const header = el('doodleHeader2');
+        const grip = el('doodleResizeGrip2');
 
         const startDrag = function (cx, cy) {
             const r = win.getBoundingClientRect();
@@ -1573,6 +2129,167 @@ const CircuitAnnotate = (function () {
     return { toggle: toggle, isOn: isOn, repaint: repaint };
 })();
 
+/* ---- Tab-2 duplicate: independent circuit annotation (own ids, cannot affect tab 1) ---- */
+const T2Annotate = (function () {
+    let canvas, ctx, stage, toggleBtn, tools;
+    let on = false;
+    let color = '#ffffff';
+    let thickness = 2;
+    const ERASER_WIDTH = 22;
+    let eraser = false;
+    let strokes = [];            // persists until the user clears
+    let current = null;
+    let drawing = false;
+    let activePointerId = null;  // the single pointer we draw with (palm rejection)
+
+    function el(id) { return document.getElementById(id); }
+
+    function init() {
+        canvas = el('canvas2AnnotateCanvas');
+        stage = el('buildStage2');
+        toggleBtn = el('caToggle2');
+        tools = el('caToolsExpanded2');
+        if (!canvas || !stage) return;
+        ctx = canvas.getContext('2d');
+
+        const swatches = tools.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.addEventListener('click', function () {
+                color = s.getAttribute('data-cacolor');
+                eraser = false;
+                el('caEraser2').classList.remove('active');
+                setActiveSwatch();
+            });
+        });
+        el('caEraser2').addEventListener('click', function () {
+            eraser = !eraser;
+            el('caEraser2').classList.toggle('active', eraser);
+            setActiveSwatch();
+        });
+        el('caThickness2').addEventListener('input', function (e) {
+            thickness = parseFloat(e.target.value);
+        });
+        el('caClear2').addEventListener('click', function () {
+            strokes = [];
+            repaint();
+        });
+        setActiveSwatch();
+        initDrawing();
+    }
+
+    function setActiveSwatch() {
+        const swatches = tools.querySelectorAll('.doodle-swatch');
+        swatches.forEach(function (s) {
+            s.classList.toggle('active', !eraser && s.getAttribute('data-cacolor') === color);
+        });
+    }
+
+    function toggle() {
+        on = !on;
+        toggleBtn.classList.toggle('active', on);
+        tools.style.display = on ? 'flex' : 'none';
+        canvas.classList.toggle('active', on);
+        stage.classList.toggle('annotating', on);
+    }
+
+    function isOn() { return on; }
+
+    /* Map client coords into the 640x480 buffer, exactly like the circuit's
+       canvasPos() so annotations register where the circuit is drawn. */
+    function bufPos(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    function repaint() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);   // transparent overlay
+        for (let i = 0; i < strokes.length; i++) drawStroke(strokes[i]);
+        if (current) drawStroke(current);
+    }
+
+    function drawStroke(s) {
+        if (!s.pts.length) return;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = s.width;
+        if (s.erase) {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = 'rgba(0,0,0,1)';
+        } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = s.color;
+        }
+        ctx.beginPath();
+        ctx.moveTo(s.pts[0].x, s.pts[0].y);
+        if (s.pts.length === 1) {
+            ctx.lineTo(s.pts[0].x + 0.01, s.pts[0].y + 0.01);
+        } else {
+            for (let i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i].x, s.pts[i].y);
+        }
+        ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function initDrawing() {
+        // Match GraphAnnotate exactly: pointer events with a single active
+        // pointer id, rejecting extra touches (palm) while one is down, and
+        // ignoring touch input when it isn't the active pointer. This is what
+        // stops a resting palm/finger from spraying strokes.
+        canvas.addEventListener('selectstart', function (e) { if (on) e.preventDefault(); });
+        canvas.addEventListener('contextmenu', function (e) { if (on) e.preventDefault(); });
+        canvas.addEventListener('touchstart', function (e) { if (on) e.preventDefault(); }, { passive: false });
+        canvas.addEventListener('touchmove', function (e) { if (on) e.preventDefault(); }, { passive: false });
+
+        canvas.addEventListener('pointerdown', function (e) {
+            if (!on) return;
+            // Reject additional touches while a stroke is already in progress
+            // (a resting palm arrives as a second touch pointer).
+            if (e.pointerType === 'touch' && activePointerId !== null) return;
+            activePointerId = e.pointerId;
+            drawing = true;
+            const p = bufPos(e.clientX, e.clientY);
+            current = { color: color, width: eraser ? ERASER_WIDTH : thickness, erase: eraser, pts: [p] };
+            try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('pointermove', function (e) {
+            if (!drawing || e.pointerId !== activePointerId) return;
+            let evs = [e];
+            if (e.getCoalescedEvents) {
+                const c = e.getCoalescedEvents();
+                if (c && c.length) evs = c;
+            }
+            for (let i = 0; i < evs.length; i++) current.pts.push(bufPos(evs[i].clientX, evs[i].clientY));
+            repaint();
+            e.preventDefault();
+        }, { passive: false });
+
+        function endStroke(e) {
+            if (e.pointerId !== activePointerId) return;
+            if (current && current.pts.length) strokes.push(current);
+            current = null;
+            drawing = false;
+            activePointerId = null;
+            try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+        canvas.addEventListener('pointerup', endStroke, { passive: false });
+        canvas.addEventListener('pointercancel', endStroke, { passive: false });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    return { toggle: toggle, isOn: isOn, repaint: repaint };
+})();
+
 
 
 </script>
@@ -1586,7 +2303,9 @@ const CircuitAnnotate = (function () {
    =========================================================================== */
 
 /* ---------- Tab switching ---------- */
+var T2activeTab = 1;
 function showTab(n) {
+    T2activeTab = n;
     document.getElementById('page1').classList.toggle('active', n === 1);
     document.getElementById('page2').classList.toggle('active', n === 2);
     document.getElementById('tabBtn1').classList.toggle('active', n === 1);
@@ -1595,6 +2314,10 @@ function showTab(n) {
 
 function openHelp() { document.getElementById('helpModalOverlay').style.display = 'flex'; }
 function closeHelp() { document.getElementById('helpModalOverlay').style.display = 'none'; }
+function openBuildHelp() { document.getElementById('buildHelpModalOverlay').style.display = 'flex'; }
+function closeBuildHelp() { document.getElementById('buildHelpModalOverlay').style.display = 'none'; }
+/* The single tab-bar ? opens help for whichever tab is active. */
+function openActiveHelp() { if (T2activeTab === 2) openBuildHelp(); else openHelp(); }
 
 /* =========================================================================
    TAB 1 STATE
@@ -3967,6 +4690,1443 @@ function initTab1() {
 
     requestAnimationFrame(tick);
 }
+
+/* =====================================================================
+   TAB 2 - Build Your Own (steady-state capacitor networks)
+   Fully isolated from tab 1: its own state (T2), its own canvas (canvas2),
+   its own handlers. Components are two-terminal elements {x1,y1,x2,y2}
+   exactly like the DC Construction Kit. Placement is tap-to-place (tap a
+   palette item, then tap the canvas) - the DC kit's iPad-reliable method.
+   Node detection uses the DC kit's union-find over endpoints within
+   SNAP_DIST. This stage: place, select, move, rotate, delete, wire, and
+   compute the electrical nodes (shown for verification). The charge-
+   conservation solver and instrument readouts come as later increments.
+   ===================================================================== */
+var T2 = {
+    items: [],
+    selectedId: null,
+    draggingFromPalette: null,   // component type being dragged from the palette
+    _seq: 1,
+    nodes: [],
+    _drag: null,
+    lastTouchTime: 0,
+    _lpTimer: null, _lpStart: null, _lpId: null,  // long-press delete
+    cumSupplied: 0,             // (legacy) unused
+    _netEmitted: 0,             // cell's net emitted charge (rises on outflow, falls when charge returns)
+    _netDelivered: 0,           // energy delivered = EMF x net emitted charge
+    _lastPots: null,            // last settled node potentials (for meter display)
+    _lastOk: false              // whether the last settle succeeded
+};
+
+var T2_SNAP_DIST = 22;       // endpoint proximity that merges into one node (DC kit style)
+var T2_GRID = 20;
+
+/* Display modes (Value / Symbol / Hide) for the on-canvas capacitor labels,
+   mirroring tab 1's DISP/dispText. 'c' = capacitance, 'q' = charge. Tapping a
+   symbol label on the canvas reveals that item's value (DC kit per-item reveal
+   Sets keyed by item id). */
+var T2DISP = { c: 'value', q: 'value' };
+var T2revealC = {};   // itemId -> true when this cap's capacitance label is revealed
+var T2revealQ = {};   // itemId -> true when this cap's charge label is revealed
+
+function T2onDisplayModeChange() {
+    var cs = document.getElementById('dispBuildC');
+    var qs = document.getElementById('dispBuildQ');
+    if (cs) T2DISP.c = cs.value;
+    if (qs) T2DISP.q = qs.value;
+    if (T2DISP.c === 'value') T2revealC = {};   // value mode clears reveals
+    if (T2DISP.q === 'value') T2revealQ = {};
+    T2draw();
+}
+
+/* What to display for a quantity on a given item: value, symbol, or '' (hidden).
+   A per-item reveal forces the value. */
+function T2dispText(key, itemId, valueStr, symbolStr) {
+    var revealed = (key === 'c') ? T2revealC[itemId] : T2revealQ[itemId];
+    if (T2DISP[key] === 'value' || revealed) return valueStr;
+    if (T2DISP[key] === 'symbol') return symbolStr;
+    return '';
+}
+
+var T2_DEFS = {
+    cell:         { len: 90, color: '#2ecc71', value: 6,    unit: 'V'  },
+    capacitor:    { len: 80, color: '#4fc3f7', value: 100,  unit: '\u00B5F' },
+    varCapacitor: { len: 80, color: '#4fc3f7', value: 100,  unit: '\u00B5F' },
+    switch:       { len: 80, color: '#9b59b6', value: 0,    unit: ''   },
+    wire:         { len: 90, color: '#5a7fb0', value: 0,    unit: ''   },
+    voltmeter:    { len: 70, color: '#ff6b9d', value: 0,    unit: 'V'  },
+    energy:       { len: 70, color: '#2ecc71', value: 0,    unit: 'J'  }
+};
+
+var canvas2, ctx2;
+
+function T2init() {
+    canvas2 = document.getElementById('canvas2');
+    if (!canvas2) return;
+    ctx2 = canvas2.getContext('2d');
+
+    // Palette: drag a component onto the canvas (DC kit draggingFromPalette).
+    var pal = document.getElementById('buildPalette');
+    var btns = pal.querySelectorAll('.drag-component');
+    for (var i = 0; i < btns.length; i++) {
+        (function (btn) {
+            var type = btn.getAttribute('data-btype');
+            btn.addEventListener('mousedown', function (e) {
+                if (e.button === 2) return;
+                if (type === 'cell' && T2hasCell()) return;   // single EMF source
+                T2.draggingFromPalette = type;
+                e.preventDefault();
+            });
+            btn.addEventListener('touchstart', function (e) {
+                if (type === 'cell' && T2hasCell()) return;   // single EMF source
+                T2.draggingFromPalette = type;
+                T2.lastTouchTime = Date.now();
+            }, { passive: true });
+        })(btns[i]);
+    }
+    T2refreshPalette();
+    // Drop on canvas (mouse up / touch end anywhere; place if over canvas).
+    document.addEventListener('mouseup', function (e) { T2paletteDrop(e.clientX, e.clientY); });
+    document.addEventListener('touchend', function (e) {
+        if (!T2.draggingFromPalette) return;
+        var t = e.changedTouches[0];
+        T2paletteDrop(t.clientX, t.clientY);
+    });
+    document.addEventListener('touchcancel', function () { T2.draggingFromPalette = null; });
+
+    T2bindCanvas();
+    T2draw();
+}
+
+/* Single EMF source: once a cell is on the canvas, grey out and disable the
+   cell palette tile until that cell is deleted. */
+function T2hasCell() {
+    for (var i = 0; i < T2.items.length; i++) { if (T2.items[i].type === 'cell') return true; }
+    return false;
+}
+function T2refreshPalette() {
+    var hasCell = T2hasCell();
+    var pal = document.getElementById('buildPalette');
+    if (!pal) return;
+    var tiles = pal.querySelectorAll('.drag-component');
+    for (var i = 0; i < tiles.length; i++) {
+        if (tiles[i].getAttribute('data-btype') === 'cell') {
+            tiles[i].classList.toggle('disabled', hasCell);
+        }
+    }
+}
+
+/* Drop a palette-dragged component if released over the canvas. */
+function T2paletteDrop(clientX, clientY) {
+    if (!T2.draggingFromPalette) return;
+    var type = T2.draggingFromPalette;
+    T2.draggingFromPalette = null;
+    // Enforce the single-cell rule even if a drag somehow started.
+    if (type === 'cell') {
+        for (var i = 0; i < T2.items.length; i++) { if (T2.items[i].type === 'cell') return; }
+    }
+    var r = canvas2.getBoundingClientRect();
+    if (clientX < r.left || clientX > r.right || clientY < r.top || clientY > r.bottom) return;
+    var x = (clientX - r.left) * (canvas2.width / r.width);
+    var y = (clientY - r.top) * (canvas2.height / r.height);
+    T2addItem(type, x, y);
+    T2hideHint();
+}
+
+function T2hideHint() {
+    var hint = document.getElementById('buildHint');
+    if (hint) hint.style.display = T2.items.length === 0 ? 'block' : 'none';
+}
+
+/* Map client coords into the canvas buffer, matching the DC kit / canvasPos. */
+function T2pos(clientX, clientY) {
+    var r = canvas2.getBoundingClientRect();
+    return {
+        x: (clientX - r.left) * (canvas2.width / r.width),
+        y: (clientY - r.top) * (canvas2.height / r.height)
+    };
+}
+
+function T2snap(v) { return Math.round(v / T2_GRID) * T2_GRID; }
+
+function T2addItem(type, x, y) {
+    var def = T2_DEFS[type];
+    var half = def.len / 2;
+    var cx = T2snap(x), cy = T2snap(y);
+    var item;
+    if (type === 'voltmeter') {
+        // Tab-1 voltmeter geometry: body with two probes hanging below.
+        // angle1/angle2 are each probe's handle orientation (rotatable, Hall-probe
+        // style). Defaults reproduce the original slight tilt.
+        item = {
+            id: T2._seq++, type: 'voltmeter', kind: 'volt',
+            bodyX: cx, bodyY: cy,
+            x1: cx - 26, y1: cy + 110, x2: cx + 26, y2: cy + 110,
+            angle1: -0.15, angle2: 0.15,
+            redNode: null, blackNode: null, voltage: NaN
+        };
+    } else if (type === 'energy') {
+        item = {
+            id: T2._seq++, type: 'energy', kind: 'energy',
+            bodyX: cx, bodyY: cy,
+            x1: cx, y1: cy + 110,
+            angle1: 0,
+            component: null, compLabel: null, energy: NaN
+        };
+    } else {
+        item = {
+            id: T2._seq++,
+            type: type,
+            x1: cx - half, y1: cy,
+            x2: cx + half, y2: cy,
+            value: def.value,
+            unit: def.unit,
+            color: def.color,
+            isOn: type === 'switch' ? false : true,
+            labelOffsetX: 0, labelOffsetY: 26,
+            cLabelOffX: 0, cLabelOffY: 32,   // capacitance label (below symbol), draggable
+            qLabelOffX: 0, qLabelOffY: -34,  // charge label (above symbol), draggable
+            initialQ: 0,
+            storedQ: 0          // persistent charge on the endpoint-1 plate
+        };
+        if (type === 'varCapacitor') {
+            // Variable capacitor - AC kit model: value = minVal + (maxVal-minVal)*wiper,
+            // adjusted by dragging the wiper arrow on the capacitor body.
+            item.wiper = 0.5; item.minVal = 0; item.maxVal = 100;
+            item.value = item.minVal + (item.maxVal - item.minVal) * item.wiper;
+        }
+    }
+    T2.items.push(item);
+    T2.selectedId = item.id;
+    T2computeNodes();
+    T2settle();          // adding a component is a topology event
+    T2refreshPalette();
+    T2draw();
+}
+
+/* ---- Node detection (DC kit union-find over endpoints) ---- */
+function T2endpoints() {
+    var eps = [];
+    for (var i = 0; i < T2.items.length; i++) {
+        var it = T2.items[i];
+        if (it.type === 'voltmeter' || it.type === 'energy') continue; // instruments are sensors
+        eps.push({ x: it.x1, y: it.y1, item: it, endNum: 1 });
+        eps.push({ x: it.x2, y: it.y2, item: it, endNum: 2 });
+    }
+    return eps;
+}
+
+function T2computeNodes() {
+    var eps = T2endpoints();
+    var parent = eps.map(function (_, i) { return i; });
+    function find(i) { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; }
+    function union(i, j) { var pi = find(i), pj = find(j); if (pi !== pj) parent[pi] = pj; }
+
+    // Merge endpoints that are close together (shared node).
+    for (var i = 0; i < eps.length; i++) {
+        for (var j = i + 1; j < eps.length; j++) {
+            if (Math.hypot(eps[i].x - eps[j].x, eps[i].y - eps[j].y) < T2_SNAP_DIST) union(i, j);
+        }
+    }
+    // A wire, or a closed switch, ties its own two endpoints into one node.
+    for (var k = 0; k < eps.length; k++) {
+        var itk = eps[k].item;
+        if (itk.type === 'wire' || (itk.type === 'switch' && itk.isOn)) {
+            // find its partner endpoint
+            for (var m = 0; m < eps.length; m++) {
+                if (eps[m].item === itk && m !== k) union(k, m);
+            }
+        }
+    }
+    // Compress roots to node ids and record a representative position.
+    var rootToNode = {};
+    var nodeList = [];
+    var epToNode = [];
+    for (var p = 0; p < eps.length; p++) {
+        var root = find(p);
+        if (!(root in rootToNode)) {
+            rootToNode[root] = nodeList.length;
+            nodeList.push({ id: nodeList.length, x: eps[p].x, y: eps[p].y, count: 1 });
+        } else {
+            var nd = nodeList[rootToNode[root]];
+            nd.x = (nd.x * nd.count + eps[p].x) / (nd.count + 1);
+            nd.y = (nd.y * nd.count + eps[p].y) / (nd.count + 1);
+            nd.count++;
+        }
+        epToNode[p] = rootToNode[root];
+    }
+    T2.nodes = nodeList;
+    T2._eps = eps;
+    T2._epToNode = epToNode;
+}
+
+/* node ids for an item's two endpoints */
+function T2nodesOf(item) {
+    var eps = T2._eps, e2n = T2._epToNode;
+    var n1 = -1, n2 = -1;
+    for (var i = 0; i < eps.length; i++) {
+        if (eps[i].item === item && eps[i].endNum === 1) n1 = e2n[i];
+        if (eps[i].item === item && eps[i].endNum === 2) n2 = e2n[i];
+    }
+    return [n1, n2];
+}
+
+/* ---- Hit testing ---- */
+function T2hit(x, y) {
+    var handleHeight = 50;
+    // topmost first
+    for (var i = T2.items.length - 1; i >= 0; i--) {
+        var it = T2.items[i];
+        if (it.type === 'voltmeter' || it.type === 'energy') {
+            var a1h = (it.angle1 != null) ? it.angle1 : (it.type === 'energy' ? 0 : -0.15);
+            // Probe 1: tip (connection) vs handle-top (rotate). Handle runs from the
+            // tip up along the angle for handleHeight; the top ~half rotates.
+            var h1topX = it.x1 + Math.sin(a1h) * handleHeight, h1topY = it.y1 - Math.cos(a1h) * handleHeight;
+            var h1midX = it.x1 + Math.sin(a1h) * handleHeight * 0.5, h1midY = it.y1 - Math.cos(a1h) * handleHeight * 0.5;
+            if (Math.hypot(x - it.x1, y - it.y1) < 15) return { item: it, part: 'e1' };           // tip: move/reconnect
+            if (Math.hypot(x - h1topX, y - h1topY) < 20 || Math.hypot(x - h1midX, y - h1midY) < 18) return { item: it, part: 'rot1' }; // handle: rotate
+            if (it.type === 'voltmeter') {
+                var a2h = (it.angle2 != null) ? it.angle2 : 0.15;
+                var h2topX = it.x2 + Math.sin(a2h) * handleHeight, h2topY = it.y2 - Math.cos(a2h) * handleHeight;
+                var h2midX = it.x2 + Math.sin(a2h) * handleHeight * 0.5, h2midY = it.y2 - Math.cos(a2h) * handleHeight * 0.5;
+                if (Math.hypot(x - it.x2, y - it.y2) < 15) return { item: it, part: 'e2' };
+                if (Math.hypot(x - h2topX, y - h2topY) < 20 || Math.hypot(x - h2midX, y - h2midY) < 18) return { item: it, part: 'rot2' };
+            }
+            // Body.
+            var bw = it.type === 'energy' ? 56 : 50, bh = it.type === 'energy' ? 64 : 60;
+            if (x > it.bodyX - bw / 2 - 5 && x < it.bodyX + bw / 2 + 5 &&
+                y > it.bodyY - bh / 2 - 5 && y < it.bodyY + bh / 2 + 10) return { item: it, part: 'body' };
+            continue;
+        }
+        // Cell EMF label (draggable; DC kit 20px).
+        if (it.type === 'cell' && it._emfLabel &&
+            Math.hypot(x - it._emfLabel.x, y - it._emfLabel.y) < 20) return { item: it, part: 'emflabel' };
+        // Capacitor labels (draggable; DC kit uses 20px). Checked before the
+        // wiper/endpoints so the labels can be grabbed where they sit.
+        if (it.type === 'capacitor' || it.type === 'varCapacitor') {
+            if (it._qLabel && Math.hypot(x - it._qLabel.x, y - it._qLabel.y) < 20) return { item: it, part: 'qlabel' };
+            if (it._cLabel && Math.hypot(x - it._cLabel.x, y - it._cLabel.y) < 20) return { item: it, part: 'clabel' };
+        }
+        // Variable capacitor wiper handle (AC kit: within 18px of _wiperX/_wiperY).
+        if (it.type === 'varCapacitor' && it._wiperX !== undefined &&
+            Math.hypot(x - it._wiperX, y - it._wiperY) < 18) return { item: it, part: 'wiper' };
+        // endpoints (DC kit uses 15px)
+        if (Math.hypot(x - it.x1, y - it.y1) < 15) return { item: it, part: 'e1' };
+        if (Math.hypot(x - it.x2, y - it.y2) < 15) return { item: it, part: 'e2' };
+        // body: distance from the segment < 15 (DC kit)
+        if (T2distToSeg(x, y, it.x1, it.y1, it.x2, it.y2) < 15) return { item: it, part: 'body' };
+    }
+    return null;
+}
+
+function T2distToSeg(px, py, x1, y1, x2, y2) {
+    var dx = x2 - x1, dy = y2 - y1;
+    var L2 = dx * dx + dy * dy;
+    if (L2 === 0) return Math.hypot(px - x1, py - y1);
+    var t = ((px - x1) * dx + (py - y1) * dy) / L2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+/* ---- Delete (long-press / right-click, DC kit onRightClick) ---- */
+function T2deleteItem(id) {
+    // Deleting a component means the circuit is being reconfigured, so we clear
+    // all stored charge and the delivered-energy total to avoid confusion (a
+    // stale delivered value that references charge no longer present). This is
+    // documented in the help. Charge starts fresh from the new configuration.
+    T2.items = T2.items.filter(function (i) { return i.id !== id; });
+    if (T2.selectedId === id) T2.selectedId = null;
+    for (var i = 0; i < T2.items.length; i++) {
+        var it = T2.items[i];
+        if (it.type === 'capacitor' || it.type === 'varCapacitor') it.storedQ = it.initialQ || 0;
+    }
+    T2._netEmitted = 0;
+    T2._netDelivered = 0;
+    T2computeNodes(); T2settle(); T2refreshPalette(); T2draw();
+}
+/* Reverse a cell's polarity by swapping its endpoints (DC kit 'r' key). */
+function T2reverseSelected() {
+    var it = T2sel(); if (!it || it.type !== 'cell') return;
+    var tx = it.x1, ty = it.y1; it.x1 = it.x2; it.y1 = it.y2; it.x2 = tx; it.y2 = ty;
+    T2computeNodes(); T2settle(); T2draw();
+}
+function T2sel() {
+    for (var i = 0; i < T2.items.length; i++) if (T2.items[i].id === T2.selectedId) return T2.items[i];
+    return null;
+}
+
+/* ---- Pointer handling (down/move/up), matching the circuit tab ---- */
+function T2down(x, y) {
+    var hit = T2hit(x, y);
+    if (hit) {
+        T2.selectedId = hit.item.id;
+        // For a label drag, record the grab offset so the label doesn't jump.
+        var lab = (hit.part === 'clabel') ? hit.item._cLabel :
+                  (hit.part === 'qlabel') ? hit.item._qLabel :
+                  (hit.part === 'emflabel') ? hit.item._emfLabel : null;
+        T2._drag = { id: hit.item.id, part: hit.part, ox: x, oy: y, sx: x, sy: y,
+                     ldx: lab ? (x - lab.x) : 0, ldy: lab ? (y - lab.y) : 0 };
+        // A tap on a switch body toggles it (DC kit). We defer the toggle to
+        // pointer-up so a body drag still moves the switch.
+        T2._switchTapId = (hit.item.type === 'switch' && hit.part === 'body') ? hit.item.id : null;
+        T2draw();
+        return true;
+    }
+    T2.selectedId = null;
+    T2draw();
+    return false;
+}
+
+/* Is (x,y) within a stored label's bounding box (centre-anchored text)? */
+function T2inLabel(x, y, lab) {
+    return x >= lab.x - lab.w / 2 - 6 && x <= lab.x + lab.w / 2 + 6 &&
+           y >= lab.y - lab.h / 2 - 6 && y <= lab.y + lab.h / 2 + 6;
+}
+function T2move(x, y) {
+    if (!T2._drag) return;
+    var it = T2sel(); if (!it) return;
+    var dx = x - T2._drag.ox, dy = y - T2._drag.oy;
+    if (T2._drag.part === 'emflabel' && it.type === 'cell') {
+        var mxE = (it.x1 + it.x2) / 2, myE = (it.y1 + it.y2) / 2;
+        it.labelOffsetX = x - T2._drag.ldx - mxE;
+        it.labelOffsetY = y - T2._drag.ldy - myE;
+        T2._drag.ox = x; T2._drag.oy = y;
+        T2draw();
+        return;
+    }
+    if ((T2._drag.part === 'clabel' || T2._drag.part === 'qlabel') &&
+        (it.type === 'capacitor' || it.type === 'varCapacitor')) {
+        var mxL = (it.x1 + it.x2) / 2, myL = (it.y1 + it.y2) / 2;
+        var nx = x - T2._drag.ldx - mxL, ny = y - T2._drag.ldy - myL;
+        if (T2._drag.part === 'clabel') { it.cLabelOffX = nx; it.cLabelOffY = ny; }
+        else { it.qLabelOffX = nx; it.qLabelOffY = ny; }
+        T2._drag.ox = x; T2._drag.oy = y;
+        T2draw();
+        return;
+    }
+    if ((T2._drag.part === 'rot1' || T2._drag.part === 'rot2') &&
+        (it.type === 'voltmeter' || it.type === 'energy')) {
+        // Rotate the probe handle around its tip (Hall-probe style). The handle
+        // top is tip + (sin a, -cos a)*h, so the angle pointing toward the
+        // pointer is atan2(dx, -dy).
+        var tx = (T2._drag.part === 'rot1') ? it.x1 : it.x2;
+        var ty = (T2._drag.part === 'rot1') ? it.y1 : it.y2;
+        var ang = Math.atan2(x - tx, -(y - ty));
+        if (T2._drag.part === 'rot1') it.angle1 = ang; else it.angle2 = ang;
+        T2draw();
+        return;
+    }
+    if (T2._drag.part === 'wiper' && it.type === 'varCapacitor') {
+        // AC kit wiper drag: project pointer onto the component axis.
+        var mx = (it.x1 + it.x2) / 2, my = (it.y1 + it.y2) / 2;
+        var ang = Math.atan2(it.y2 - it.y1, it.x2 - it.x1);
+        var lenW = Math.hypot(it.x2 - it.x1, it.y2 - it.y1);
+        var bodyLenW = Math.min(lenW * 0.6, 90);
+        var proj = (x - mx) * Math.cos(ang) + (y - my) * Math.sin(ang);
+        it.wiper = Math.max(0, Math.min(1, proj / bodyLenW + 0.5));
+        var minV = it.minVal || 0, maxV = (it.maxVal != null) ? it.maxVal : 100;
+        it.value = Math.max(1e-6, parseFloat((minV + (maxV - minV) * it.wiper).toPrecision(6)));
+        T2._drag.ox = x; T2._drag.oy = y;
+        // Changing C is a real electrical change - settle live so energy delivered
+        // updates continuously, like the stored-energy reading does.
+        T2computeNodes(); T2settle();
+        T2draw();
+        return;
+    }
+    if (it.type === 'voltmeter' || it.type === 'energy') {
+        // Match tab 1's meterMove: dragging the body moves ONLY the body
+        // (bodyX/bodyY); the probes and their node connections stay put, so the
+        // cable just stretches. Dragging a probe moves that probe tip.
+        if (T2._drag.part === 'body') {
+            it.bodyX += dx; it.bodyY += dy;
+        } else if (T2._drag.part === 'e1') {
+            it.x1 += dx; it.y1 += dy;
+        } else if (T2._drag.part === 'e2') {
+            it.x2 += dx; it.y2 += dy;
+        }
+    } else if (T2._drag.part === 'body') {
+        it.x1 += dx; it.y1 += dy; it.x2 += dx; it.y2 += dy;
+    } else if (T2._drag.part === 'e1') {
+        it.x1 += dx; it.y1 += dy;
+    } else if (T2._drag.part === 'e2') {
+        it.x2 += dx; it.y2 += dy;
+    }
+    T2._drag.ox = x; T2._drag.oy = y;
+    T2computeNodes();
+    T2draw();
+}
+/* Snap a dragged endpoint to the nearest other component's endpoint (DC kit
+   findSnapTarget, 20px), so endpoints wire together. Returns {x,y} or null. */
+function T2findSnap(x, y, excludeItem) {
+    var nearest = null, nd = 20;
+    for (var i = 0; i < T2.items.length; i++) {
+        var it = T2.items[i];
+        if (it === excludeItem) continue;
+        if (it.type === 'voltmeter' || it.type === 'energy') continue;
+        var d1 = Math.hypot(x - it.x1, y - it.y1);
+        if (d1 < nd) { nd = d1; nearest = { x: it.x1, y: it.y1 }; }
+        var d2 = Math.hypot(x - it.x2, y - it.y2);
+        if (d2 < nd) { nd = d2; nearest = { x: it.x2, y: it.y2 }; }
+    }
+    return nearest;
+}
+
+function T2up() {
+    if (T2._drag) {
+        var it = T2sel();
+        // Switch body tap (no significant drag) toggles open/closed - DC kit.
+        if (T2._switchTapId != null && it && it.id === T2._switchTapId) {
+            var moved = Math.hypot(T2._drag.ox - T2._drag.sx, T2._drag.oy - T2._drag.sy);
+            if (moved < 8) {
+                it.isOn = !it.isOn;
+                T2._switchTapId = null;
+                T2._drag = null;
+                T2computeNodes();
+                T2settle();          // switch toggle is the key topology event
+                T2draw();
+                return;
+            }
+        }
+        T2._switchTapId = null;
+        // EMF label drag: just repositioned, nothing electrical.
+        if (it && T2._drag.part === 'emflabel') { T2._drag = null; T2draw(); return; }
+        // Label: a tap (barely moved) in symbol mode reveals that item's value
+        // (DC kit <5px tap threshold); a real drag has already repositioned it.
+        if (it && (T2._drag.part === 'clabel' || T2._drag.part === 'qlabel')) {
+            var movedL = Math.hypot(T2._drag.ox - T2._drag.sx, T2._drag.oy - T2._drag.sy);
+            if (movedL < 5) {
+                if (T2._drag.part === 'clabel' && T2DISP.c === 'symbol') T2revealC[it.id] = true;
+                if (T2._drag.part === 'qlabel' && T2DISP.q === 'symbol') T2revealQ[it.id] = true;
+            }
+            T2._drag = null;
+            T2draw();
+            return;
+        }
+        if (it && T2._drag.part === 'wiper') {
+            // wiper drag: nothing to snap
+        } else if (it) {
+            if (it.type === 'voltmeter' || it.type === 'energy') {
+                // Only a probe drag re-snaps to the circuit; a body move leaves
+                // the probes (and their connections) exactly where they are.
+                if (T2._drag.part === 'e1' || T2._drag.part === 'e2') {
+                    T2snapProbe(it, T2._drag.part);
+                }
+            } else if (T2._drag.part === 'e1') {
+                var s1 = T2findSnap(it.x1, it.y1, it);
+                if (s1) { it.x1 = s1.x; it.y1 = s1.y; }
+                else { it.x1 = T2snap(it.x1); it.y1 = T2snap(it.y1); }
+            } else if (T2._drag.part === 'e2') {
+                var s2 = T2findSnap(it.x2, it.y2, it);
+                if (s2) { it.x2 = s2.x; it.y2 = s2.y; }
+                else { it.x2 = T2snap(it.x2); it.y2 = T2snap(it.y2); }
+            } else {
+                it.x1 = T2snap(it.x1); it.y1 = T2snap(it.y1);
+                it.x2 = T2snap(it.x2); it.y2 = T2snap(it.y2);
+            }
+        }
+        // A meter-body move OR a probe rotate leaves the circuit unchanged.
+        var skipSettle = it && (it.type === 'voltmeter' || it.type === 'energy') &&
+            (T2._drag.part === 'body' || T2._drag.part === 'rot1' || T2._drag.part === 'rot2');
+        T2._drag = null;
+        T2computeNodes();
+        if (!skipSettle) T2settle();
+        T2draw();
+    }
+}
+
+/* Snap a meter probe onto the built circuit (matching tab 1's snapProbe idea,
+   adapted to the dynamic circuit). Voltmeter probes snap to the nearest node
+   position and record its node id; the energy probe snaps to the nearest
+   capacitor body and records that component. */
+function T2snapProbe(m, part) {
+    var px = part === 'e1' ? m.x1 : m.x2;
+    var py = part === 'e1' ? m.y1 : m.y2;
+    if (m.type === 'energy') {
+        var tgt = T2nearestEnergyTarget(px, py, 40);
+        if (tgt) {
+            var cmx = (tgt.x1 + tgt.x2) / 2, cmy = (tgt.y1 + tgt.y2) / 2;
+            m.x1 = cmx; m.y1 = cmy; m.component = tgt.id;
+            m.compLabel = (tgt.type === 'cell') ? 'supplied' : 'stored';
+        } else { m.component = null; m.compLabel = null; }
+        return;
+    }
+    // voltmeter probe -> snap onto the nearest wire point / endpoint
+    var pt = T2nearestNode(px, py, 30);
+    if (part === 'e1') {
+        if (pt) { m.x1 = pt.x; m.y1 = pt.y; } // node resolved at solve time
+    } else {
+        if (pt) { m.x2 = pt.x; m.y2 = pt.y; }
+    }
+}
+
+/* Snap a probe to the nearest endpoint OR the nearest point along any item's
+   segment (so it lands anywhere along a wire), within 30px - matching the DC
+   kit's findWireSnapTarget. Returns {x,y} or null. */
+function T2nearestNode(x, y, maxD) {
+    var best = null, bd = maxD || 30;
+    for (var i = 0; i < T2.items.length; i++) {
+        var it = T2.items[i];
+        if (it.type === 'voltmeter' || it.type === 'energy') continue;
+        var d1 = Math.hypot(x - it.x1, y - it.y1);
+        if (d1 < bd) { bd = d1; best = { x: it.x1, y: it.y1 }; }
+        var d2 = Math.hypot(x - it.x2, y - it.y2);
+        if (d2 < bd) { bd = d2; best = { x: it.x2, y: it.y2 }; }
+        var sp = T2nearestPointOnSeg(x, y, it.x1, it.y1, it.x2, it.y2);
+        var ds = Math.hypot(x - sp.x, y - sp.y);
+        if (ds < bd) { bd = ds; best = { x: sp.x, y: sp.y }; }
+    }
+    return best;
+}
+
+function T2nearestPointOnSeg(px, py, x1, y1, x2, y2) {
+    var dx = x2 - x1, dy = y2 - y1;
+    var len2 = dx * dx + dy * dy;
+    if (len2 === 0) return { x: x1, y: y1 };
+    var t = ((px - x1) * dx + (py - y1) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    return { x: x1 + t * dx, y: y1 + t * dy };
+}
+
+/* Resolve which electrical node is at a probe tip (DC kit findNodeAtPoint):
+   check endpoints first, then along segments. A wire or closed switch is
+   zero-resistance, so any point on it is that item's single node; for other
+   components, the nearer end's node. Returns node id or null. */
+function T2findNodeAtPoint(px, py) {
+    var eps = T2._eps, e2n = T2._epToNode;
+    if (!eps) return null;
+    var PROBE = 14;
+    for (var i = 0; i < eps.length; i++) {
+        if (Math.hypot(px - eps[i].x, py - eps[i].y) < PROBE) return e2n[i];
+    }
+    for (var k = 0; k < T2.items.length; k++) {
+        var it = T2.items[k];
+        if (it.type === 'voltmeter' || it.type === 'energy') continue;
+        var d = T2distToSeg(px, py, it.x1, it.y1, it.x2, it.y2);
+        if (d < PROBE) {
+            if (it.type === 'wire' || (it.type === 'switch' && it.isOn)) {
+                for (var i2 = 0; i2 < eps.length; i2++) if (eps[i2].item === it) return e2n[i2];
+            } else {
+                var d1 = Math.hypot(px - it.x1, py - it.y1);
+                var d2 = Math.hypot(px - it.x2, py - it.y2);
+                var end = d1 <= d2 ? 1 : 2;
+                for (var i3 = 0; i3 < eps.length; i3++)
+                    if (eps[i3].item === it && eps[i3].endNum === end) return e2n[i3];
+            }
+        }
+    }
+    return null;
+}
+function T2nearestCapacitor(x, y, maxD) {
+    var best = null, bd = maxD || 40;
+    for (var i = 0; i < T2.items.length; i++) {
+        var it = T2.items[i];
+        if (it.type !== 'capacitor' && it.type !== 'varCapacitor') continue;
+        var mx = (it.x1 + it.x2) / 2, my = (it.y1 + it.y2) / 2;
+        var d = Math.hypot(x - mx, y - my);
+        if (d < bd) { bd = d; best = it; }
+    }
+    return best;
+}
+/* Energy meter can read a capacitor (stored) or the cell (supplied). */
+function T2nearestEnergyTarget(x, y, maxD) {
+    var best = null, bd = maxD || 40;
+    for (var i = 0; i < T2.items.length; i++) {
+        var it = T2.items[i];
+        if (it.type !== 'capacitor' && it.type !== 'varCapacitor' && it.type !== 'cell') continue;
+        var mx = (it.x1 + it.x2) / 2, my = (it.y1 + it.y2) / 2;
+        var d = Math.hypot(x - mx, y - my);
+        if (d < bd) { bd = d; best = it; }
+    }
+    return best;
+}
+
+function T2bindCanvas() {
+    // Mouse
+    canvas2.addEventListener('mousedown', function (e) {
+        if (Date.now() - T2.lastTouchTime < 350) return;
+        var p = T2pos(e.clientX, e.clientY);
+        if (T2down(p.x, p.y)) e.preventDefault();
+    });
+    window.addEventListener('mousemove', function (e) {
+        if (!T2._drag) return;
+        var p = T2pos(e.clientX, e.clientY);
+        T2move(p.x, p.y); e.preventDefault();
+    });
+    window.addEventListener('mouseup', function () { T2up(); });
+
+    // Right-click deletes a component (DC kit onRightClick).
+    canvas2.addEventListener('contextmenu', function (e) {
+        var p = T2pos(e.clientX, e.clientY);
+        var hit = T2hit(p.x, p.y);
+        if (hit) { T2deleteItem(hit.item.id); e.preventDefault(); }
+    });
+
+    // Touch (finger + Pencil). No touch-action:none on the canvas (auto-fit),
+    // so preventDefault here. Multi-touch defence + long-press delete.
+    canvas2.addEventListener('touchstart', function (e) {
+        T2.lastTouchTime = Date.now();
+        if (e.touches.length !== 1) { T2clearLongPress(); return; }
+        var t = e.touches[0];
+        var p = T2pos(t.clientX, t.clientY);
+        // Arm long-press delete if a component was touched (but not on a probe
+        // rotate handle - the user may hold still while re-orienting it).
+        var hit = T2hit(p.x, p.y);
+        if (hit && hit.part !== 'rot1' && hit.part !== 'rot2' &&
+            hit.part !== 'clabel' && hit.part !== 'qlabel' && hit.part !== 'emflabel') {
+            T2._lpStart = { x: t.clientX, y: t.clientY };
+            T2._lpId = hit.item.id;
+            T2._lpTimer = setTimeout(function () {
+                T2deleteItem(T2._lpId); T2clearLongPress(); T2._drag = null;
+            }, 600);
+        }
+        if (T2down(p.x, p.y)) e.preventDefault();
+    }, { passive: false });
+    canvas2.addEventListener('touchmove', function (e) {
+        T2.lastTouchTime = Date.now();
+        if (e.touches.length !== 1) return;
+        var t = e.touches[0];
+        if (T2._lpStart) {
+            var d = Math.hypot(t.clientX - T2._lpStart.x, t.clientY - T2._lpStart.y);
+            if (d > 10) T2clearLongPress();
+        }
+        if (!T2._drag) return;
+        var p = T2pos(t.clientX, t.clientY);
+        T2move(p.x, p.y); e.preventDefault();
+    }, { passive: false });
+    canvas2.addEventListener('touchend', function (e) {
+        T2.lastTouchTime = Date.now();
+        T2clearLongPress();
+        T2up();
+        if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    canvas2.addEventListener('touchcancel', function () { T2clearLongPress(); T2up(); });
+
+    // 'r' reverses a selected cell's polarity (DC kit).
+    document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if ((e.key === 'r' || e.key === 'R') && document.getElementById('page2').classList.contains('active')) {
+            T2reverseSelected();
+        }
+    });
+}
+
+function T2clearLongPress() {
+    if (T2._lpTimer) { clearTimeout(T2._lpTimer); T2._lpTimer = null; }
+    T2._lpStart = null; T2._lpId = null;
+}
+
+/* ---- Rendering ---- */
+function T2draw() {
+    if (!ctx2) return;
+    T2updateMeters();   // recompute readings from the solved circuit
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+
+    // faint grid
+    ctx2.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx2.lineWidth = 1;
+    for (var gx = 0; gx <= canvas2.width; gx += T2_GRID) {
+        ctx2.beginPath(); ctx2.moveTo(gx, 0); ctx2.lineTo(gx, canvas2.height); ctx2.stroke();
+    }
+    for (var gy = 0; gy <= canvas2.height; gy += T2_GRID) {
+        ctx2.beginPath(); ctx2.moveTo(0, gy); ctx2.lineTo(canvas2.width, gy); ctx2.stroke();
+    }
+
+    // Junction dots: draw only where 3+ component endpoints physically meet at
+    // the same point (DC kit rule: eps.length >= 3). Cluster endpoints by
+    // proximity - independent of the solver's node union (which also ties a
+    // wire's own two ends) - and draw the dot at a real endpoint position, never
+    // an averaged centroid (which floated in empty space).
+    var jeps = T2._eps || [];
+    var jparent = jeps.map(function (_, i) { return i; });
+    function jfind(i) { while (jparent[i] !== i) { jparent[i] = jparent[jparent[i]]; i = jparent[i]; } return i; }
+    for (var ja = 0; ja < jeps.length; ja++) {
+        for (var jb = ja + 1; jb < jeps.length; jb++) {
+            if (Math.hypot(jeps[ja].x - jeps[jb].x, jeps[ja].y - jeps[jb].y) < T2_SNAP_DIST) {
+                var ra = jfind(ja), rb = jfind(jb); if (ra !== rb) jparent[ra] = rb;
+            }
+        }
+    }
+    var clusters = {};
+    for (var jc = 0; jc < jeps.length; jc++) {
+        var jr = jfind(jc);
+        if (!clusters[jr]) clusters[jr] = { n: 0, x: jeps[jc].x, y: jeps[jc].y };
+        clusters[jr].n++;
+    }
+    for (var key in clusters) {
+        if (clusters[key].n >= 3) {
+            ctx2.fillStyle = 'rgba(120,200,255,0.9)';
+            ctx2.beginPath(); ctx2.arc(clusters[key].x, clusters[key].y, 5, 0, Math.PI * 2); ctx2.fill();
+        }
+    }
+
+    // components
+    for (var i = 0; i < T2.items.length; i++) {
+        T2drawItem(T2.items[i], T2.items[i].id === T2.selectedId);
+    }
+
+    var hint = document.getElementById('buildHint');
+    if (hint) hint.style.display = T2.items.length === 0 ? 'block' : 'none';
+
+    // Rebuild the inspector only when the selection changes, so typing in a
+    // field isn't interrupted; refresh the live 'settled' figures separately.
+    if (T2._inspFor !== T2.selectedId) { T2._inspFor = T2.selectedId; T2updateInspector(); }
+    else T2refreshInspectorLive();
+}
+
+function T2drawItem(it, selected) {
+    var midX = (it.x1 + it.x2) / 2, midY = (it.y1 + it.y2) / 2;
+    var angle = Math.atan2(it.y2 - it.y1, it.x2 - it.x1);
+    ctx2.save();
+    if (selected) { ctx2.shadowColor = it.color; ctx2.shadowBlur = 15; }
+
+    ctx2.strokeStyle = it.color;
+    ctx2.fillStyle = it.color;
+    ctx2.lineWidth = 3;
+    ctx2.lineCap = 'round';
+
+    if (it.type === 'wire') {
+        ctx2.beginPath(); ctx2.moveTo(it.x1, it.y1); ctx2.lineTo(it.x2, it.y2); ctx2.stroke();
+    } else if (it.type === 'cell') {
+        T2drawCell(it, midX, midY, angle);
+    } else if (it.type === 'capacitor' || it.type === 'varCapacitor') {
+        T2drawCapacitor(it, midX, midY, angle);
+    } else if (it.type === 'switch') {
+        T2drawSwitch(it, midX, midY, angle);
+    } else if (it.type === 'voltmeter' || it.type === 'energy') {
+        T2drawInstrument(it);
+    }
+
+    ctx2.shadowBlur = 0;
+
+    // Endpoints: 6px colour dots, 10px white ring when selected (DC kit style).
+    if (it.type !== 'voltmeter' && it.type !== 'energy') {
+        ctx2.fillStyle = it.color;
+        ctx2.beginPath(); ctx2.arc(it.x1, it.y1, 6, 0, Math.PI * 2); ctx2.fill();
+        ctx2.beginPath(); ctx2.arc(it.x2, it.y2, 6, 0, Math.PI * 2); ctx2.fill();
+        if (selected) {
+            ctx2.strokeStyle = '#fff'; ctx2.lineWidth = 2;
+            ctx2.beginPath(); ctx2.arc(it.x1, it.y1, 10, 0, Math.PI * 2); ctx2.stroke();
+            ctx2.beginPath(); ctx2.arc(it.x2, it.y2, 10, 0, Math.PI * 2); ctx2.stroke();
+        }
+    }
+
+    // Value label (skip wire and instruments).
+    if (it.type === 'cell') {
+        ctx2.fillStyle = '#2ecc71'; ctx2.font = 'bold 12px Arial'; ctx2.textAlign = 'center';
+        var eOffX = (it.labelOffsetX != null) ? it.labelOffsetX : 0;
+        var eOffY = (it.labelOffsetY != null) ? it.labelOffsetY : 26;
+        var elx = midX + eOffX, ely = midY + eOffY;
+        var eText = it.value.toFixed(1) + ' V';
+        ctx2.fillText(eText, elx, ely);
+        var ew = ctx2.measureText(eText).width;
+        it._emfLabel = { x: elx, y: ely, w: Math.max(ew, 20), h: 16 };
+    } else if (it.type === 'capacitor' || it.type === 'varCapacitor') {
+        var cOffX = (it.cLabelOffX != null) ? it.cLabelOffX : 0;
+        var cOffY = (it.cLabelOffY != null) ? it.cLabelOffY : 32;
+        var qOffX = (it.qLabelOffX != null) ? it.qLabelOffX : 0;
+        var qOffY = (it.qLabelOffY != null) ? it.qLabelOffY : -34;
+        // Capacitance label: Value 'nnn µF', Symbol 'C' (large), or hidden.
+        var cIsSymbol = (T2DISP.c === 'symbol' && !T2revealC[it.id]);
+        var cText = T2dispText('c', it.id, T2fmtC(it.value), 'C');
+        it._cLabel = null;
+        if (cText) {
+            ctx2.fillStyle = '#4fc3f7'; ctx2.textAlign = 'center';
+            ctx2.font = cIsSymbol ? 'bold 20px Arial' : 'bold 12px Arial';
+            var clx = midX + cOffX, cly = midY + cOffY;
+            ctx2.fillText(cText, clx, cly);
+            var cw = ctx2.measureText(cText).width;
+            it._cLabel = { x: clx, y: cly, w: Math.max(cw, 20), h: cIsSymbol ? 24 : 16 };
+        }
+        // Charge label above the capacitor: Value 'Q = ...', Symbol 'Q' (large), hidden.
+        it._qLabel = null;
+        if (it._solvedQ != null && !isNaN(it._solvedQ)) {
+            var qIsSymbol = (T2DISP.q === 'symbol' && !T2revealQ[it.id]);
+            var qText = T2dispText('q', it.id, 'Q = ' + T2fmtQ(it._solvedQ), 'Q');
+            if (qText) {
+                ctx2.fillStyle = '#ffd166'; ctx2.textAlign = 'center';
+                ctx2.font = qIsSymbol ? 'bold 20px Arial' : 'bold 11px Arial';
+                var qlx = midX + qOffX, qly = midY + qOffY;
+                ctx2.fillText(qText, qlx, qly);
+                var qw = ctx2.measureText(qText).width;
+                it._qLabel = { x: qlx, y: qly, w: Math.max(qw, 20), h: qIsSymbol ? 24 : 16 };
+            }
+        }
+    }
+    ctx2.restore();
+}
+
+function T2fmtQ(q) {
+    var uC = q * 1e6;
+    if (Math.abs(uC) >= 1000) return (uC / 1000).toFixed(2) + ' mC';
+    if (Math.abs(uC) >= 10) return uC.toFixed(1) + ' \u00B5C';
+    return uC.toFixed(2) + ' \u00B5C';
+}
+
+/* Inspector: show the selected component's editable properties (DC kit
+   updateSelectedInfo pattern). Capacitor: capacitance + initial charge
+   (default 0, used only in source-free circuits). Cell: voltage. Switch:
+   status + toggle. */
+function T2updateInspector() {
+    var host = document.getElementById('buildInspector');
+    if (!host) return;
+    var it = T2sel();
+    if (!it) { host.innerHTML = 'Tap a component to edit it.'; return; }
+
+    var name = { cell: 'Cell', capacitor: 'Capacitor', varCapacitor: 'Variable capacitor',
+                 switch: 'Switch', wire: 'Wire', voltmeter: 'Voltmeter', energy: 'Energy meter' }[it.type] || it.type;
+    var color = (it.type === 'cell') ? '#2ecc71' : (it.color || '#4fc3f7');
+    var html = '<div class="insp-title" style="color:' + color + '">' + name + '</div>';
+
+    if (it.type === 'cell') {
+        html += '<div class="insp-row"><label>EMF</label>' +
+                '<span><input type="number" id="inspCellV" value="' + it.value + '" min="0" step="0.1" style="color:#2ecc71;border-color:#2ecc71"> V</span></div>';
+        html += '<div class="insp-note">Press r to reverse polarity.</div>';
+    } else if (it.type === 'capacitor' || it.type === 'varCapacitor') {
+        if (it.type === 'varCapacitor') {
+            html += '<div class="insp-row"><label>Capacitance</label><span style="color:#4fc3f7">' + T2fmtC(it.value) + '</span></div>';
+            html += '<div class="insp-row"><label>Range</label><span>' + T2fmtC(it.minVal) + ' &ndash; ' + T2fmtC(it.maxVal) + '</span></div>';
+            html += '<div class="insp-note">Drag the arrow on the capacitor to vary its value.</div>';
+        } else {
+            html += '<div class="insp-row"><label>Capacitance</label>' +
+                    '<span><input type="number" id="inspCapC" value="' + it.value + '" min="0.001" step="any"> \u00B5F</span></div>';
+        }
+        var q0 = (it.initialQ != null) ? (it.initialQ * 1e6) : 0;   // stored in C, show µC
+        html += '<div class="insp-row"><label>Initial charge</label>' +
+                '<span><input type="number" id="inspCapQ0" value="' + q0 + '" step="any" style="color:#ffd166;border-color:#ffd166"> \u00B5C</span></div>';
+        var qNow = (it._solvedQ != null && !isNaN(it._solvedQ)) ? T2fmtQ(it._solvedQ) : '--';
+        var vNow = (it._solvedV != null && !isNaN(it._solvedV)) ? it._solvedV.toFixed(2) + ' V' : '--';
+        html += '<div class="insp-row"><label>Settled</label><span>' + vNow + ' &bull; ' + qNow + '</span></div>';
+        html += '<div class="insp-note">Initial charge is used only when no cell is connected (charge sharing). With a cell, the cell sets the charge.</div>';
+    } else if (it.type === 'switch') {
+        html += '<div class="insp-row"><label>Status</label><span style="color:' + (it.isOn ? '#2ecc71' : '#e74c3c') + '">' +
+                (it.isOn ? 'CLOSED' : 'OPEN') + '</span></div>';
+        html += '<button class="insp-btn" id="inspSwToggle">' + (it.isOn ? 'Open switch' : 'Close switch') + '</button>';
+    } else if (it.type === 'voltmeter') {
+        var vr = (it.voltage != null && !isNaN(it.voltage)) ? it.voltage.toFixed(2) + ' V' : '--';
+        html += '<div class="insp-row"><label>Reading</label><span>' + vr + '</span></div>';
+        html += '<div class="insp-note">Drag probes to connect; red minus black.</div>';
+    } else if (it.type === 'energy') {
+        var er = (it.energy != null && !isNaN(it.energy)) ? T2fmtEnergy(it.energy) : '--';
+        html += '<div class="insp-row"><label>Stored energy</label><span>' + er + '</span></div>';
+        html += '<div class="insp-note">Drag probe onto a capacitor.</div>';
+    } else if (it.type === 'wire') {
+        html += '<div class="insp-note">A wire (zero resistance).</div>';
+    }
+    host.innerHTML = html;
+
+    // Wire up the editable fields.
+    var cV = document.getElementById('inspCellV');
+    if (cV) cV.addEventListener('change', function () {
+        var v = parseFloat(cV.value);
+        if (!isNaN(v) && v >= 0) { it.value = v; T2computeNodes(); T2settle(); T2draw(); }  // EMF change flows charge
+    });
+    var cC = document.getElementById('inspCapC');
+    if (cC) cC.addEventListener('change', function () {
+        // Real-circuit behaviour: re-settle after a capacitance change. If the
+        // cap is connected to the cell, the cell holds V fixed so charge flows
+        // to Q=CV and the supplied energy updates. If isolated, the settle
+        // conserves the trapped charge (Q fixed) and V=Q/C changes instead.
+        var v = parseFloat(cC.value);
+        if (!isNaN(v) && v > 0) { it.value = v; T2computeNodes(); T2settle(); T2draw(); }
+    });
+    var cQ = document.getElementById('inspCapQ0');
+    if (cQ) cQ.addEventListener('change', function () {
+        var v = parseFloat(cQ.value);
+        if (!isNaN(v)) {
+            it.initialQ = v * 1e-6;      // µC -> C
+            it.storedQ = it.initialQ;    // set the plate charge directly
+            T2computeNodes(); T2settle(); T2draw();
+        }
+    });
+    var sw = document.getElementById('inspSwToggle');
+    if (sw) sw.addEventListener('click', function () { it.isOn = !it.isOn; T2computeNodes(); T2settle(); T2draw(); T2updateInspector(); });
+}
+
+/* Update only the read-only live figures in the inspector (the settled V/Q of a
+   capacitor, the meter readings) without rebuilding inputs, so an in-progress
+   edit keeps focus. Cheap and safe to call every frame. */
+function T2refreshInspectorLive() {
+    // The inspector is small; live figures are inside .insp-row spans. Rather
+    // than track each, we simply leave the value inputs alone and rebuild only
+    // if no input is focused (so typing is never interrupted).
+    var host = document.getElementById('buildInspector');
+    if (!host) return;
+    var active = document.activeElement;
+    if (active && host.contains(active) && active.tagName === 'INPUT') return; // editing -> don't touch
+    T2updateInspector();
+}
+
+/* Cell - matches DC kit drawBattery: leads to plate gap, long + plate, short - plate, + marker. */
+function T2drawCell(it, midX, midY, angle) {
+    var plateGap = 12;
+    ctx2.lineWidth = 3;
+    ctx2.beginPath(); ctx2.moveTo(it.x1, it.y1);
+    ctx2.lineTo(midX - plateGap / 2 * Math.cos(angle), midY - plateGap / 2 * Math.sin(angle)); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(it.x2, it.y2);
+    ctx2.lineTo(midX + plateGap / 2 * Math.cos(angle), midY + plateGap / 2 * Math.sin(angle)); ctx2.stroke();
+    ctx2.save(); ctx2.translate(midX, midY); ctx2.rotate(angle);
+    ctx2.lineWidth = 4;
+    ctx2.beginPath(); ctx2.moveTo(-plateGap / 2, -18); ctx2.lineTo(-plateGap / 2, 18); ctx2.stroke();  // long +
+    ctx2.lineWidth = 3;
+    ctx2.beginPath(); ctx2.moveTo(plateGap / 2, -10); ctx2.lineTo(plateGap / 2, 10); ctx2.stroke();     // short -
+    ctx2.font = 'bold 12px Arial'; ctx2.fillStyle = it.color; ctx2.textAlign = 'center';
+    ctx2.fillText('+', -plateGap / 2 - 12, -12);
+    ctx2.restore();
+}
+
+/* Capacitor - same lead-and-symbol style as the DC kit's two-terminal parts. */
+function T2drawCapacitor(it, midX, midY, angle) {
+    var plateGap = 12;
+    ctx2.lineWidth = 3;
+    ctx2.beginPath(); ctx2.moveTo(it.x1, it.y1);
+    ctx2.lineTo(midX - plateGap / 2 * Math.cos(angle), midY - plateGap / 2 * Math.sin(angle)); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(it.x2, it.y2);
+    ctx2.lineTo(midX + plateGap / 2 * Math.cos(angle), midY + plateGap / 2 * Math.sin(angle)); ctx2.stroke();
+    ctx2.save(); ctx2.translate(midX, midY); ctx2.rotate(angle);
+    ctx2.lineWidth = 3;
+    ctx2.beginPath(); ctx2.moveTo(-plateGap / 2, -18); ctx2.lineTo(-plateGap / 2, 18); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(plateGap / 2, -18); ctx2.lineTo(plateGap / 2, 18); ctx2.stroke();
+    ctx2.restore();
+    if (it.type === 'varCapacitor') T2drawWiperArrow(it, midX, midY, angle);
+}
+
+/* Wiper arrow - matches the AC kit's drawWiperArrow exactly: a white arrow
+   pointing down at the body, positioned by the wiper (0-1) across bodyLen, with
+   a drag-handle bar (yellow when selected). Stores _wiperX/_wiperY for hit
+   detection and _bodyLen for the drag mapping. */
+function T2drawWiperArrow(it, midX, midY, angle) {
+    var len = Math.hypot(it.x2 - it.x1, it.y2 - it.y1);
+    var bodyLen = Math.min(len * 0.6, 90);
+    var wiper = it.wiper !== undefined ? it.wiper : 0.5;
+    var arrowX = -bodyLen / 2 + bodyLen * wiper;
+    var arrowBaseY = -35, arrowTipY = -12;
+
+    ctx2.save();
+    ctx2.translate(midX, midY);
+    ctx2.rotate(angle);
+    ctx2.strokeStyle = '#fff'; ctx2.lineWidth = 2.5;
+    ctx2.beginPath(); ctx2.moveTo(arrowX, arrowBaseY); ctx2.lineTo(arrowX, arrowTipY); ctx2.stroke();
+    ctx2.fillStyle = '#fff';
+    ctx2.beginPath(); ctx2.moveTo(arrowX, arrowTipY); ctx2.lineTo(arrowX - 6, arrowTipY - 10); ctx2.lineTo(arrowX + 6, arrowTipY - 10); ctx2.closePath(); ctx2.fill();
+    var isSelected = it.id === T2.selectedId;
+    ctx2.fillStyle = isSelected ? '#ffcc00' : '#999';
+    ctx2.strokeStyle = isSelected ? '#fff' : '#666';
+    ctx2.lineWidth = 1.5;
+    ctx2.beginPath(); ctx2.roundRect(arrowX - 7, arrowBaseY - 3, 14, 6, 2); ctx2.fill(); ctx2.stroke();
+    ctx2.restore();
+
+    var perpX = -Math.sin(angle), perpY = Math.cos(angle);
+    it._wiperX = midX + arrowX * Math.cos(angle) + arrowBaseY * perpX;
+    it._wiperY = midY + arrowX * Math.sin(angle) + arrowBaseY * perpY;
+    it._bodyLen = bodyLen;
+}
+
+/* Switch - matches DC kit drawSwitch: leads to contacts, contact dots, lever. */
+function T2drawSwitch(it, midX, midY, angle) {
+    var contactOffset = 20;
+    var c1x = midX - contactOffset * Math.cos(angle), c1y = midY - contactOffset * Math.sin(angle);
+    var c2x = midX + contactOffset * Math.cos(angle), c2y = midY + contactOffset * Math.sin(angle);
+    ctx2.lineWidth = 3; ctx2.strokeStyle = it.color;
+    ctx2.beginPath(); ctx2.moveTo(it.x1, it.y1); ctx2.lineTo(c1x, c1y); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(it.x2, it.y2); ctx2.lineTo(c2x, c2y); ctx2.stroke();
+    ctx2.fillStyle = it.color;
+    ctx2.beginPath(); ctx2.arc(c1x, c1y, 5, 0, Math.PI * 2); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(c2x, c2y, 5, 0, Math.PI * 2); ctx2.fill();
+    ctx2.strokeStyle = it.isOn ? '#2ecc71' : it.color; ctx2.lineWidth = 4;
+    ctx2.beginPath(); ctx2.moveTo(c1x, c1y);
+    if (it.isOn) { ctx2.lineTo(c2x, c2y); }
+    else { var pa = angle - Math.PI / 4; ctx2.lineTo(c1x + 35 * Math.cos(pa), c1y + 35 * Math.sin(pa)); }
+    ctx2.stroke();
+}
+
+/* Instruments drawn exactly like tab 1's meters (duplicated to draw on ctx2). */
+function T2drawInstrument(it) {
+    if (it.type === 'energy') T2drawEnergyMeter(it);
+    else T2drawVoltmeter(it);
+}
+
+function T2drawVoltmeter(m) {
+    var bodyX = m.bodyX, bodyY = m.bodyY;
+    var bodyWidth = 50, bodyHeight = 60;
+    var leftConnX = bodyX - 12, leftConnY = bodyY + bodyHeight / 2 + 5;
+    var rightConnX = bodyX + 12, rightConnY = bodyY + bodyHeight / 2 + 5;
+    var probeHandleHeight = 50;
+    var a1 = (m.angle1 != null) ? m.angle1 : -0.15;
+    var a2 = (m.angle2 != null) ? m.angle2 : 0.15;
+    var p1TopX = m.x1 + Math.sin(a1) * probeHandleHeight, p1TopY = m.y1 - Math.cos(a1) * probeHandleHeight;
+    var p2TopX = m.x2 + Math.sin(a2) * probeHandleHeight, p2TopY = m.y2 - Math.cos(a2) * probeHandleHeight;
+
+    T2cableLead(p1TopX, p1TopY, leftConnX, leftConnY, '#aa2222', '#dd3333', '#ff6666', false);
+    T2cableLead(p2TopX, p2TopY, rightConnX, rightConnY, '#111', '#333', '#555', true);
+
+    ctx2.save();
+    ctx2.fillStyle = '#1a1a1a'; ctx2.strokeStyle = '#000'; ctx2.lineWidth = 2;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - bodyWidth / 2 - 5, bodyY - bodyHeight / 2 - 5, bodyWidth + 10, bodyHeight + 15, 12); ctx2.fill(); ctx2.stroke();
+    var fg = ctx2.createLinearGradient(bodyX, bodyY - bodyHeight / 2, bodyX, bodyY + bodyHeight / 2);
+    fg.addColorStop(0, '#ffaa44'); fg.addColorStop(0.5, '#ff9922'); fg.addColorStop(1, '#ee8811');
+    ctx2.fillStyle = fg;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - bodyWidth / 2, bodyY - bodyHeight / 2, bodyWidth, bodyHeight, 8); ctx2.fill();
+    ctx2.fillStyle = '#222'; ctx2.font = 'bold 11px Arial'; ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
+    ctx2.fillText('Voltage', bodyX, bodyY - 12);
+    ctx2.fillStyle = '#f8f8f8'; ctx2.strokeStyle = '#999'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - 22, bodyY, 44, 20, 3); ctx2.fill(); ctx2.stroke();
+    var v = m.voltage;
+    var displayV = isNaN(v) ? '--' : v.toFixed(2);
+    ctx2.fillStyle = '#111'; ctx2.font = 'bold 14px monospace'; ctx2.fillText(displayV, bodyX, bodyY + 10);
+    ctx2.restore();
+
+    ctx2.fillStyle = '#cc3333'; ctx2.strokeStyle = '#991111'; ctx2.lineWidth = 2;
+    ctx2.beginPath(); ctx2.arc(leftConnX, leftConnY, 6, 0, Math.PI * 2); ctx2.fill(); ctx2.stroke();
+    ctx2.fillStyle = '#222'; ctx2.strokeStyle = '#000';
+    ctx2.beginPath(); ctx2.arc(rightConnX, rightConnY, 6, 0, Math.PI * 2); ctx2.fill(); ctx2.stroke();
+
+    T2probeHandle(m.x1, m.y1, '#cc4422', '#ff6644', a1);
+    T2probeHandle(m.x2, m.y2, '#222', '#444', a2);
+}
+
+function T2drawEnergyMeter(m) {
+    var bodyX = m.bodyX, bodyY = m.bodyY;
+    var bodyWidth = 56, bodyHeight = 64;
+    var connX = bodyX, connY = bodyY + bodyHeight / 2 + 5;
+    var probeHandleHeight = 50, a1 = (m.angle1 != null) ? m.angle1 : 0;
+    var p1TopX = m.x1 + Math.sin(a1) * probeHandleHeight, p1TopY = m.y1 - Math.cos(a1) * probeHandleHeight;
+
+    T2cableLead(p1TopX, p1TopY, connX, connY, '#0a5d2c', '#13a04f', '#3fe07f', false);
+
+    ctx2.save();
+    ctx2.fillStyle = '#1a1a1a'; ctx2.strokeStyle = '#000'; ctx2.lineWidth = 2;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - bodyWidth / 2 - 5, bodyY - bodyHeight / 2 - 5, bodyWidth + 10, bodyHeight + 15, 12); ctx2.fill(); ctx2.stroke();
+    var fg = ctx2.createLinearGradient(bodyX, bodyY - bodyHeight / 2, bodyX, bodyY + bodyHeight / 2);
+    fg.addColorStop(0, '#5ee08a'); fg.addColorStop(0.5, '#34c46d'); fg.addColorStop(1, '#23a558');
+    ctx2.fillStyle = fg;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - bodyWidth / 2, bodyY - bodyHeight / 2, bodyWidth, bodyHeight, 8); ctx2.fill();
+    ctx2.fillStyle = '#0c2a18'; ctx2.font = 'bold 11px Arial'; ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
+    ctx2.fillText('Energy', bodyX, bodyY - 20);
+    ctx2.font = 'bold 9px Arial'; ctx2.fillText(m.compLabel ? m.compLabel : '--', bodyX, bodyY - 8);
+    ctx2.fillStyle = '#f8f8f8'; ctx2.strokeStyle = '#999'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - 26, bodyY + 2, 52, 20, 3); ctx2.fill(); ctx2.stroke();
+    var e = m.energy;
+    var disp = (isNaN(e) || m.component == null) ? '--' : T2fmtEnergy(e);
+    ctx2.fillStyle = '#111'; ctx2.font = 'bold 12px monospace'; ctx2.fillText(disp, bodyX, bodyY + 12);
+    ctx2.restore();
+
+    ctx2.fillStyle = '#2ecc71'; ctx2.strokeStyle = '#13802f'; ctx2.lineWidth = 2;
+    ctx2.beginPath(); ctx2.arc(connX, connY, 6, 0, Math.PI * 2); ctx2.fill(); ctx2.stroke();
+
+    T2probeHandle(m.x1, m.y1, '#1a8f48', '#3fe07f', a1);
+}
+
+function T2cableLead(probeX, probeY, meterX, meterY, darkColor, midColor, lightColor, isRed) {
+    var dx = meterX - probeX, dy = meterY - probeY;
+    var dist = Math.hypot(dx, dy);
+    var droopDepth = Math.max(50, Math.min(dist * 0.4, 110));
+    var cp1x = probeX + (isRed ? -10 : 10), cp1y = probeY - 36;
+    var midYc = Math.max(probeY, meterY) + droopDepth;
+    var cp2x = meterX + (isRed ? -30 : 30), cp2y = midYc;
+    ctx2.lineCap = 'round'; ctx2.lineJoin = 'round';
+    ctx2.strokeStyle = darkColor; ctx2.lineWidth = 6;
+    ctx2.beginPath(); ctx2.moveTo(probeX, probeY); ctx2.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, meterX, meterY); ctx2.stroke();
+    ctx2.strokeStyle = midColor; ctx2.lineWidth = 4;
+    ctx2.beginPath(); ctx2.moveTo(probeX, probeY); ctx2.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, meterX, meterY); ctx2.stroke();
+    ctx2.strokeStyle = lightColor; ctx2.lineWidth = 1.5;
+    ctx2.beginPath(); ctx2.moveTo(probeX - 1, probeY); ctx2.bezierCurveTo(cp1x - 1, cp1y, cp2x - 1, cp2y, meterX - 1, meterY); ctx2.stroke();
+}
+
+function T2probeHandle(tipX, tipY, darkColor, lightColor, angle) {
+    ctx2.save();
+    ctx2.translate(tipX, tipY);
+    ctx2.rotate(angle || 0);
+    var handleHeight = 50, handleWidth = 14;
+    var hg = ctx2.createLinearGradient(-handleWidth / 2, 0, handleWidth / 2, 0);
+    hg.addColorStop(0, darkColor); hg.addColorStop(0.3, lightColor); hg.addColorStop(0.7, lightColor); hg.addColorStop(1, darkColor);
+    ctx2.fillStyle = hg; ctx2.strokeStyle = darkColor; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.roundRect(-handleWidth / 2, -handleHeight, handleWidth, handleHeight - 15, [4, 4, 0, 0]); ctx2.fill(); ctx2.stroke();
+    ctx2.strokeStyle = 'rgba(0,0,0,0.25)'; ctx2.lineWidth = 1;
+    for (var i = 0; i < 5; i++) { var ry = -handleHeight + 8 + i * 6; ctx2.beginPath(); ctx2.moveTo(-handleWidth / 2 + 2, ry); ctx2.lineTo(handleWidth / 2 - 2, ry); ctx2.stroke(); }
+    ctx2.fillStyle = '#888'; ctx2.strokeStyle = '#555';
+    ctx2.beginPath(); ctx2.roundRect(-handleWidth / 2 - 1, -18, handleWidth + 2, 8, 2); ctx2.fill(); ctx2.stroke();
+    var tg = ctx2.createLinearGradient(-3, 0, 3, 0);
+    tg.addColorStop(0, '#999'); tg.addColorStop(0.5, '#ddd'); tg.addColorStop(1, '#999');
+    ctx2.fillStyle = tg; ctx2.strokeStyle = '#666'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(-4, -10); ctx2.lineTo(4, -10); ctx2.lineTo(2, 0); ctx2.lineTo(-2, 0); ctx2.closePath(); ctx2.fill(); ctx2.stroke();
+    ctx2.restore();
+}
+
+function T2fmtEnergy(joules) {
+    return (joules * 1e3).toFixed(2) + ' mJ';
+}
+
+function T2fmtC(uF) {
+    if (uF >= 1000) return (uF / 1000).toFixed(2) + ' mF';
+    if (uF < 1) return (uF * 1000).toFixed(0) + ' nF';
+    return uF.toFixed(0) + ' \u00B5F';
+}
+
+/* ============================================================
+   Charge-conservation solver (verified in isolation against
+   A-level answers before wiring in). Single EMF source.
+     - Cell pins its two nodes' potentials (- terminal grounded).
+     - Nodes tied by wires / closed switches are already merged.
+     - Each free node is pinned by charge conservation:
+         sum over capacitors on the node of C*(V_node - V_other) = 0
+       solved as a small linear system (C in place of conductance).
+   Returns { ok, potentials } (potentials indexed by node id).
+   ============================================================ */
+function T2solveLinear(A, b) {
+    var n = b.length;
+    for (var col = 0; col < n; col++) {
+        var piv = col;
+        for (var r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+        if (Math.abs(A[piv][col]) < 1e-12) return null;
+        var tA = A[col]; A[col] = A[piv]; A[piv] = tA;
+        var tb = b[col]; b[col] = b[piv]; b[piv] = tb;
+        for (var r2 = 0; r2 < n; r2++) {
+            if (r2 === col) continue;
+            var f = A[r2][col] / A[col][col];
+            for (var c = col; c < n; c++) A[r2][c] -= f * A[col][c];
+            b[r2] -= f * b[col];
+        }
+    }
+    var x = [];
+    for (var i = 0; i < n; i++) x[i] = b[i] / A[i][i];
+    return x;
+}
+
+function T2solve() {
+    var N = T2.nodes.length;
+    if (N === 0) return { ok: false };
+    var cells = [], caps = [];
+    for (var i = 0; i < T2.items.length; i++) {
+        var t = T2.items[i].type;
+        if (t === 'cell') cells.push(T2.items[i]);
+        else if (t === 'capacitor' || t === 'varCapacitor') caps.push(T2.items[i]);
+    }
+    if (cells.length > 1) return { ok: false };
+
+    var fixed = {};
+    if (cells.length === 1) {
+        var cn = T2nodesOf(cells[0]);
+        if (cn[0] < 0 || cn[1] < 0) return { ok: false };
+        if (cn[0] === cn[1]) return { ok: false };      // shorted cell
+        fixed[cn[1]] = 0;                                // - terminal ground
+        fixed[cn[0]] = cells[0].value;                  // + terminal at EMF
+    } else {
+        fixed[0] = 0;                                    // source-free reference
+    }
+
+    var unknown = [];
+    for (var i = 0; i < N; i++) if (!(i in fixed)) unknown.push(i);
+
+    if (unknown.length === 0) {
+        var p0 = [];
+        for (var i = 0; i < N; i++) p0[i] = (i in fixed) ? fixed[i] : 0;
+        return { ok: true, potentials: p0, caps: caps };
+    }
+
+    var idx = {};
+    for (var u = 0; u < unknown.length; u++) idx[unknown[u]] = u;
+    var n = unknown.length, A = [], b = [];
+    for (var r = 0; r < n; r++) { var row = []; for (var q = 0; q < n; q++) row.push(0); A.push(row); b.push(0); }
+
+    function addTerm(eqNode, varNode, coeff) {
+        if (!(eqNode in idx)) return;
+        if (varNode in idx) A[idx[eqNode]][idx[varNode]] += coeff;
+        else b[idx[eqNode]] -= coeff * fixed[varNode];
+    }
+    function addRHS(eqNode, q) { if (eqNode in idx) b[idx[eqNode]] += q; }
+    var sourceFree = (cells.length === 0);
+    for (var c = 0; c < caps.length; c++) {
+        var cnodes = T2nodesOf(caps[c]);
+        var na = cnodes[0], nb = cnodes[1];
+        if (na < 0 || nb < 0 || na === nb) continue;
+        var C = caps[c].value * 1e-6;
+        addTerm(na, na, C); addTerm(na, nb, -C);
+        addTerm(nb, nb, C); addTerm(nb, na, -C);
+        // Initial charge only matters with no cell (charge sharing): the plate at
+        // endpoint 1 holds +Q0, so node na conserves +Q0 and nb conserves -Q0.
+        if (sourceFree && caps[c].initialQ) {
+            addRHS(na, caps[c].initialQ);
+            addRHS(nb, -caps[c].initialQ);
+        }
+    }
+    var x = T2solveLinear(A, b);
+    if (!x) return { ok: false };
+    var pots = [];
+    for (var i = 0; i < N; i++) pots[i] = (i in fixed) ? fixed[i] : x[idx[i]];
+    return { ok: true, potentials: pots, caps: caps };
+}
+
+/* ============================================================
+   STATEFUL SETTLE (event-driven). Recomputes node potentials given each
+   capacitor's persistent storedQ (charge on its endpoint-1 plate), conserving
+   trapped charge on isolated islands and cell-pinning where connected, then
+   writes back each cap's storedQ and accumulates cell-supplied energy.
+   Call ONLY on discrete events (switch toggle, add, delete, endpoint release,
+   cell-EMF change, Reset) - never on ordinary redraws.
+   ============================================================ */
+function T2settle() {
+    var N = T2.nodes.length;
+    if (N === 0) { T2._lastOk = false; T2._lastPots = null; return; }
+    var cells = [], caps = [];
+    for (var i = 0; i < T2.items.length; i++) {
+        var t = T2.items[i].type;
+        if (t === 'cell') cells.push(T2.items[i]);
+        else if (t === 'capacitor' || t === 'varCapacitor') caps.push(T2.items[i]);
+    }
+    if (cells.length > 1) { T2._lastOk = false; T2._lastPots = null; return; }
+
+    var fixed = {};
+    if (cells.length === 1) {
+        var cn = T2nodesOf(cells[0]);
+        if (cn[0] < 0 || cn[1] < 0 || cn[0] === cn[1]) { T2._lastOk = false; T2._lastPots = null; return; }
+        fixed[cn[1]] = 0; fixed[cn[0]] = cells[0].value;
+    }
+    var unknown = [];
+    for (var i = 0; i < N; i++) if (!(i in fixed)) unknown.push(i);
+    if (cells.length === 0) {
+        if (!(0 in fixed)) { fixed[0] = 0; unknown = []; for (var i = 0; i < N; i++) if (!(i in fixed)) unknown.push(i); }
+    }
+
+    var pots = [];
+    if (unknown.length === 0) {
+        for (var i = 0; i < N; i++) pots[i] = (i in fixed) ? fixed[i] : 0;
+    } else {
+        var idx = {};
+        for (var u = 0; u < unknown.length; u++) idx[unknown[u]] = u;
+        var n = unknown.length, A = [], b = [];
+        for (var r = 0; r < n; r++) { var row = []; for (var q = 0; q < n; q++) row.push(0); A.push(row); b.push(0); }
+        function addTerm(eq, vv, coef) { if (!(eq in idx)) return; if (vv in idx) A[idx[eq]][idx[vv]] += coef; else b[idx[eq]] -= coef * fixed[vv]; }
+        function addRHS(eq, q) { if (eq in idx) b[idx[eq]] += q; }
+        for (var c = 0; c < caps.length; c++) {
+            var cnodes = T2nodesOf(caps[c]);
+            var na = cnodes[0], nb = cnodes[1];
+            if (na < 0 || nb < 0 || na === nb) continue;
+            var C = caps[c].value * 1e-6;
+            addTerm(na, na, C); addTerm(na, nb, -C);
+            addTerm(nb, nb, C); addTerm(nb, na, -C);
+            var q = caps[c].storedQ || 0;   // trapped charge conserved on isolated islands
+            addRHS(na, q); addRHS(nb, -q);
+        }
+        var x = T2solveLinear(A, b);
+        if (!x) { T2._lastOk = false; T2._lastPots = null; return; }
+        for (var i = 0; i < N; i++) pots[i] = (i in fixed) ? fixed[i] : x[idx[i]];
+    }
+
+    // Energy delivered by the cell = EMF x the cell's NET EMITTED CHARGE, tracked
+    // persistently. Each event, the charge that flows THROUGH the cell equals the
+    // change in charge on the capacitors currently connected to the cell (old
+    // stored charge -> new settled charge). Charge to an empty cap adds; charge
+    // returning (decrease C) subtracts; a cap isolated by an open switch is not
+    // connected so its stranded charge neither adds nor subtracts (it stays
+    // counted from when it was charged); charge-sharing between isolated caps
+    // never touches the cell. This is correct real-circuit behaviour and is
+    // path-independent for the final state.
+    if (cells.length === 1) {
+        var cnodes2 = T2nodesOf(cells[0]);
+        var plus = cnodes2[0];
+        var dQ = 0;
+        for (var c2 = 0; c2 < caps.length; c2++) {
+            var cn2 = T2nodesOf(caps[c2]);
+            if (cn2[0] < 0 || cn2[1] < 0) continue;
+            // Only caps sitting across the cell's nodes carry current through it.
+            var connectedToCell = (cn2[0] === plus || cn2[1] === plus);
+            if (!connectedToCell) continue;
+            var C2 = caps[c2].value * 1e-6;
+            var newQplus = (cn2[0] === plus) ? C2 * (pots[cn2[0]] - pots[cn2[1]])
+                                             : C2 * (pots[cn2[1]] - pots[cn2[0]]);
+            var oldQ = caps[c2].storedQ || 0;
+            // old charge on the plate facing the cell + node (sign matched)
+            var oldQplus = (cn2[0] === plus) ? oldQ : -oldQ;
+            dQ += (newQplus - oldQplus);
+        }
+        T2._netEmitted = (T2._netEmitted || 0) + dQ;
+        T2._netDelivered = T2._netEmitted * cells[0].value;   // EMF x net emitted charge
+    } else {
+        // No single cell this event: leave the emitted charge as-is (a stranded
+        // network still represents charge the cell previously delivered). Recompute
+        // the displayed energy from the stored emitted charge against no cell -> 0
+        // only if there is genuinely no cell in the circuit at all.
+        var anyCell = false;
+        for (var ci0 = 0; ci0 < T2.items.length; ci0++) if (T2.items[ci0].type === 'cell') { anyCell = true; break; }
+        if (!anyCell) { /* cell deleted: keep stranded charge value as delivered */ }
+    }
+
+    // Write back each capacitor's new stored charge (endpoint-1 plate).
+    for (var c3 = 0; c3 < caps.length; c3++) {
+        var cn3 = T2nodesOf(caps[c3]);
+        if (cn3[0] < 0 || cn3[1] < 0) continue;
+        var C3 = caps[c3].value * 1e-6;
+        caps[c3].storedQ = C3 * (pots[cn3[0]] - pots[cn3[1]]);
+    }
+
+    T2._lastPots = pots;
+    T2._lastOk = true;
+}
+
+/* Reset: clear all stored charge (to each cap's initial charge) and the
+   delivered-energy figure. */
+function T2resetCharge() {
+    for (var i = 0; i < T2.items.length; i++) {
+        var it = T2.items[i];
+        if (it.type === 'capacitor' || it.type === 'varCapacitor') it.storedQ = it.initialQ || 0;
+    }
+    T2._netEmitted = 0;
+    T2._netDelivered = 0;
+    T2computeNodes();
+    T2settle();
+    T2draw();
+}
+
+/* Display meters and capacitor labels from the last SETTLED state. Read-only:
+   it never re-settles, so trapped charge is preserved between events. Safe to
+   call every redraw. Voltmeter uses node potentials from the last settle; a
+   capacitor's charge/energy come from its persistent storedQ; the cell energy
+   meter shows the cumulative supplied total. */
+function T2updateMeters() {
+    var pots = T2._lastPots;
+    var ok = T2._lastOk && pots;
+    for (var i = 0; i < T2.items.length; i++) {
+        var m = T2.items[i];
+        if (m.type === 'voltmeter') {
+            var rn = T2findNodeAtPoint(m.x1, m.y1);
+            var bn = T2findNodeAtPoint(m.x2, m.y2);
+            m.redNode = rn; m.blackNode = bn;
+            if (ok && rn != null && bn != null && rn < pots.length && bn < pots.length) {
+                m.voltage = pots[rn] - pots[bn];   // real polarity: red minus black
+            } else { m.voltage = NaN; }
+        } else if (m.type === 'energy') {
+            if (m.component != null) {
+                var comp = null;
+                for (var k = 0; k < T2.items.length; k++) if (T2.items[k].id === m.component) { comp = T2.items[k]; break; }
+                if (comp && comp.type === 'cell') {
+                    m.energy = T2._netDelivered || 0;       // net energy delivered by the cell
+                } else if (comp) {
+                    var C = comp.value * 1e-6;
+                    var q = comp.storedQ || 0;
+                    m.energy = (C > 0) ? (q * q) / (2 * C) : NaN;   // 1/2 Q^2 / C from stored charge
+                } else { m.energy = NaN; }
+            } else { m.energy = NaN; }
+        }
+    }
+
+    // Capacitor label figures from persistent storedQ (V = Q/C).
+    for (var ci = 0; ci < T2.items.length; ci++) {
+        var it = T2.items[ci];
+        if (it.type !== 'capacitor' && it.type !== 'varCapacitor') continue;
+        var Cc = it.value * 1e-6;
+        var qc = it.storedQ || 0;
+        it._solvedQ = qc;
+        it._solvedV = (Cc > 0) ? qc / Cc : NaN;
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', T2init);
+} else {
+    T2init();
+}
+
+
 initTab1();
 </script>
 </body>
