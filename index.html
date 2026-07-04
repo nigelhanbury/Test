@@ -1104,7 +1104,7 @@ canvas#canvas2 {
                             <span class="component-label">Energy</span>
                         </div>
                     </div>
-                    <p class="palette-note">Drag onto the canvas. Drag endpoints to rotate, resize or wire. Drag a label to move it. Long-press to delete a component &mdash; deleting resets the circuit&rsquo;s charge and delivered energy, since you&rsquo;re reconfiguring.</p>
+                    <p class="palette-note">Drag a tile onto the canvas, or on a touch screen tap the tile then tap the canvas to place it. Drag endpoints to rotate, resize or wire. Drag a label to move it. To delete a component, long-press it on a touch screen or right-click it on a computer &mdash; deleting resets the circuit&rsquo;s charge and delivered energy, since you&rsquo;re reconfiguring.</p>
                     <button class="build-action" id="buildReset" onclick="T2resetCharge()" title="Clear all charge and energy" style="margin-top:10px;">&#8635; Reset charge &amp; energy</button>
                 </div>
                 <div class="panel" id="buildInspectorPanel" style="margin-top:12px;">
@@ -1193,7 +1193,7 @@ canvas#canvas2 {
         <h3>What this tab is for</h3>
         <p>Build any arrangement of cells and capacitors and read the potential difference, charge and stored energy once the circuit has settled. In the settled state a capacitor is fully charged and no current flows, so this tab is about charge and energy rather than current. There are no resistors: they only affect how long charging takes, never the final settled state.</p>
         <h3>Building a circuit</h3>
-        <p><span class="key">Drag</span> a component from the palette onto the canvas. Drag an <span class="key">endpoint</span> to rotate or resize it, or onto another endpoint to wire the two together &mdash; a blue dot marks where three or more ends join. Only one cell is allowed; the cell tile greys out once one is placed.</p>
+        <p>To add a component, drag its tile from the palette onto the canvas, or on a touch screen tap the tile to highlight it and then tap the canvas to place it. Drag an <span class="key">endpoint</span> to rotate or resize a component, or onto another endpoint to wire the two together &mdash; a blue dot marks where three or more ends join. Only one cell is allowed; the cell tile greys out once one is placed.</p>
         <p><span class="key">Long-press</span> a component (or right-click on a computer) to delete it. Deleting resets the circuit&rsquo;s charge and delivered energy, since removing a part means you are reconfiguring.</p>
         <h3>Components</h3>
         <p><span class="key">Cell</span> &mdash; the supply; set its EMF in the inspector, and press <span class="key">r</span> to reverse its polarity. <span class="key">Capacitor</span> &mdash; set its capacitance and, for a source-free circuit, an initial charge. <span class="key">Variable capacitor</span> &mdash; drag the arrow on its body to change the capacitance live. <span class="key">Switch</span> &mdash; tap its body to open or close it. <span class="key">Wire</span> &mdash; a zero-resistance link.</p>
@@ -1202,15 +1202,17 @@ canvas#canvas2 {
         <h3>The inspector</h3>
         <p>Tap a component to select it; its editable properties appear in the <span class="key">Inspector</span> panel, along with the settled voltage and charge for a capacitor. Changes take effect at once.</p>
         <h3>Meters</h3>
-        <p><span class="key">Voltmeter</span> &mdash; drop it on, then drag its two probes onto the circuit to read a potential difference; the reading follows the probe polarity, so swapping the probes reverses its sign. <span class="key">Energy</span> &mdash; touch its probe to a capacitor to read the energy stored in it, or to the cell to read the energy the cell has delivered. Rotate a probe by its handle to swing it clear of anything underneath, and move a meter by its body. Long-press a meter to remove it.</p>
+        <p><span class="key">Voltmeter</span> &mdash; drop it on, then drag its two probes onto the circuit to read a potential difference; the reading follows the probe polarity, so swapping the probes reverses its sign. <span class="key">Energy</span> &mdash; touch its probe to a capacitor to read the energy stored in it, or to the cell to read the energy the cell has delivered. Rotate a probe by its handle to swing it clear of anything underneath, and move a meter by its body. To remove a meter, long-press it on a touch screen or right-click it on a computer.</p>
         <h3>Energy delivered</h3>
         <p>The energy the cell has delivered is the work it has done pushing charge into the circuit. It rises as capacitors charge, and falls if charge flows back into the cell &mdash; for instance when you reduce a connected capacitor&rsquo;s value. Charge stranded by an open switch still counts, because it has not returned to the cell.</p>
         <h3>Display options</h3>
         <p>The options under the canvas let you choose, for the capacitance and the charge, whether to show the <span class="key">Value</span>, just the <span class="key">Symbol</span>, or to <span class="key">Hide</span> it. In symbol mode, tapping the symbol on the circuit reveals its value &mdash; useful when you want students to predict a value first. Drag any label to reposition it.</p>
         <h3>Reset</h3>
         <p><span class="key">Reset charge &amp; energy</span> &mdash; empties every capacitor and clears the delivered-energy total, without changing the circuit you have built.</p>
-        <h3>Touch</h3>
-        <p>Drag components, endpoints, probes, meters, wiper arrows and labels with a finger or Apple Pencil exactly as with a mouse.</p>
+        <h3>Touch devices (iPad and Apple Pencil)</h3>
+        <p>Everything works with a finger or an Apple Pencil. To add a component, <span class="key">tap</span> its tile in the palette so it highlights, then <span class="key">tap the canvas</span> where you want it &mdash; tap the highlighted tile again to cancel. On a computer you can instead drag a tile straight onto the canvas.</p>
+        <p>Tap a component to select it or, for a switch, to open and close it; a small movement is ignored so a tap does not nudge anything. Drag endpoints, probes, meters, wiper arrows and labels just as with a mouse. <span class="key">Long-press</span> a component to delete it.</p>
+        <p>Use <span class="key">Annotate</span> to draw over the circuit and <span class="key">Scribble</span> for a free notepad; rest your palm on the screen while writing with the Pencil, as touches from your hand are ignored while a pen stroke is in progress.</p>
     </div>
 </div>
 
@@ -4705,7 +4707,9 @@ function initTab1() {
 var T2 = {
     items: [],
     selectedId: null,
-    draggingFromPalette: null,   // component type being dragged from the palette
+    draggingFromPalette: null,   // component type being dragged from the palette (mouse)
+    selectedPaletteType: null,   // armed palette type for tap-to-place (touch)
+    _armedEl: null, _palTouchStart: null, _palTouchScrolled: false, _lastAddTime: 0,
     _seq: 1,
     nodes: [],
     _drag: null,
@@ -4765,12 +4769,16 @@ function T2init() {
     if (!canvas2) return;
     ctx2 = canvas2.getContext('2d');
 
-    // Palette: drag a component onto the canvas (DC kit draggingFromPalette).
+    // Palette placement. Mouse: drag a tile onto the canvas (draggingFromPalette).
+    // Touch (iPad, DC kit method): TAP a tile to arm it (white highlight), then
+    // TAP the canvas to place it. A >10px move on the tile is treated as a scroll
+    // and abandons the arm.
     var pal = document.getElementById('buildPalette');
     var btns = pal.querySelectorAll('.drag-component');
     for (var i = 0; i < btns.length; i++) {
         (function (btn) {
             var type = btn.getAttribute('data-btype');
+            btn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
             btn.addEventListener('mousedown', function (e) {
                 if (e.button === 2) return;
                 if (type === 'cell' && T2hasCell()) return;   // single EMF source
@@ -4778,21 +4786,53 @@ function T2init() {
                 e.preventDefault();
             });
             btn.addEventListener('touchstart', function (e) {
-                if (type === 'cell' && T2hasCell()) return;   // single EMF source
-                T2.draggingFromPalette = type;
+                if (e.touches.length !== 1) return;
+                T2._palTouchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                T2._palTouchScrolled = false;
                 T2.lastTouchTime = Date.now();
             }, { passive: true });
+            btn.addEventListener('touchmove', function (e) {
+                if (!T2._palTouchStart || T2._palTouchScrolled) return;
+                if (e.touches.length !== 1) return;
+                var t = e.touches[0];
+                if (Math.hypot(t.clientX - T2._palTouchStart.x, t.clientY - T2._palTouchStart.y) > 10) {
+                    T2._palTouchScrolled = true;   // scrolling, not tapping
+                }
+            }, { passive: true });
+            btn.addEventListener('touchend', function (e) {
+                if (!T2._palTouchStart) return;
+                var wasScroll = T2._palTouchScrolled;
+                T2._palTouchStart = null; T2._palTouchScrolled = false;
+                if (wasScroll) return;
+                if (type === 'cell' && T2hasCell()) return;   // single EMF source
+                if (e.cancelable) e.preventDefault();          // suppress synthetic mouse
+                T2.lastTouchTime = Date.now();
+                // Tap toggles the armed palette selection (white outline highlight).
+                if (T2._armedEl && T2._armedEl !== btn) T2._armedEl.style.outline = '';
+                if (T2.selectedPaletteType === type) {
+                    T2.selectedPaletteType = null; T2._armedEl = null; btn.style.outline = '';
+                    return;
+                }
+                T2.selectedPaletteType = type;
+                T2._armedEl = btn;
+                btn.style.outline = '3px solid #fff';
+            }, { passive: false });
         })(btns[i]);
     }
     T2refreshPalette();
-    // Drop on canvas (mouse up / touch end anywhere; place if over canvas).
+    // Drop on canvas (mouse drag release; place if over canvas).
     document.addEventListener('mouseup', function (e) { T2paletteDrop(e.clientX, e.clientY); });
     document.addEventListener('touchend', function (e) {
         if (!T2.draggingFromPalette) return;
         var t = e.changedTouches[0];
         T2paletteDrop(t.clientX, t.clientY);
     });
-    document.addEventListener('touchcancel', function () { T2.draggingFromPalette = null; });
+    document.addEventListener('touchcancel', function () {
+        T2.draggingFromPalette = null;
+        T2._palTouchStart = null; T2._palTouchScrolled = false;
+        if (T2._armedEl) T2._armedEl.style.outline = '';
+        T2.selectedPaletteType = null; T2._armedEl = null;
+    });
 
     T2bindCanvas();
     T2draw();
@@ -5133,6 +5173,18 @@ function T2move(x, y) {
         T2draw();
         return;
     }
+    // Movement threshold: don't nudge a component until the pointer has clearly
+    // moved from where the drag began. This stops a tap (to select or toggle a
+    // switch) or a shaky finger from wobbling the component. Once the drag is
+    // past the threshold it stays "moving" for the rest of the gesture.
+    if (!T2._drag.moving) {
+        var moved0 = Math.hypot(x - T2._drag.sx, y - T2._drag.sy);
+        if (moved0 < 5) { return; }
+        T2._drag.moving = true;
+        // Re-anchor so the first applied delta is measured from here (no jump).
+        T2._drag.ox = x; T2._drag.oy = y;
+        return;
+    }
     if (it.type === 'voltmeter' || it.type === 'energy') {
         // Match tab 1's meterMove: dragging the body moves ONLY the body
         // (bodyX/bodyY); the probes and their node connections stay put, so the
@@ -5368,6 +5420,22 @@ function T2bindCanvas() {
         if (e.touches.length !== 1) { T2clearLongPress(); return; }
         var t = e.touches[0];
         var p = T2pos(t.clientX, t.clientY);
+        // If a palette component is armed, tapping the canvas places it there.
+        if (T2.selectedPaletteType) {
+            var type = T2.selectedPaletteType;
+            if (!(type === 'cell' && T2hasCell())) {
+                var now = Date.now();
+                if (now - (T2._lastAddTime || 0) >= 100) {
+                    T2._lastAddTime = now;
+                    T2addItem(type, p.x, p.y);
+                    T2hideHint();
+                }
+            }
+            if (T2._armedEl) T2._armedEl.style.outline = '';
+            T2.selectedPaletteType = null; T2._armedEl = null;
+            e.preventDefault();
+            return;
+        }
         // Arm long-press delete if a component was touched (but not on a probe
         // rotate handle - the user may hold still while re-orienting it).
         var hit = T2hit(p.x, p.y);
