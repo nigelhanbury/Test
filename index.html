@@ -813,6 +813,36 @@ input[type="range"]:disabled { cursor: not-allowed; }
     border-radius: 10px;
     padding: 6px 10px;
 }
+/* Tab-2 preset example circuits (DC kit presets-row style). */
+.build-presets-row {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 10px 12px; margin-top: 10px;
+    background: linear-gradient(135deg, rgba(30,30,60,0.6), rgba(20,20,40,0.7));
+    border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+}
+.build-presets-label {
+    color: #ffaa44; font-size: 0.75em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; margin-right: 4px;
+}
+.build-preset-btn {
+    padding: 8px 12px; font-size: 0.75em; font-weight: 600;
+    border-radius: 6px; cursor: pointer; color: #fff;
+    background: linear-gradient(135deg, rgba(79,195,247,0.35), rgba(41,128,185,0.3));
+    border: 1px solid rgba(79,195,247,0.5);
+    transition: all 0.2s ease; touch-action: manipulation;
+}
+.build-preset-btn:hover {
+    background: linear-gradient(135deg, rgba(79,195,247,0.55), rgba(41,128,185,0.5));
+    transform: translateY(-1px); box-shadow: 0 3px 10px rgba(79,195,247,0.4);
+}
+.build-preset-btn.clear-btn {
+    background: linear-gradient(135deg, rgba(231,76,60,0.4), rgba(192,57,43,0.3));
+    border: 1px solid rgba(231,76,60,0.5);
+}
+.build-preset-btn.clear-btn:hover {
+    background: linear-gradient(135deg, rgba(231,76,60,0.6), rgba(192,57,43,0.5));
+    box-shadow: 0 3px 10px rgba(231,76,60,0.4);
+}
 canvas#canvas2 {
     background: linear-gradient(180deg, #0a0a1f 0%, #151530 100%);
     border-radius: 15px;
@@ -1038,6 +1068,34 @@ canvas#canvas2 {
                             </select>
                         </div>
                     </div>
+                    <div class="opt-group">
+                        <div class="opt-group-label">Cell labels</div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#2ecc71">EMF</span>
+                            <select id="dispBuildEmf" class="label-mode-select" style="color:#2ecc71" onchange="T2onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <span style="color:#ffd166">Charge delivered</span>
+                            <select id="dispBuildCellQ" class="label-mode-select" style="color:#ffd166" onchange="T2onDisplayModeChange()">
+                                <option value="value">Value</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="hide">Hide</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="build-presets-row">
+                    <span class="build-presets-label">Examples:</span>
+                    <button class="build-preset-btn" onclick="T2preset1()">Single capacitor</button>
+                    <button class="build-preset-btn" onclick="T2preset2()">Series</button>
+                    <button class="build-preset-btn" onclick="T2preset3()">Parallel</button>
+                    <button class="build-preset-btn" onclick="T2preset4()">Series/Parallel</button>
+                    <button class="build-preset-btn" onclick="T2preset5()">Capacitor charging capacitor</button>
+                    <button class="build-preset-btn clear-btn" onclick="T2clearAll()">Clear all</button>
                 </div>
             </div>
             <div class="build-controls">
@@ -4729,17 +4787,25 @@ var T2_GRID = 20;
    mirroring tab 1's DISP/dispText. 'c' = capacitance, 'q' = charge. Tapping a
    symbol label on the canvas reveals that item's value (DC kit per-item reveal
    Sets keyed by item id). */
-var T2DISP = { c: 'value', q: 'value' };
+var T2DISP = { c: 'value', q: 'value', cellq: 'value', emf: 'value' };
 var T2revealC = {};   // itemId -> true when this cap's capacitance label is revealed
 var T2revealQ = {};   // itemId -> true when this cap's charge label is revealed
+var T2revealCellQ = {}; // cellId -> true when the cell's charge-delivered label is revealed
+var T2revealEmf = {}; // cellId -> true when the cell's EMF label is revealed
 
 function T2onDisplayModeChange() {
     var cs = document.getElementById('dispBuildC');
     var qs = document.getElementById('dispBuildQ');
+    var cqs = document.getElementById('dispBuildCellQ');
+    var es = document.getElementById('dispBuildEmf');
     if (cs) T2DISP.c = cs.value;
     if (qs) T2DISP.q = qs.value;
+    if (cqs) T2DISP.cellq = cqs.value;
+    if (es) T2DISP.emf = es.value;
     if (T2DISP.c === 'value') T2revealC = {};   // value mode clears reveals
     if (T2DISP.q === 'value') T2revealQ = {};
+    if (T2DISP.cellq === 'value') T2revealCellQ = {};
+    if (T2DISP.emf === 'value') T2revealEmf = {};
     T2draw();
 }
 
@@ -5041,10 +5107,21 @@ function T2hit(x, y) {
         // Cell EMF label (draggable; live position from offset, DC kit 20px).
         if (it.type === 'cell') {
             var emx = (it.x1 + it.x2) / 2, emy = (it.y1 + it.y2) / 2;
-            var eOX = (it.labelOffsetX != null) ? it.labelOffsetX : 0;
-            var eOY = (it.labelOffsetY != null) ? it.labelOffsetY : 26;
-            if (Math.hypot(x - (emx + eOX), y - (emy + eOY - 12 * 0.35)) < 20)
-                return { item: it, part: 'emflabel' };
+            if (T2DISP.emf !== 'hide') {
+                var eOX = (it.labelOffsetX != null) ? it.labelOffsetX : 0;
+                var eOY = (it.labelOffsetY != null) ? it.labelOffsetY : 26;
+                var eFontH = (T2DISP.emf === 'symbol' && !T2revealEmf[it.id]) ? 20 : 12;
+                if (Math.hypot(x - (emx + eOX), y - (emy + eOY - eFontH * 0.35)) < 20)
+                    return { item: it, part: 'emflabel' };
+            }
+            // Cell charge-delivered label (draggable; shown unless hidden).
+            if (T2DISP.cellq !== 'hide') {
+                var cqOX = (it.cqLabelOffX != null) ? it.cqLabelOffX : 0;
+                var cqOY = (it.cqLabelOffY != null) ? it.cqLabelOffY : 44;
+                var cqFontH = (T2DISP.cellq === 'symbol' && !T2revealCellQ[it.id]) ? 20 : 11;
+                if (Math.hypot(x - (emx + cqOX), y - (emy + cqOY - cqFontH * 0.35)) < 20)
+                    return { item: it, part: 'cqlabel' };
+            }
         }
         // Capacitor labels (draggable; DC kit computes label pos live from the
         // offset in the hit test, so it never depends on a prior draw or on the
@@ -5141,6 +5218,11 @@ function T2down(x, y) {
             anchorX = emx2 + ((hit.item.labelOffsetX != null) ? hit.item.labelOffsetX : 0);
             anchorY = emy2 + ((hit.item.labelOffsetY != null) ? hit.item.labelOffsetY : 26);
             haveLab = true;
+        } else if (hit.part === 'cqlabel') {
+            var cmx2 = (hit.item.x1 + hit.item.x2) / 2, cmy2 = (hit.item.y1 + hit.item.y2) / 2;
+            anchorX = cmx2 + ((hit.item.cqLabelOffX != null) ? hit.item.cqLabelOffX : 0);
+            anchorY = cmy2 + ((hit.item.cqLabelOffY != null) ? hit.item.cqLabelOffY : 44);
+            haveLab = true;
         }
         T2._drag = { id: hit.item.id, part: hit.part, ox: x, oy: y, sx: x, sy: y,
                      ldx: haveLab ? (x - anchorX) : 0, ldy: haveLab ? (y - anchorY) : 0 };
@@ -5168,6 +5250,14 @@ function T2move(x, y) {
         var mxE = (it.x1 + it.x2) / 2, myE = (it.y1 + it.y2) / 2;
         it.labelOffsetX = x - T2._drag.ldx - mxE;
         it.labelOffsetY = y - T2._drag.ldy - myE;
+        T2._drag.ox = x; T2._drag.oy = y;
+        T2draw();
+        return;
+    }
+    if (T2._drag.part === 'cqlabel' && it.type === 'cell') {
+        var mxCq = (it.x1 + it.x2) / 2, myCq = (it.y1 + it.y2) / 2;
+        it.cqLabelOffX = x - T2._drag.ldx - mxCq;
+        it.cqLabelOffY = y - T2._drag.ldy - myCq;
         T2._drag.ox = x; T2._drag.oy = y;
         T2draw();
         return;
@@ -5278,8 +5368,22 @@ function T2up() {
             }
         }
         T2._switchTapId = null;
-        // EMF label drag: just repositioned, nothing electrical.
-        if (it && T2._drag.part === 'emflabel') { T2._drag = null; T2draw(); return; }
+        // EMF label drag: just repositioned. A tap (barely moved) in symbol mode
+        // reveals the value, matching the capacitor and charge labels.
+        if (it && T2._drag.part === 'emflabel') {
+            var movedE = Math.hypot(T2._drag.ox - T2._drag.sx, T2._drag.oy - T2._drag.sy);
+            if (movedE < 5 && T2DISP.emf === 'symbol') T2revealEmf[it.id] = true;
+            T2._drag = null; T2draw(); return;
+        }
+        // Cell charge-delivered label: a tap in symbol mode reveals its value;
+        // a real drag has already repositioned it.
+        if (it && T2._drag.part === 'cqlabel') {
+            var movedCq = Math.hypot(T2._drag.ox - T2._drag.sx, T2._drag.oy - T2._drag.sy);
+            if (movedCq < 5 && T2DISP.cellq === 'symbol') T2revealCellQ[it.id] = true;
+            T2._drag = null;
+            T2draw();
+            return;
+        }
         // Label: a tap (barely moved) in symbol mode reveals that item's value
         // (DC kit <5px tap threshold); a real drag has already repositioned it.
         if (it && (T2._drag.part === 'clabel' || T2._drag.part === 'qlabel')) {
@@ -5510,8 +5614,13 @@ function T2bindCanvas() {
     // 'r' reverses a selected cell's polarity (DC kit).
     document.addEventListener('keydown', function (e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        if ((e.key === 'r' || e.key === 'R') && document.getElementById('page2').classList.contains('active')) {
+        if (!document.getElementById('page2').classList.contains('active')) return;
+        if (e.key === 'r' || e.key === 'R') {
             T2reverseSelected();
+        }
+        // Debug: press 'D' to dump the circuit config to the console (DC kit style).
+        if (e.key === 'd' || e.key === 'D') {
+            T2captureConfig();
         }
     });
 }
@@ -5618,14 +5727,44 @@ function T2drawItem(it, selected) {
 
     // Value label (skip wire and instruments).
     if (it.type === 'cell') {
-        ctx2.fillStyle = '#2ecc71'; ctx2.font = 'bold 12px Arial'; ctx2.textAlign = 'center';
-        var eOffX = (it.labelOffsetX != null) ? it.labelOffsetX : 0;
-        var eOffY = (it.labelOffsetY != null) ? it.labelOffsetY : 26;
-        var elx = midX + eOffX, ely = midY + eOffY;
-        var eText = it.value.toFixed(1) + ' V';
-        ctx2.fillText(eText, elx, ely);
-        var ew = ctx2.measureText(eText).width;
-        it._emfLabel = { x: elx, y: ely, w: Math.max(ew, 20), h: 16 };
+        // EMF label (draggable, own show/hide, DC kit showBatteryValues pattern).
+        // Value: 'n.n V'; Symbol: 'V' (the EMF symbol); or hidden. A tap on the
+        // symbol reveals the value, matching the capacitor and charge labels.
+        it._emfLabel = null;
+        if (T2DISP.emf !== 'hide') {
+            var emfIsSymbol = (T2DISP.emf === 'symbol' && !T2revealEmf[it.id]);
+            ctx2.fillStyle = '#2ecc71'; ctx2.textAlign = 'center';
+            var emfFont = emfIsSymbol ? 20 : 12;
+            ctx2.font = 'bold ' + emfFont + 'px Arial';
+            var eOffX = (it.labelOffsetX != null) ? it.labelOffsetX : 0;
+            var eOffY = (it.labelOffsetY != null) ? it.labelOffsetY : 26;
+            var elx = midX + eOffX, ely = midY + eOffY;
+            var eText = emfIsSymbol ? 'V' : (it.value.toFixed(1) + ' V');
+            ctx2.fillText(eText, elx, ely);
+            var ew = ctx2.measureText(eText).width;
+            it._emfLabel = { x: elx, y: ely - emfFont * 0.35, bx: elx, by: ely, w: Math.max(ew, 20), h: emfIsSymbol ? 24 : 16 };
+        }
+        // Charge-delivered label (draggable, own show/hide). Net charge delivered
+        // by the cell = T2._netEmitted (charge that has flowed through the cell),
+        // which in a source-driven circuit equals the net charge stored on the
+        // capacitors it feeds. The cell does NOT store this charge, so the label
+        // says "Net charge delivered" rather than "Q =", which would wrongly imply
+        // storage. Value: 'Net charge delivered = ...'; Symbol: 'Qdel'; or hidden.
+        it._cqLabel = null;
+        if (it.type === 'cell' && T2DISP.cellq !== 'hide') {
+            var cqIsSymbol = (T2DISP.cellq === 'symbol' && !T2revealCellQ[it.id]);
+            var qDel = T2._netEmitted || 0;
+            var cqText = cqIsSymbol ? 'Qdel' : ('Net charge delivered = ' + T2fmtQ(qDel));
+            ctx2.fillStyle = '#ffd166'; ctx2.textAlign = 'center';
+            var cqFont = cqIsSymbol ? 20 : 11;
+            ctx2.font = 'bold ' + cqFont + 'px Arial';
+            var cqOffX = (it.cqLabelOffX != null) ? it.cqLabelOffX : 0;
+            var cqOffY = (it.cqLabelOffY != null) ? it.cqLabelOffY : 44;
+            var cqlx = midX + cqOffX, cqly = midY + cqOffY;
+            ctx2.fillText(cqText, cqlx, cqly);
+            var cqw = ctx2.measureText(cqText).width;
+            it._cqLabel = { x: cqlx, y: cqly - cqFont * 0.35, bx: cqlx, by: cqly, w: Math.max(cqw, 20), h: cqIsSymbol ? 24 : 16 };
+        }
     } else if (it.type === 'capacitor' || it.type === 'varCapacitor') {
         var cOffX = (it.cLabelOffX != null) ? it.cLabelOffX : 0;
         var cOffY = (it.cLabelOffY != null) ? it.cLabelOffY : 32;
@@ -6184,6 +6323,339 @@ function T2resetCharge() {
     T2._netDelivered = 0;
     T2computeNodes();
     T2settle();
+    T2draw();
+}
+
+/* ---- Preset capture / load (DC kit preset pattern) ----
+   T2captureConfig(): logs the current circuit as clean JSON to the console.
+   Build a circuit, run T2captureConfig() in the Chrome console, copy the output.
+   The transient draw caches (underscore-prefixed fields) are stripped so only
+   the exact persistent geometry, values and label offsets are captured. */
+function T2captureConfig() {
+    var out = [];
+    for (var i = 0; i < T2.items.length; i++) {
+        var src = T2.items[i], clean = {};
+        for (var k in src) {
+            if (!src.hasOwnProperty(k)) continue;
+            if (k.charAt(0) === '_') continue;          // drop transient draw caches
+            clean[k] = src[k];
+        }
+        out.push(clean);
+    }
+    var json = JSON.stringify(out, null, 2);
+    if (typeof console !== 'undefined' && console.log) {
+        console.log('%c--- T2 CONFIG (' + out.length + ' items) - copy below ---', 'color:#2ecc71;font-weight:bold');
+        console.log(json);
+    }
+    // Copy to clipboard if the console's copy() helper exists, else the async API.
+    try { if (typeof copy === 'function') copy(json); }
+    catch (e) {}
+    try { if (navigator && navigator.clipboard) navigator.clipboard.writeText(json); }
+    catch (e2) {}
+    return json;
+}
+// Expose on window so it is callable from the Chrome console regardless of scope.
+if (typeof window !== 'undefined') {
+    window.T2captureConfig = T2captureConfig;
+    window.T2loadPreset = T2loadPreset;
+}
+
+/* ---- Example preset circuits ---- */
+/* Single capacitor: 6 V cell, 100 µF capacitor, wire, and an open switch, so a
+   class can close the switch to charge it. Geometry and label positions are the
+   exact captured configuration. */
+function T2preset1() {
+    T2loadPreset([
+        { "id": 1, "type": "cell", "x1": 120, "y1": 80, "x2": 540, "y2": 80,
+          "value": 6, "unit": "V", "color": "#2ecc71", "isOn": true,
+          "labelOffsetX": 2.3529411764705515, "labelOffsetY": -24.883115612309794,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 2, "type": "capacitor", "x1": 120, "y1": 220, "x2": 540, "y2": 220,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 3, "type": "wire", "x1": 540, "y1": 80, "x2": 540, "y2": 220,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 4, "type": "switch", "x1": 120, "y1": 220, "x2": 120, "y2": 80,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 }
+    ]);
+}
+
+/* Clear the whole circuit. */
+function T2clearAll() {
+    T2loadPreset([]);
+}
+
+/* Series: three capacitors 600, 300, 200 µF in series across a 6 V cell. In
+   series every capacitor carries the same charge, so V = Q/C splits in inverse
+   proportion to capacitance - here 1 V, 2 V, 3 V (ratio 1:2:3), all whole
+   numbers, showing the smallest capacitor takes the largest share. The switch
+   starts open so a class can close it to charge the chain. Geometry and label
+   positions are the exact captured configuration; charge starts fresh. */
+function T2preset2() {
+    T2loadPreset([
+        { "id": 1, "type": "cell", "x1": 60, "y1": 80, "x2": 700, "y2": 80,
+          "value": 6, "unit": "V", "color": "#2ecc71", "isOn": true,
+          "labelOffsetX": 2.3529411764705515, "labelOffsetY": -24.883115612309794,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 2, "type": "capacitor", "x1": 60, "y1": 220, "x2": 260, "y2": 220,
+          "value": 600, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 3, "type": "wire", "x1": 700, "y1": 80, "x2": 700, "y2": 220,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 4, "type": "switch", "x1": 60, "y1": 220, "x2": 60, "y2": 80,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 5, "type": "capacitor", "x1": 260, "y1": 220, "x2": 480, "y2": 220,
+          "value": 300, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 6, "type": "capacitor", "x1": 480, "y1": 220, "x2": 700, "y2": 220,
+          "value": 200, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 }
+    ]);
+}
+
+/* Parallel: three capacitors 100, 200, 300 µF each on its own branch across the
+   6 V cell, so every capacitor sees the full 6 V. Total capacitance adds:
+   100 + 200 + 300 = 600 µF, and the stored charges are Q = CV = 600, 1200,
+   1800 µC - all whole numbers, largest capacitor holds the most. Each branch has
+   its own open switch so a class can bring branches in one at a time and watch
+   the total charge climb. Geometry and label positions are the exact captured
+   configuration; charge starts fresh. */
+function T2preset3() {
+    T2loadPreset([
+        { "id": 1, "type": "cell", "x1": 60, "y1": 80, "x2": 700, "y2": 80,
+          "value": 6, "unit": "V", "color": "#2ecc71", "isOn": true,
+          "labelOffsetX": 2.3529411764705515, "labelOffsetY": -24.883115612309794,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 2, "type": "capacitor", "x1": 60, "y1": 220, "x2": 700, "y2": 220,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 3, "type": "wire", "x1": 700, "y1": 80, "x2": 700, "y2": 220,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 4, "type": "switch", "x1": 60, "y1": 220, "x2": 60, "y2": 80,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 5, "type": "capacitor", "x1": 60, "y1": 460, "x2": 700, "y2": 460,
+          "value": 300, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 6, "type": "capacitor", "x1": 60, "y1": 340, "x2": 700, "y2": 340,
+          "value": 200, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 7, "type": "wire", "x1": 700, "y1": 340, "x2": 700, "y2": 220,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 8, "type": "wire", "x1": 700, "y1": 460, "x2": 700, "y2": 340,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 9, "type": "switch", "x1": 60, "y1": 340, "x2": 60, "y2": 220,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 10, "type": "switch", "x1": 60, "y1": 460, "x2": 60, "y2": 340,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 }
+    ]);
+}
+
+/* Series/Parallel combination: a 100 µF capacitor in series with a parallel pair
+   (200 µF and 100 µF). The pair combines to 300 µF, in series with the 100 µF
+   gives 75 µF total. Across 6 V the series charge is 450 µC, so the 100 µF single
+   takes 4.5 V (the larger share, being the smaller series capacitance) and the
+   pair takes 1.5 V; the pair's charge splits 300 µC / 150 µC in proportion to
+   capacitance. All three switches start open so the network can be energised and
+   the branches brought in one at a time. Geometry and label positions are the
+   exact captured configuration; charge starts fresh. */
+function T2preset4() {
+    T2loadPreset([
+        { "id": 1, "type": "cell", "x1": 60, "y1": 80, "x2": 700, "y2": 80,
+          "value": 6, "unit": "V", "color": "#2ecc71", "isOn": true,
+          "labelOffsetX": 2.3529411764705515, "labelOffsetY": -24.883115612309794,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 2, "type": "capacitor", "x1": 60, "y1": 240, "x2": 240, "y2": 240,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 6, "type": "capacitor", "x1": 400, "y1": 180, "x2": 640, "y2": 180,
+          "value": 200, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 11, "type": "switch", "x1": 240, "y1": 180, "x2": 400, "y2": 180,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 12, "type": "switch", "x1": 240, "y1": 300, "x2": 400, "y2": 300,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 13, "type": "capacitor", "x1": 400, "y1": 300, "x2": 640, "y2": 300,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 15, "type": "wire", "x1": 640, "y1": 240, "x2": 640, "y2": 180,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 16, "type": "wire", "x1": 240, "y1": 180, "x2": 240, "y2": 240,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 17, "type": "wire", "x1": 240, "y1": 240, "x2": 240, "y2": 300,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 18, "type": "switch", "x1": 60, "y1": 240, "x2": 60, "y2": 80,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 19, "type": "wire", "x1": 640, "y1": 240, "x2": 640, "y2": 300,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 20, "type": "wire", "x1": 700, "y1": 240, "x2": 700, "y2": 80,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 21, "type": "wire", "x1": 640, "y1": 240, "x2": 700, "y2": 240,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 }
+    ]);
+}
+
+/* Capacitor charging capacitor: no cell. A 200 µF capacitor is PRE-CHARGED to
+   500 µC (initialQ = 0.0005 C, so 2.5 V), a 100 µF capacitor starts empty, and an
+   open switch separates them. Closing the switch lets them share charge: both
+   settle to a common 500/300 = 1.667 V, with 333.3 µC on the 200 µF and 166.7 µC
+   on the 100 µF. Stored energy falls from 0.625 mJ to 0.417 mJ - a third is lost
+   however small the wire resistance, the classic two-capacitor paradox. A
+   voltmeter across the pair reads the shared voltage. Geometry and label
+   positions are the exact captured configuration; the pre-charge is deliberate. */
+function T2preset5() {
+    T2loadPreset([
+        { "id": 6, "type": "capacitor", "x1": 160, "y1": 80, "x2": 600, "y2": 80,
+          "value": 200, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0.0005, "storedQ": 0.0005 },
+        { "id": 13, "type": "capacitor", "x1": 160, "y1": 300, "x2": 600, "y2": 300,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 15, "type": "wire", "x1": 600, "y1": 180, "x2": 600, "y2": 80,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 18, "type": "switch", "x1": 160, "y1": 300, "x2": 160, "y2": 180,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 19, "type": "wire", "x1": 600, "y1": 180, "x2": 600, "y2": 300,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 20, "type": "wire", "x1": 160, "y1": 180, "x2": 160, "y2": 80,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 21, "type": "wire", "x1": 600, "y1": 180, "x2": 660, "y2": 180,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 22, "type": "wire", "x1": 100, "y1": 180, "x2": 160, "y2": 180,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 23, "type": "voltmeter", "kind": "volt",
+          "bodyX": 480.3921568627451, "bodyY": 36.94505602035326,
+          "x1": 100, "y1": 180, "x2": 658.549019607843, "y2": 180,
+          "angle1": -0.15, "angle2": 0.15,
+          "redNode": null, "blackNode": null, "voltage": NaN }
+    ]);
+}
+
+/* Load a preset: replace the circuit with an exact copy of the given item array,
+   preserving all geometry and label positions. Charge starts from each
+   capacitor's stored/initial charge as given; then the network settles. */
+function T2loadPreset(items) {
+    T2.items = [];
+    var maxId = 0;
+    for (var i = 0; i < items.length; i++) {
+        var it = JSON.parse(JSON.stringify(items[i]));   // deep copy, verbatim
+        if (it.storedQ == null) it.storedQ = it.initialQ || 0;
+        if (it.id > maxId) maxId = it.id;
+        T2.items.push(it);
+    }
+    T2._seq = maxId + 1;
+    T2.selectedId = null;
+    T2.selectedPaletteType = null;
+    if (T2._armedEl) { T2._armedEl.style.outline = ''; T2._armedEl = null; }
+    T2._netEmitted = 0;
+    T2._netDelivered = 0;
+    T2revealC = {}; T2revealQ = {}; T2revealCellQ = {}; T2revealEmf = {};
+    T2computeNodes();
+    T2settle();
+    T2refreshPalette();
+    T2hideHint();
     T2draw();
 }
 
