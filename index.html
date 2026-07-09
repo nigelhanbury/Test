@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<!-- redeploy trigger: 2026-07-04 -->
+<!-- redeploy trigger: 2026-07-05 (capacitor toolkit: bridge preset + polarity + safari layout fix) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capacitor Toolkit</title>
+<link rel="icon" href="/favicon.ico?v=2" sizes="any">
+<link rel="icon" href="/favicon-drh.svg?v=2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/favicon-drh-256.png?v=2">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -359,7 +362,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
     gap: 8px;
     padding: 4px 0;
 }
-.checkbox-row label { color: #bbb; font-size: 0.85em; cursor: pointer; }
+.checkbox-row label { color: #bbb; font-size: 0.78em; cursor: pointer; white-space: nowrap; }
 .checkbox-row input { cursor: pointer; width: 16px; height: 16px; }
 
 .btn-row { display: flex; gap: 8px; margin-top: 6px; }
@@ -696,7 +699,7 @@ input[type="range"]:disabled { cursor: not-allowed; }
 
 /* ===== Build Your Own (tab 2) - layout & palette match DC Construction Kit ===== */
 .build-area { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
-.build-canvas-wrap { position: relative; flex: 1 1 auto; min-width: 500px; }
+.build-canvas-wrap { position: relative; flex: 1 1 500px; min-width: 500px; }
 .build-controls { width: 300px; flex: 0 0 auto; }
 .components-grid {
     display: grid;
@@ -771,6 +774,12 @@ input[type="range"]:disabled { cursor: not-allowed; }
     box-shadow: 0 4px 20px rgba(155,89,182,0.3);
 }
 .drag-component.switch:hover { box-shadow: 0 6px 30px rgba(155,89,182,0.5); }
+.drag-component.spdt {
+    background: linear-gradient(135deg, rgba(230,126,34,0.3), rgba(211,84,0,0.2));
+    border: 2px solid rgba(230,126,34,0.5);
+    box-shadow: 0 4px 20px rgba(230,126,34,0.3);
+}
+.drag-component.spdt:hover { box-shadow: 0 6px 30px rgba(230,126,34,0.5); }
 .drag-component.wire {
     background: linear-gradient(135deg, rgba(52,152,219,0.3), rgba(41,128,185,0.2));
     border: 2px solid rgba(52,152,219,0.5);
@@ -789,6 +798,12 @@ input[type="range"]:disabled { cursor: not-allowed; }
     box-shadow: 0 4px 20px rgba(46,204,113,0.3);
 }
 .drag-component.energy:hover { box-shadow: 0 6px 30px rgba(46,204,113,0.5); }
+.drag-component.probe {
+    background: linear-gradient(135deg, rgba(255,107,157,0.3), rgba(255,77,136,0.2));
+    border: 2px solid rgba(255,107,157,0.5);
+    box-shadow: 0 4px 20px rgba(255,107,157,0.3);
+}
+.drag-component.probe:hover { box-shadow: 0 6px 30px rgba(255,107,157,0.5); }
 .drag-component.selected { outline: 3px solid #ffd166; outline-offset: 1px; }
 .drag-component.disabled {
     opacity: 0.3 !important;
@@ -1027,7 +1042,6 @@ canvas#canvas2 {
 
     <!-- ============ TAB 2 (scaffold placeholder) ============ -->
     <div class="tab-page" id="page2">
-        <p class="tab-blurb" style="margin:0 0 10px;">Drag a component from the palette onto the canvas. Drag its endpoints to rotate, resize or wire it to others; long-press (or right-click) a component to delete it. Build any arrangement of cells and capacitors, then read potential difference and stored energy with the instruments. In the settled state a capacitor is fully charged and carries no current, so this tab is about potential difference, charge and energy &mdash; not current.</p>
         <div class="build-area">
             <div class="build-canvas-wrap">
                 <div class="build-annotate-bar" id="buildAnnotateBar2">
@@ -1067,6 +1081,10 @@ canvas#canvas2 {
                                 <option value="hide">Hide</option>
                             </select>
                         </div>
+                        <div class="checkbox-row" style="justify-content:space-between;">
+                            <label for="dispBuildPolarity" style="color:#ff8fb6">Plate polarity (+ / &minus;)</label>
+                            <input type="checkbox" id="dispBuildPolarity" checked onchange="T2onDisplayModeChange()">
+                        </div>
                     </div>
                     <div class="opt-group">
                         <div class="opt-group-label">Cell labels</div>
@@ -1095,6 +1113,7 @@ canvas#canvas2 {
                     <button class="build-preset-btn" onclick="T2preset3()">Parallel</button>
                     <button class="build-preset-btn" onclick="T2preset4()">Series/Parallel</button>
                     <button class="build-preset-btn" onclick="T2preset5()">Capacitor charging capacitor</button>
+                    <button class="build-preset-btn" onclick="T2preset6()">Capacitor bridge</button>
                     <button class="build-preset-btn clear-btn" onclick="T2clearAll()">Clear all</button>
                 </div>
             </div>
@@ -1141,6 +1160,18 @@ canvas#canvas2 {
                             </svg>
                             <span class="component-label">Switch</span>
                         </div>
+                        <div class="drag-component spdt" data-btype="spdt">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <line x1="4" y1="15" x2="14" y2="15" stroke="#e67e22" stroke-width="3"/>
+                                <circle cx="14" cy="15" r="2.5" fill="#e67e22"/>
+                                <line x1="14" y1="15" x2="33" y2="7" stroke="#e67e22" stroke-width="3"/>
+                                <circle cx="35" cy="7" r="2.5" fill="#e67e22"/>
+                                <line x1="35" y1="7" x2="46" y2="7" stroke="#e67e22" stroke-width="3"/>
+                                <circle cx="35" cy="23" r="2.5" fill="#e67e22"/>
+                                <line x1="35" y1="23" x2="46" y2="23" stroke="#e67e22" stroke-width="3"/>
+                            </svg>
+                            <span class="component-label">SPDT Switch</span>
+                        </div>
                         <div class="drag-component wire" data-btype="wire">
                             <svg class="component-icon" viewBox="0 0 50 30">
                                 <line x1="5" y1="15" x2="45" y2="15" stroke="#3498db" stroke-width="3"/>
@@ -1161,8 +1192,15 @@ canvas#canvas2 {
                             </svg>
                             <span class="component-label">Energy</span>
                         </div>
+                        <div class="drag-component probe" data-btype="probe">
+                            <svg class="component-icon" viewBox="0 0 50 30">
+                                <circle cx="25" cy="15" r="11" fill="none" stroke="#ff6b9d" stroke-width="2.5"/>
+                                <text x="25" y="20" font-size="12" fill="#ff6b9d" text-anchor="middle" font-weight="bold">&#966;</text>
+                            </svg>
+                            <span class="component-label">Potential</span>
+                        </div>
                     </div>
-                    <p class="palette-note">Drag a tile onto the canvas, or on a touch screen tap the tile then tap the canvas to place it. Drag endpoints to rotate, resize or wire. Drag a label to move it. To delete a component, long-press it on a touch screen or right-click it on a computer &mdash; deleting resets the circuit&rsquo;s charge and delivered energy, since you&rsquo;re reconfiguring.</p>
+                    <p class="palette-note">Drag a tile onto the canvas, or on a touch screen tap the tile then tap the canvas to place it. Drag endpoints to rotate, resize or wire. Drag a label to move it. To delete a component, long-press it on a touch screen or right-click it on a computer &mdash; deleting a circuit component resets the circuit&rsquo;s charge and delivered energy, since you&rsquo;re reconfiguring (deleting a meter or probe doesn&rsquo;t).</p>
                     <button class="build-action" id="buildReset" onclick="T2resetCharge()" title="Clear all charge and energy" style="margin-top:10px;">&#8635; Reset charge &amp; energy</button>
                 </div>
                 <div class="panel" id="buildInspectorPanel" style="margin-top:12px;">
@@ -1184,6 +1222,7 @@ canvas#canvas2 {
             <button class="graphs-type-btn"        id="graphTypeBtn_i"  onclick="setGraphType('i')">Current vs time</button>
             <button class="graphs-type-btn"        id="graphTypeBtn_e"  onclick="setGraphType('e')">Energy vs time</button>
             <button class="graphs-type-btn"        id="graphTypeBtn_qv" onclick="setGraphType('qv')">Charge vs voltage</button>
+            <button class="graphs-type-btn"        id="graphTypeBtn_ln" onclick="setGraphType('ln')">ln plot &amp; time constant</button>
         </div>
         <button class="graphs-close" onclick="closeGraphsModal()" title="Close">&#10005;</button>
     </div>
@@ -1254,9 +1293,10 @@ canvas#canvas2 {
         <p>To add a component, drag its tile from the palette onto the canvas, or on a touch screen tap the tile to highlight it and then tap the canvas to place it. Drag an <span class="key">endpoint</span> to rotate or resize a component, or onto another endpoint to wire the two together &mdash; a blue dot marks where three or more ends join. Only one cell is allowed; the cell tile greys out once one is placed.</p>
         <p><span class="key">Long-press</span> a component (or right-click on a computer) to delete it. Deleting resets the circuit&rsquo;s charge and delivered energy, since removing a part means you are reconfiguring.</p>
         <h3>Components</h3>
-        <p><span class="key">Cell</span> &mdash; the supply; set its EMF in the inspector, and press <span class="key">r</span> to reverse its polarity. <span class="key">Capacitor</span> &mdash; set its capacitance and, for a source-free circuit, an initial charge. <span class="key">Variable capacitor</span> &mdash; drag the arrow on its body to change the capacitance live. <span class="key">Switch</span> &mdash; tap its body to open or close it. <span class="key">Wire</span> &mdash; a zero-resistance link.</p>
-        <h3>The switch and trapped charge</h3>
-        <p>Closing a switch completes a path so charge can flow; opening it strands whatever charge is already on an isolated capacitor, which then holds that charge. Connect a charged capacitor to an empty one and the charge shares between them, settling at a common voltage &mdash; the total stored energy falls, as it does in a real circuit.</p>
+        <p><span class="key">Cell</span> &mdash; the supply; set its EMF in the inspector, and press <span class="key">r</span> to reverse its polarity. <span class="key">Capacitor</span> &mdash; set its capacitance and, for a source-free circuit, an initial charge. <span class="key">Variable capacitor</span> &mdash; drag the arrow on its body to change the capacitance live. <span class="key">Switch</span> &mdash; tap its body to open or close it. <span class="key">SPDT switch</span> &mdash; a changeover switch with three terminals; tap an arm to route the common to it (see below). <span class="key">Wire</span> &mdash; a zero-resistance link.</p>
+        <h3>The SPDT (changeover) switch</h3>
+        <p>The SPDT switch has three terminals: a common (<span class="key">C</span>) and two throws, <span class="key">A</span> and <span class="key">B</span>. Tap arm A to switch to A, tap arm B to switch to B, tap arm C to disconnect.</p>
+        <p>Wire the common to a capacitor, throw A to the cell and throw B to a second capacitor, and you have charge, isolate and share in one component: tap A to charge, tap C to isolate, tap B to share.</p>
         <h3>The inspector</h3>
         <p>Tap a component to select it; its editable properties appear in the <span class="key">Inspector</span> panel, along with the settled voltage and charge for a capacitor. Changes take effect at once.</p>
         <h3>Meters</h3>
@@ -1269,7 +1309,7 @@ canvas#canvas2 {
         <p><span class="key">Reset charge &amp; energy</span> &mdash; empties every capacitor and clears the delivered-energy total, without changing the circuit you have built.</p>
         <h3>Touch devices (iPad and Apple Pencil)</h3>
         <p>Everything works with a finger or an Apple Pencil. To add a component, <span class="key">tap</span> its tile in the palette so it highlights, then <span class="key">tap the canvas</span> where you want it &mdash; tap the highlighted tile again to cancel. On a computer you can instead drag a tile straight onto the canvas.</p>
-        <p>Tap a component to select it or, for a switch, to open and close it; a small movement is ignored so a tap does not nudge anything. Drag endpoints, probes, meters, wiper arrows and labels just as with a mouse. <span class="key">Long-press</span> a component to delete it.</p>
+        <p>Tap a component to select it or, for a switch, to open and close it; for an SPDT switch, tap the A, B or common arm to route the common to that terminal. A small movement is ignored so a tap does not nudge anything. Drag endpoints, probes, meters, wiper arrows and labels just as with a mouse. <span class="key">Long-press</span> a component to delete it.</p>
         <p>Use <span class="key">Annotate</span> to draw over the circuit and <span class="key">Scribble</span> for a free notepad; rest your palm on the screen while writing with the Pencil, as touches from your hand are ignored while a pen stroke is in progress.</p>
     </div>
 </div>
@@ -2748,6 +2788,26 @@ function stepPhysics(dt) {
     const R = Reff();
     const tau = R * T1.C;
     if (tau <= 0) return;
+    // Once settled, the run is frozen at the settle boundary: do not advance t or
+    // q any further. Without this the live loop keeps stepping past SETTLE_TAUS*tau
+    // toward q = 0, so the live end and the scrubber's far-right position (which
+    // maps to exactly SETTLE_TAUS*tau) would show DIFFERENT charges for the same
+    // reported time. Freezing here makes them coincide exactly.
+    if (T1.settled) return;
+
+    const tEnd = SETTLE_TAUS * tau;
+    // If this step would cross the settle boundary, land exactly on it and use the
+    // analytic charge at tEnd (identical to qAtTime(tEnd) used by the scrubber), so
+    // the two paths agree to the last digit.
+    if (T1.t + dt >= tEnd) {
+        T1.t = tEnd;
+        T1.q = qAtTime(tEnd);
+        T1.settled = true;
+        showScrubber(true);
+        refreshSliderLock();   // run finished: parameters editable again
+        return;
+    }
+
     if (T1.mode === 'charge') {
         const Q0 = T1.C * T1.V;
         T1.q = Q0 + (T1.q - Q0) * Math.exp(-dt / tau);
@@ -2755,17 +2815,6 @@ function stepPhysics(dt) {
         T1.q = T1.q * Math.exp(-dt / tau);
     }
     T1.t += dt;
-
-    // Mark the run as settled once it reaches the settle span (SETTLE_TAUS * tau),
-    // which is also the scrubber window, so the live end state and the scrubber's
-    // far-right position coincide exactly.
-    if (T1.mode === 'charge' || T1.mode === 'discharge') {
-        if (!T1.settled && T1.t >= SETTLE_TAUS * tau) {
-            T1.settled = true;
-            showScrubber(true);
-            refreshSliderLock();   // run finished: parameters editable again
-        }
-    }
 }
 
 function presentValues() {
@@ -3700,7 +3749,8 @@ const GRAPH_META = {
     v: { label: 'Capacitor voltage', symbol: 'V_C', units: 'V', color: '#2ecc71' },
     i: { label: 'Current', symbol: 'I', units: 'mA', color: '#e74c3c' },
     e: { label: 'Energy stored', symbol: 'E', units: 'mJ', color: '#f1c40f' },
-    qv: { label: 'Charge', symbol: 'Q', units: '\u00B5C', color: '#9b59b6' }
+    qv: { label: 'Charge', symbol: 'Q', units: '\u00B5C', color: '#9b59b6' },
+    ln: { label: 'ln plot', symbol: 'ln', units: '', color: '#1abc9c' }
 };
 
 function openGraphsModal() {
@@ -3736,7 +3786,7 @@ function closeGraphsModal() {
 
 function setGraphType(type) {
     graphsState.type = type;
-    const types = ['q', 'v', 'i', 'e', 'qv'];
+    const types = ['q', 'v', 'i', 'e', 'qv', 'ln'];
     for (let i = 0; i < types.length; i++) {
         const b = document.getElementById('graphTypeBtn_' + types[i]);
         if (b) b.classList.toggle('active', types[i] === type);
@@ -3831,6 +3881,78 @@ function buildGraphDataset() {
             yLabel: meta.label, yUnits: u.units,
             tau: Infinity, ceiling: null, ceilingLabel: null,
             isQV: true, qScale: u.scale
+        };
+    }
+
+    // ln plot: linearise the exponential to a straight line whose gradient gives
+    // the time constant. DISCHARGE V = V0 e^(-t/RC) so ln V = ln V0 - t/RC, a
+    // straight line of gradient -1/RC. CHARGE V = V0(1 - e^(-t/RC)) is NOT linear
+    // under ln V (V rises, it does not decay); the quantity that decays is the
+    // gap to the final value, (V0 - V) = V0 e^(-t/RC), so we plot ln(V0 - V),
+    // again a straight line of gradient -1/RC. The tool picks the right quantity
+    // from the mode. The line is exact (analytic, noise-free), so reading two
+    // points off it recovers RC exactly - it demonstrates the method rather than
+    // fitting scattered data.
+    if (kind === 'ln') {
+        const tauLn = Reff() * T1.C;
+        const tWinLn = T1.histWindow;
+        if (tauLn <= 0 || tWinLn <= 0) return null;
+        const mode = T1.mode;
+        if (mode !== 'charge' && mode !== 'discharge') {
+            // Isolated: no exponential in progress, nothing to linearise.
+            return {
+                kind, color: meta.color, points: [],
+                xMin: 0, xMax: tWinLn, yMin: 0, yMax: 1,
+                xLabel: 'Time', xUnits: 's',
+                yLabel: 'ln(V)', yUnits: '',
+                tau: Infinity, ceiling: null, ceilingLabel: null,
+                isLn: true, lnMode: 'isolate'
+            };
+        }
+        const V0 = T1.V;
+        // y(t): discharge -> ln(Vc); charge -> ln(V0 - Vc). Guard the log domain.
+        const yOf = function (tt) {
+            const vc = curveValueRC('v', tt, tauLn);
+            const arg = (mode === 'discharge') ? vc : (V0 - vc);
+            if (arg <= 1e-12) return null;   // log undefined / off-scale
+            return Math.log(arg);
+        };
+        const N = 160;
+        const points = [];
+        for (let n = 0; n <= N; n++) {
+            const tt = (n / N) * tWinLn;
+            const yy = yOf(tt);
+            if (yy !== null) points.push({ x: tt, y: yy });
+        }
+        if (points.length < 2) return null;
+        // y-range from the data, with a little headroom top and bottom.
+        let yLo = points[0].y, yHi = points[0].y;
+        for (let n = 0; n < points.length; n++) {
+            if (points[n].y > yHi) yHi = points[n].y;
+            if (points[n].y < yLo) yLo = points[n].y;
+        }
+        const padLn = (yHi - yLo) * 0.08 || 1;
+        const yMinLn = yLo - padLn, yMaxLn = yHi + padLn;
+        // Two endpoints for the gradient working: the extreme ends of the plotted
+        // line - the first and last points actually drawn. This is the honest
+        // "read the two ends off the graph" method and gives the widest, clearest
+        // rise and run.
+        const first = points[0], last = points[points.length - 1];
+        const xA = first.x, xB = last.x;
+        const yA = first.y, yB = last.y;
+        // gradient = -1/RC ; RC = -1/gradient
+        const grad = (yA !== null && yB !== null && xB !== xA) ? (yB - yA) / (xB - xA) : null;
+        const rcFromGrad = (grad !== null && grad !== 0) ? (-1 / grad) : null;
+        const yLabelLn = (mode === 'discharge') ? 'ln(V)' : 'ln(V\u2080 \u2212 V)';
+        return {
+            kind, color: meta.color,
+            points, xMin: 0, xMax: tWinLn, yMin: yMinLn, yMax: yMaxLn,
+            xLabel: 'Time', xUnits: 's',
+            yLabel: yLabelLn, yUnits: '',
+            tau: tauLn, ceiling: null, ceilingLabel: null,
+            isLn: true, lnMode: mode,
+            fitA: { x: xA, y: yA }, fitB: { x: xB, y: yB },
+            grad, rcFromGrad, tauTrue: tauLn
         };
     }
 
@@ -4073,10 +4195,10 @@ function drawPanel(ctx, dataset, geom, opts) {
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText(dataset.xLabel + ' / ' + dataset.xUnits, plotXR - 6, xAxisPx.y + 20);
+    ctx.fillText(dataset.xUnits ? (dataset.xLabel + ' / ' + dataset.xUnits) : dataset.xLabel, plotXR - 6, xAxisPx.y + 20);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(dataset.yLabel + ' / ' + dataset.yUnits, plotXL + 6, plotYT - 4);
+    ctx.fillText(dataset.yUnits ? (dataset.yLabel + ' / ' + dataset.yUnits) : dataset.yLabel, plotXL + 6, plotYT - 4);
 
     if (dataset.ceiling !== null && dataset.ceiling !== undefined && dataset.ceiling <= yMax) {
         const cp = toPx(xMin, dataset.ceiling);
@@ -4093,7 +4215,7 @@ function drawPanel(ctx, dataset, geom, opts) {
         ctx.fillText(dataset.ceilingLabel, plotXR - 2, cp.y - 2);
     }
 
-    if (dataset.tau <= xMax && dataset.tau !== Infinity && T1.mode !== 'isolate') {
+    if (dataset.tau <= xMax && dataset.tau !== Infinity && T1.mode !== 'isolate' && !dataset.isLn) {
         const tp = toPx(dataset.tau, yMin);
         ctx.strokeStyle = 'rgba(255,170,68,0.6)';
         ctx.setLineDash([4, 4]);
@@ -4106,6 +4228,88 @@ function drawPanel(ctx, dataset, geom, opts) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText('\u03C4', tp.x, plotYT - 2);
+    }
+
+    if (dataset.isLn) {
+        // Isolated: no exponential to linearise.
+        if (dataset.lnMode === 'isolate') {
+            ctx.fillStyle = '#889';
+            ctx.font = '13px sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('Throw the switch to Charge or Discharge to see the ln plot.',
+                (plotXL + plotXR) / 2, (plotYT + plotYB) / 2);
+            return;
+        }
+        // The linearised data as a straight line (teal, matching the curve colour).
+        ctx.strokeStyle = dataset.color;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (let i = 0; i < dataset.points.length; i++) {
+            const p = toPx(dataset.points[i].x, dataset.points[i].y);
+            if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+
+        // White marker at the present time, following the scrubber - same as the
+        // other graphs (min(T1.t, xMax), y interpolated from the plotted points).
+        const tmLn = Math.min(T1.t, xMax);
+        const vmLn = dataset.points.length ? interpY(dataset.points, tmLn) : 0;
+        const mpLn = toPx(tmLn, vmLn);
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(mpLn.x, mpLn.y, 4, 0, Math.PI * 2); ctx.fill();
+
+        // Two endpoints read off the line for the gradient working.
+        const A = dataset.fitA, B = dataset.fitB;
+        if (A && B && A.y !== null && B.y !== null && dataset.grad !== null) {
+            const pA = toPx(A.x, A.y), pB = toPx(B.x, B.y);
+            // glowing endpoint markers (dice style)
+            const ends = [pA, pB];
+            for (let e = 0; e < 2; e++) {
+                ctx.beginPath();
+                ctx.arc(ends[e].x, ends[e].y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#fb923c';
+                ctx.shadowColor = '#fb923c'; ctx.shadowBlur = 9; ctx.fill(); ctx.shadowBlur = 0;
+                ctx.lineWidth = 1.8; ctx.strokeStyle = '#fff'; ctx.stroke();
+            }
+            // coordinate labels beside each marker
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#fdba74';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+            const cA = '(' + A.x.toFixed(3) + ', ' + A.y.toFixed(2) + ')';
+            ctx.fillText(cA, pA.x + 10, pA.y - 6);
+            const cB = '(' + B.x.toFixed(3) + ', ' + B.y.toFixed(2) + ')';
+            let cBx = pB.x + 10;
+            const cBw = ctx.measureText(cB).width;
+            if (cBx + cBw > plotXR) cBx = plotXR - cBw;
+            ctx.fillText(cB, cBx, pB.y + 20);
+
+            // Gradient working box (dice gwDrawLn style): identity, substitution,
+            // value, then RC = -1/gradient with substitution and result. Anchored
+            // at the bottom-left, just to the right of the vertical axis.
+            const grad = dataset.grad;
+            const rc = dataset.rcFromGrad;
+            const dy = 22;
+            const nLines = 6;                 // total text rows below (incl the 0.3 gap)
+            const blockH = (nLines + 0.3) * dy;
+            const bx = plotXL + 10;
+            const by = plotYB - blockH - 6;   // sit just above the x-axis
+            let ln = 0;
+            ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+            ctx.font = 'bold 15px sans-serif'; ctx.fillStyle = '#e5e7eb';
+            ctx.fillText('gradient = \u22121/RC = (y\u2082 \u2212 y\u2081)/(x\u2082 \u2212 x\u2081)', bx, by + dy * (ln++));
+            ctx.font = '13px sans-serif'; ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('= (' + B.y.toFixed(2) + ' \u2212 ' + A.y.toFixed(2) + ') / ('
+                + B.x.toFixed(3) + ' \u2212 ' + A.x.toFixed(3) + ')', bx, by + dy * (ln++));
+            ctx.fillText('= ' + grad.toFixed(3) + ' s\u207B\u00B9', bx, by + dy * (ln++));
+            ln += 0.3;
+            ctx.font = 'bold 15px sans-serif'; ctx.fillStyle = '#e5e7eb';
+            ctx.fillText('time constant  RC = \u22121 / gradient', bx, by + dy * (ln++));
+            ctx.font = '13px sans-serif'; ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('= \u22121 / (' + grad.toFixed(3) + ')', bx, by + dy * (ln++));
+            ctx.font = 'bold 16px sans-serif'; ctx.fillStyle = dataset.color;
+            ctx.fillText('RC = ' + rc.toFixed(4) + ' s', bx, by + dy * (ln++));
+        }
+        return;
     }
 
     if (dataset.isQV) {
@@ -4787,7 +4991,7 @@ var T2_GRID = 20;
    mirroring tab 1's DISP/dispText. 'c' = capacitance, 'q' = charge. Tapping a
    symbol label on the canvas reveals that item's value (DC kit per-item reveal
    Sets keyed by item id). */
-var T2DISP = { c: 'value', q: 'value', cellq: 'value', emf: 'value' };
+var T2DISP = { c: 'value', q: 'value', cellq: 'value', emf: 'value', polarity: true };
 var T2revealC = {};   // itemId -> true when this cap's capacitance label is revealed
 var T2revealQ = {};   // itemId -> true when this cap's charge label is revealed
 var T2revealCellQ = {}; // cellId -> true when the cell's charge-delivered label is revealed
@@ -4798,10 +5002,12 @@ function T2onDisplayModeChange() {
     var qs = document.getElementById('dispBuildQ');
     var cqs = document.getElementById('dispBuildCellQ');
     var es = document.getElementById('dispBuildEmf');
+    var ps = document.getElementById('dispBuildPolarity');
     if (cs) T2DISP.c = cs.value;
     if (qs) T2DISP.q = qs.value;
     if (cqs) T2DISP.cellq = cqs.value;
     if (es) T2DISP.emf = es.value;
+    if (ps) T2DISP.polarity = ps.checked;
     if (T2DISP.c === 'value') T2revealC = {};   // value mode clears reveals
     if (T2DISP.q === 'value') T2revealQ = {};
     if (T2DISP.cellq === 'value') T2revealCellQ = {};
@@ -4823,9 +5029,11 @@ var T2_DEFS = {
     capacitor:    { len: 80, color: '#4fc3f7', value: 100,  unit: '\u00B5F' },
     varCapacitor: { len: 80, color: '#4fc3f7', value: 100,  unit: '\u00B5F' },
     switch:       { len: 80, color: '#9b59b6', value: 0,    unit: ''   },
+    spdt:         { len: 80, color: '#e67e22', value: 0,    unit: ''   },
     wire:         { len: 90, color: '#5a7fb0', value: 0,    unit: ''   },
     voltmeter:    { len: 70, color: '#ff6b9d', value: 0,    unit: 'V'  },
-    energy:       { len: 70, color: '#2ecc71', value: 0,    unit: 'J'  }
+    energy:       { len: 70, color: '#2ecc71', value: 0,    unit: 'J'  },
+    probe:        { len: 70, color: '#ff6b9d', value: 0,    unit: 'V'  }
 };
 
 var canvas2, ctx2;
@@ -4834,6 +5042,11 @@ function T2init() {
     canvas2 = document.getElementById('canvas2');
     if (!canvas2) return;
     ctx2 = canvas2.getContext('2d');
+
+    // Sync the plate-polarity checkbox to its default (Apps Script strips the HTML
+    // 'checked' attribute, so set it from the T2DISP default in JS on load).
+    var polCb = document.getElementById('dispBuildPolarity');
+    if (polCb) polCb.checked = T2DISP.polarity;
 
     // Palette placement. Mouse: drag a tile onto the canvas (draggingFromPalette).
     // Touch (iPad, DC kit method): TAP a tile to arm it (white highlight), then
@@ -4979,6 +5192,36 @@ function T2addItem(type, x, y) {
             angle1: 0,
             component: null, compLabel: null, energy: NaN
         };
+    } else if (type === 'probe') {
+        // Potential probe: single probe, like the energy meter, but its tip snaps
+        // to any point on a wire/component and reads the ABSOLUTE potential at that
+        // node (one voltmeter probe against the circuit's 0 V reference). Reveals
+        // why a capacitor holds no charge - probe both plates and compare.
+        item = {
+            id: T2._seq++, type: 'probe', kind: 'probe',
+            bodyX: cx, bodyY: cy,
+            x1: cx, y1: cy + 110,
+            angle1: 0,
+            node: null, potential: NaN
+        };
+    } else if (type === 'spdt') {
+        // First three-terminal component. Common (pivot) at {x1,y1} on the left;
+        // throw A at {x2,y2} upper-right; throw B at {x3,y3} lower-right. The
+        // pivot sits at the body centre (bodyX,bodyY). 'throw' routes the common
+        // to A, to B, or to neither (centre-off) - starts 'off' so a class can
+        // predict then reveal. Duplicated into its own shape so the working
+        // two-terminal switch and its {x1,y1,x2,y2}-only handlers are untouched.
+        var sbx = cx, sby = cy;                 // body/pivot centre
+        item = {
+            id: T2._seq++, type: 'spdt',
+            bodyX: sbx, bodyY: sby,
+            x1: sbx - 40, y1: sby,              // common (left lead end)
+            x2: sbx + 40, y2: sby - 24,         // throw A (upper-right)
+            x3: sbx + 40, y3: sby + 24,         // throw B (lower-right)
+            throw: 'off',                       // 'A' | 'off' | 'B'
+            value: def.value, unit: def.unit, color: def.color,
+            labelOffsetX: 0, labelOffsetY: 40   // 'SPDT' label below body, draggable
+        };
     } else {
         item = {
             id: T2._seq++,
@@ -5015,7 +5258,15 @@ function T2endpoints() {
     var eps = [];
     for (var i = 0; i < T2.items.length; i++) {
         var it = T2.items[i];
-        if (it.type === 'voltmeter' || it.type === 'energy') continue; // instruments are sensors
+        if (T2isInstrument(it.type)) continue; // instruments are sensors
+        if (it.type === 'spdt') {
+            // Three terminals: common (1), throw A (2), throw B (3). The routing
+            // between them (which pair is tied) is applied in T2computeNodes.
+            eps.push({ x: it.x1, y: it.y1, item: it, endNum: 1 });
+            eps.push({ x: it.x2, y: it.y2, item: it, endNum: 2 });
+            eps.push({ x: it.x3, y: it.y3, item: it, endNum: 3 });
+            continue;
+        }
         eps.push({ x: it.x1, y: it.y1, item: it, endNum: 1 });
         eps.push({ x: it.x2, y: it.y2, item: it, endNum: 2 });
     }
@@ -5042,6 +5293,19 @@ function T2computeNodes() {
             for (var m = 0; m < eps.length; m++) {
                 if (eps[m].item === itk && m !== k) union(k, m);
             }
+        }
+    }
+    // An SPDT ties its common (endNum 1) to the live throw: endNum 2 when thrown
+    // to A, endNum 3 when thrown to B, and to neither when centre-off (both
+    // throws float, so charge on an isolated island is stranded and holds).
+    for (var s = 0; s < eps.length; s++) {
+        var its = eps[s].item;
+        if (its.type !== 'spdt') continue;
+        if (eps[s].endNum !== 1) continue;                 // act once, from the common
+        var liveEnd = (its.throw === 'A') ? 2 : (its.throw === 'B') ? 3 : 0;
+        if (!liveEnd) continue;                            // off: no tie
+        for (var mm = 0; mm < eps.length; mm++) {
+            if (eps[mm].item === its && eps[mm].endNum === liveEnd) union(s, mm);
         }
     }
     // Compress roots to node ids and record a representative position.
@@ -5083,7 +5347,7 @@ function T2hit(x, y) {
     // topmost first
     for (var i = T2.items.length - 1; i >= 0; i--) {
         var it = T2.items[i];
-        if (it.type === 'voltmeter' || it.type === 'energy') {
+        if (T2isInstrument(it.type)) {
             var a1h = (it.angle1 != null) ? it.angle1 : (it.type === 'energy' ? 0 : -0.15);
             // Probe 1: tip (connection) vs handle-top (rotate). Handle runs from the
             // tip up along the angle for handleHeight; the top ~half rotates.
@@ -5099,7 +5363,7 @@ function T2hit(x, y) {
                 if (Math.hypot(x - h2topX, y - h2topY) < 20 || Math.hypot(x - h2midX, y - h2midY) < 18) return { item: it, part: 'rot2' };
             }
             // Body.
-            var bw = it.type === 'energy' ? 56 : 50, bh = it.type === 'energy' ? 64 : 60;
+            var bw = (it.type === 'energy' || it.type === 'probe') ? 56 : 50, bh = (it.type === 'energy' || it.type === 'probe') ? 64 : 60;
             if (x > it.bodyX - bw / 2 - 5 && x < it.bodyX + bw / 2 + 5 &&
                 y > it.bodyY - bh / 2 - 5 && y < it.bodyY + bh / 2 + 10) return { item: it, part: 'body' };
             continue;
@@ -5146,6 +5410,23 @@ function T2hit(x, y) {
                     return { item: it, part: 'clabel' };
             }
         }
+        // SPDT: three terminals plus body plus its draggable label. Tested as its
+        // own shape so the generic two-terminal endpoint/body tests below never
+        // apply to it. Endpoints first (15px, DC kit), then the label, then the
+        // body region (near the pivot or along any of the three leads).
+        if (it.type === 'spdt') {
+            var slab = it._spdtLabel;
+            if (slab && T2inLabel(x, y, slab)) return { item: it, part: 'spdtlabel' };
+            if (Math.hypot(x - it.x1, y - it.y1) < 15) return { item: it, part: 'e1' };
+            if (Math.hypot(x - it.x2, y - it.y2) < 15) return { item: it, part: 'e2' };
+            if (Math.hypot(x - it.x3, y - it.y3) < 15) return { item: it, part: 'e3' };
+            var pxs = it.bodyX, pys = it.bodyY;
+            if (Math.hypot(x - pxs, y - pys) < 22) return { item: it, part: 'body' };
+            if (T2distToSeg(x, y, it.x1, it.y1, pxs, pys) < 12) return { item: it, part: 'body' };
+            if (T2distToSeg(x, y, pxs, pys, it.x2, it.y2) < 12) return { item: it, part: 'body' };
+            if (T2distToSeg(x, y, pxs, pys, it.x3, it.y3) < 12) return { item: it, part: 'body' };
+            continue;
+        }
         // Variable capacitor wiper handle (AC kit: within 18px of _wiperX/_wiperY).
         if (it.type === 'varCapacitor' && it._wiperX !== undefined &&
             Math.hypot(x - it._wiperX, y - it._wiperY) < 18) return { item: it, part: 'wiper' };
@@ -5169,18 +5450,28 @@ function T2distToSeg(px, py, x1, y1, x2, y2) {
 
 /* ---- Delete (long-press / right-click, DC kit onRightClick) ---- */
 function T2deleteItem(id) {
-    // Deleting a component means the circuit is being reconfigured, so we clear
-    // all stored charge and the delivered-energy total to avoid confusion (a
-    // stale delivered value that references charge no longer present). This is
-    // documented in the help. Charge starts fresh from the new configuration.
+    // Find what is being deleted BEFORE removing it. Instruments (voltmeter,
+    // energy meter, potential probe) are sensors: they form no nodes and hold no
+    // charge, so deleting one does NOT reconfigure the circuit and must not
+    // reset it. Deleting a real component (cell, capacitor, wire, switch) means
+    // the circuit is being reconfigured, so we clear all stored charge and the
+    // delivered-energy total to avoid confusion (a stale delivered value that
+    // references charge no longer present). This is documented in the help.
+    var deleted = null;
+    for (var d = 0; d < T2.items.length; d++) if (T2.items[d].id === id) { deleted = T2.items[d]; break; }
+    var isInstrument = deleted && T2isInstrument(deleted.type);
+
     T2.items = T2.items.filter(function (i) { return i.id !== id; });
     if (T2.selectedId === id) T2.selectedId = null;
-    for (var i = 0; i < T2.items.length; i++) {
-        var it = T2.items[i];
-        if (it.type === 'capacitor' || it.type === 'varCapacitor') it.storedQ = it.initialQ || 0;
+
+    if (!isInstrument) {
+        for (var i = 0; i < T2.items.length; i++) {
+            var it = T2.items[i];
+            if (it.type === 'capacitor' || it.type === 'varCapacitor') it.storedQ = it.initialQ || 0;
+        }
+        T2._netEmitted = 0;
+        T2._netDelivered = 0;
     }
-    T2._netEmitted = 0;
-    T2._netDelivered = 0;
     T2computeNodes(); T2settle(); T2refreshPalette(); T2draw();
 }
 /* Reverse a cell's polarity by swapping its endpoints (DC kit 'r' key). */
@@ -5223,12 +5514,22 @@ function T2down(x, y) {
             anchorX = cmx2 + ((hit.item.cqLabelOffX != null) ? hit.item.cqLabelOffX : 0);
             anchorY = cmy2 + ((hit.item.cqLabelOffY != null) ? hit.item.cqLabelOffY : 44);
             haveLab = true;
+        } else if (hit.part === 'spdtlabel') {
+            anchorX = hit.item.bodyX + ((hit.item.labelOffsetX != null) ? hit.item.labelOffsetX : 0);
+            anchorY = hit.item.bodyY + ((hit.item.labelOffsetY != null) ? hit.item.labelOffsetY : 40);
+            haveLab = true;
         }
         T2._drag = { id: hit.item.id, part: hit.part, ox: x, oy: y, sx: x, sy: y,
                      ldx: haveLab ? (x - anchorX) : 0, ldy: haveLab ? (y - anchorY) : 0 };
         // A tap on a switch body toggles it (DC kit). We defer the toggle to
         // pointer-up so a body drag still moves the switch.
         T2._switchTapId = (hit.item.type === 'switch' && hit.part === 'body') ? hit.item.id : null;
+        // SPDT: a body-region tap (not a drag) changes the throw. Defer to
+        // pointer-up so a body drag still moves the whole component. Record the
+        // down-point so up can tell WHICH region was tapped (A dot / B dot /
+        // pivot dot / elsewhere) and route accordingly.
+        T2._spdtTapId = (hit.item.type === 'spdt' && hit.part === 'body') ? hit.item.id : null;
+        T2._spdtTapX = x; T2._spdtTapY = y;
         T2draw();
         return true;
     }
@@ -5262,6 +5563,13 @@ function T2move(x, y) {
         T2draw();
         return;
     }
+    if (T2._drag.part === 'spdtlabel' && it.type === 'spdt') {
+        it.labelOffsetX = x - T2._drag.ldx - it.bodyX;
+        it.labelOffsetY = y - T2._drag.ldy - it.bodyY;
+        T2._drag.ox = x; T2._drag.oy = y;
+        T2draw();
+        return;
+    }
     if ((T2._drag.part === 'clabel' || T2._drag.part === 'qlabel') &&
         (it.type === 'capacitor' || it.type === 'varCapacitor')) {
         var mxL = (it.x1 + it.x2) / 2, myL = (it.y1 + it.y2) / 2;
@@ -5273,7 +5581,7 @@ function T2move(x, y) {
         return;
     }
     if ((T2._drag.part === 'rot1' || T2._drag.part === 'rot2') &&
-        (it.type === 'voltmeter' || it.type === 'energy')) {
+        (T2isInstrument(it.type))) {
         // Rotate the probe handle around its tip (Hall-probe style). The handle
         // top is tip + (sin a, -cos a)*h, so the angle pointing toward the
         // pointer is atan2(dx, -dy).
@@ -5313,7 +5621,26 @@ function T2move(x, y) {
         T2._drag.ox = x; T2._drag.oy = y;
         return;
     }
-    if (it.type === 'voltmeter' || it.type === 'energy') {
+    if (it.type === 'spdt') {
+        // Body drag moves the whole three-terminal component (all terminals and
+        // the pivot) rigidly. An endpoint drag moves just that terminal; the
+        // pivot stays, so the lever and leads re-draw to the new position.
+        if (T2._drag.part === 'body') {
+            it.x1 += dx; it.y1 += dy; it.x2 += dx; it.y2 += dy;
+            it.x3 += dx; it.y3 += dy; it.bodyX += dx; it.bodyY += dy;
+        } else if (T2._drag.part === 'e1') {
+            it.x1 += dx; it.y1 += dy;
+        } else if (T2._drag.part === 'e2') {
+            it.x2 += dx; it.y2 += dy;
+        } else if (T2._drag.part === 'e3') {
+            it.x3 += dx; it.y3 += dy;
+        }
+        T2._drag.ox = x; T2._drag.oy = y;
+        T2computeNodes();
+        T2draw();
+        return;
+    }
+    if (T2isInstrument(it.type)) {
         // Match tab 1's meterMove: dragging the body moves ONLY the body
         // (bodyX/bodyY); the probes and their node connections stay put, so the
         // cable just stretches. Dragging a probe moves that probe tip.
@@ -5342,7 +5669,7 @@ function T2findSnap(x, y, excludeItem) {
     for (var i = 0; i < T2.items.length; i++) {
         var it = T2.items[i];
         if (it === excludeItem) continue;
-        if (it.type === 'voltmeter' || it.type === 'energy') continue;
+        if (T2isInstrument(it.type)) continue;
         var d1 = Math.hypot(x - it.x1, y - it.y1);
         if (d1 < nd) { nd = d1; nearest = { x: it.x1, y: it.y1 }; }
         var d2 = Math.hypot(x - it.x2, y - it.y2);
@@ -5368,6 +5695,33 @@ function T2up() {
             }
         }
         T2._switchTapId = null;
+        // SPDT tap (no significant drag) sets the throw by which ARM was tapped:
+        // the A arm selects A, the B arm selects B, and the common (C) arm - the
+        // lead from C to the pivot - selects off. No cycling; the tapped arm is
+        // the destination, so it never depends on the current position. Deferred
+        // here (like the SPST) so a body DRAG still moves the whole component.
+        if (T2._spdtTapId != null && it && it.id === T2._spdtTapId) {
+            var movedS = Math.hypot(T2._drag.ox - T2._drag.sx, T2._drag.oy - T2._drag.sy);
+            if (movedS < 8) {
+                var px = it.bodyX, py = it.bodyY;
+                var tx = T2._spdtTapX, ty = T2._spdtTapY;
+                // Distance from the tap to each of the three arms (pivot-anchored
+                // segments). Nearest arm wins; the C arm maps to off.
+                var dCarm = T2distToSeg(tx, ty, it.x1, it.y1, px, py);
+                var dAarm = T2distToSeg(tx, ty, px, py, it.x2, it.y2);
+                var dBarm = T2distToSeg(tx, ty, px, py, it.x3, it.y3);
+                if (dAarm <= dCarm && dAarm <= dBarm) it.throw = 'A';
+                else if (dBarm <= dCarm && dBarm <= dAarm) it.throw = 'B';
+                else it.throw = 'off';   // common arm (or pivot) -> isolate
+                T2._spdtTapId = null;
+                T2._drag = null;
+                T2computeNodes();
+                T2settle();          // throw change is the key topology event
+                T2draw();
+                return;
+            }
+        }
+        T2._spdtTapId = null;
         // EMF label drag: just repositioned. A tap (barely moved) in symbol mode
         // reveals the value, matching the capacitor and charge labels.
         if (it && T2._drag.part === 'emflabel') {
@@ -5384,6 +5738,10 @@ function T2up() {
             T2draw();
             return;
         }
+        // SPDT label: reposition only (no symbol/reveal mode for the SPDT tag).
+        if (it && T2._drag.part === 'spdtlabel') {
+            T2._drag = null; T2draw(); return;
+        }
         // Label: a tap (barely moved) in symbol mode reveals that item's value
         // (DC kit <5px tap threshold); a real drag has already repositioned it.
         if (it && (T2._drag.part === 'clabel' || T2._drag.part === 'qlabel')) {
@@ -5398,8 +5756,31 @@ function T2up() {
         }
         if (it && T2._drag.part === 'wiper') {
             // wiper drag: nothing to snap
+        } else if (it && it.type === 'spdt') {
+            // Three-terminal snap. An endpoint snaps to a neighbour's endpoint
+            // (so it wires up) or to the grid. A body move snaps the whole
+            // component: snap the pivot to grid and shift every terminal by the
+            // same delta, preserving the three-terminal geometry.
+            if (T2._drag.part === 'e1') {
+                var sp1 = T2findSnap(it.x1, it.y1, it);
+                if (sp1) { it.x1 = sp1.x; it.y1 = sp1.y; }
+                else { it.x1 = T2snap(it.x1); it.y1 = T2snap(it.y1); }
+            } else if (T2._drag.part === 'e2') {
+                var sp2 = T2findSnap(it.x2, it.y2, it);
+                if (sp2) { it.x2 = sp2.x; it.y2 = sp2.y; }
+                else { it.x2 = T2snap(it.x2); it.y2 = T2snap(it.y2); }
+            } else if (T2._drag.part === 'e3') {
+                var sp3 = T2findSnap(it.x3, it.y3, it);
+                if (sp3) { it.x3 = sp3.x; it.y3 = sp3.y; }
+                else { it.x3 = T2snap(it.x3); it.y3 = T2snap(it.y3); }
+            } else if (T2._drag.part === 'body') {
+                var pbx = T2snap(it.bodyX), pby = T2snap(it.bodyY);
+                var sdx = pbx - it.bodyX, sdy = pby - it.bodyY;
+                it.bodyX = pbx; it.bodyY = pby;
+                it.x1 += sdx; it.y1 += sdy; it.x2 += sdx; it.y2 += sdy; it.x3 += sdx; it.y3 += sdy;
+            }
         } else if (it) {
-            if (it.type === 'voltmeter' || it.type === 'energy') {
+            if (T2isInstrument(it.type)) {
                 // Only a probe drag re-snaps to the circuit; a body move leaves
                 // the probes (and their connections) exactly where they are.
                 if (T2._drag.part === 'e1' || T2._drag.part === 'e2') {
@@ -5419,7 +5800,7 @@ function T2up() {
             }
         }
         // A meter-body move OR a probe rotate leaves the circuit unchanged.
-        var skipSettle = it && (it.type === 'voltmeter' || it.type === 'energy') &&
+        var skipSettle = it && (T2isInstrument(it.type)) &&
             (T2._drag.part === 'body' || T2._drag.part === 'rot1' || T2._drag.part === 'rot2');
         T2._drag = null;
         T2computeNodes();
@@ -5432,6 +5813,12 @@ function T2up() {
    adapted to the dynamic circuit). Voltmeter probes snap to the nearest node
    position and record its node id; the energy probe snaps to the nearest
    capacitor body and records that component. */
+/* True for the sensor instruments (voltmeter, energy meter, potential probe).
+   These are drawn on top, never form nodes, and share drag/hit/delete handling. */
+function T2isInstrument(t) {
+    return t === 'voltmeter' || t === 'energy' || t === 'probe';
+}
+
 function T2snapProbe(m, part) {
     var px = part === 'e1' ? m.x1 : m.x2;
     var py = part === 'e1' ? m.y1 : m.y2;
@@ -5460,7 +5847,7 @@ function T2nearestNode(x, y, maxD) {
     var best = null, bd = maxD || 30;
     for (var i = 0; i < T2.items.length; i++) {
         var it = T2.items[i];
-        if (it.type === 'voltmeter' || it.type === 'energy') continue;
+        if (T2isInstrument(it.type)) continue;
         var d1 = Math.hypot(x - it.x1, y - it.y1);
         if (d1 < bd) { bd = d1; best = { x: it.x1, y: it.y1 }; }
         var d2 = Math.hypot(x - it.x2, y - it.y2);
@@ -5494,7 +5881,25 @@ function T2findNodeAtPoint(px, py) {
     }
     for (var k = 0; k < T2.items.length; k++) {
         var it = T2.items[k];
-        if (it.type === 'voltmeter' || it.type === 'energy') continue;
+        if (T2isInstrument(it.type)) continue;
+        if (it.type === 'spdt') {
+            // Probe along the SPDT: common lead and the live throw lead share the
+            // common's node; each throw lead maps to its own terminal node. Check
+            // the three leads (each from the pivot) and return the matching end.
+            var pxs = it.bodyX, pys = it.bodyY;
+            var dC = T2distToSeg(px, py, it.x1, it.y1, pxs, pys);
+            var dAe = T2distToSeg(px, py, pxs, pys, it.x2, it.y2);
+            var dBe = T2distToSeg(px, py, pxs, pys, it.x3, it.y3);
+            var endS = 0;
+            if (dC < PROBE && dC <= dAe && dC <= dBe) endS = 1;
+            else if (dAe < PROBE && dAe <= dBe) endS = 2;
+            else if (dBe < PROBE) endS = 3;
+            if (endS) {
+                for (var iS = 0; iS < eps.length; iS++)
+                    if (eps[iS].item === it && eps[iS].endNum === endS) return e2n[iS];
+            }
+            continue;
+        }
         var d = T2distToSeg(px, py, it.x1, it.y1, it.x2, it.y2);
         if (d < PROBE) {
             if (it.type === 'wire' || (it.type === 'switch' && it.isOn)) {
@@ -5682,6 +6087,31 @@ function T2draw() {
     var hint = document.getElementById('buildHint');
     if (hint) hint.style.display = T2.items.length === 0 ? 'block' : 'none';
 
+    // On-canvas notice when the circuit cannot be solved, so a blank probe /
+    // voltmeter reads as a clear explanation rather than looking broken. Matches
+    // the DC kit's centered on-canvas message style. A dead short across the
+    // ideal cell is the common case (closing a wire-only loop across it).
+    if (T2._shortReason) {
+        var msg = (T2._shortReason === 'shorted')
+            ? 'Cell short-circuited \u2014 no steady state (an ideal cell shorted by a wire draws infinite current)'
+            : (T2._shortReason === 'twocells')
+                ? 'More than one cell \u2014 remove the extra cell to solve the circuit'
+                : 'Circuit cannot be solved';
+        ctx2.save();
+        ctx2.font = 'bold 14px "Segoe UI", Arial, sans-serif';
+        ctx2.textAlign = 'center';
+        ctx2.textBaseline = 'top';
+        var mw = ctx2.measureText(msg).width;
+        var padX = 14, boxH = 30, boxY = 12, boxX = canvas2.width / 2 - mw / 2 - padX;
+        ctx2.fillStyle = 'rgba(60,10,20,0.92)';
+        ctx2.strokeStyle = '#ff5a5a';
+        ctx2.lineWidth = 2;
+        ctx2.beginPath(); ctx2.roundRect(boxX, boxY, mw + padX * 2, boxH, 8); ctx2.fill(); ctx2.stroke();
+        ctx2.fillStyle = '#ff9a9a';
+        ctx2.fillText(msg, canvas2.width / 2, boxY + 8);
+        ctx2.restore();
+    }
+
     // Rebuild the inspector only when the selection changes, so typing in a
     // field isn't interrupted; refresh the live 'settled' figures separately.
     if (T2._inspFor !== T2.selectedId) { T2._inspFor = T2.selectedId; T2updateInspector(); }
@@ -5707,14 +6137,17 @@ function T2drawItem(it, selected) {
         T2drawCapacitor(it, midX, midY, angle);
     } else if (it.type === 'switch') {
         T2drawSwitch(it, midX, midY, angle);
-    } else if (it.type === 'voltmeter' || it.type === 'energy') {
+    } else if (it.type === 'spdt') {
+        T2drawSpdt(it);
+    } else if (T2isInstrument(it.type)) {
         T2drawInstrument(it);
     }
 
     ctx2.shadowBlur = 0;
 
     // Endpoints: 6px colour dots, 10px white ring when selected (DC kit style).
-    if (it.type !== 'voltmeter' && it.type !== 'energy') {
+    // SPDT has three terminals and draws its own dots inside T2drawSpdt.
+    if (it.type !== 'voltmeter' && it.type !== 'energy' && it.type !== 'spdt') {
         ctx2.fillStyle = it.color;
         ctx2.beginPath(); ctx2.arc(it.x1, it.y1, 6, 0, Math.PI * 2); ctx2.fill();
         ctx2.beginPath(); ctx2.arc(it.x2, it.y2, 6, 0, Math.PI * 2); ctx2.fill();
@@ -5785,11 +6218,14 @@ function T2drawItem(it, selected) {
             // so the label is grabbed where it is seen, not below it.
             it._cLabel = { x: clx, y: cly - cFont * 0.35, bx: clx, by: cly, w: Math.max(cw, 20), h: cIsSymbol ? 24 : 16 };
         }
-        // Charge label above the capacitor: Value 'Q = ...', Symbol 'Q' (large), hidden.
+        // Charge label above the capacitor. Always MAGNITUDE only - a capacitor
+        // cannot hold "negative charge"; a negative solvedQ just means the plate
+        // polarity is opposite to the drawn orientation. The sign is conveyed by
+        // the + / - plate markers (T2DISP.polarity), not by a minus on the number.
         it._qLabel = null;
         if (it._solvedQ != null && !isNaN(it._solvedQ)) {
             var qIsSymbol = (T2DISP.q === 'symbol' && !T2revealQ[it.id]);
-            var qText = T2dispText('q', it.id, 'Q = ' + T2fmtQ(it._solvedQ), 'Q');
+            var qText = T2dispText('q', it.id, 'Q = ' + T2fmtQ(Math.abs(it._solvedQ)), 'Q');
             if (qText) {
                 ctx2.fillStyle = '#ffd166'; ctx2.textAlign = 'center';
                 var qFont = qIsSymbol ? 20 : 11;
@@ -5858,6 +6294,10 @@ function T2updateInspector() {
         var er = (it.energy != null && !isNaN(it.energy)) ? T2fmtEnergy(it.energy) : '--';
         html += '<div class="insp-row"><label>Stored energy</label><span>' + er + '</span></div>';
         html += '<div class="insp-note">Drag probe onto a capacitor.</div>';
+    } else if (it.type === 'probe') {
+        var pr = (it.potential != null && !isNaN(it.potential)) ? it.potential.toFixed(2) + ' V' : '--';
+        html += '<div class="insp-row"><label>Potential</label><span>' + pr + '</span></div>';
+        html += '<div class="insp-note">Drag the probe onto any wire or component to read the potential there (against the 0 V terminal).</div>';
     } else if (it.type === 'wire') {
         html += '<div class="insp-note">A wire (zero resistance).</div>';
     }
@@ -5935,6 +6375,30 @@ function T2drawCapacitor(it, midX, midY, angle) {
     ctx2.lineWidth = 3;
     ctx2.beginPath(); ctx2.moveTo(-plateGap / 2, -18); ctx2.lineTo(-plateGap / 2, 18); ctx2.stroke();
     ctx2.beginPath(); ctx2.moveTo(plateGap / 2, -18); ctx2.lineTo(plateGap / 2, 18); ctx2.stroke();
+
+    // Plate polarity markers: one + on the higher-potential plate, one - on the
+    // lower, matching Tab 1's colours (+ red, - blue). Drawn in the rotated frame
+    // so they orient correctly on diagonal capacitors (e.g. bridge networks).
+    // Shown ONLY when the toggle is on AND the capacitor carries a charge that
+    // rounds to a non-zero magnitude on its Q label (|Q| >= 0.005 uC) - an
+    // uncharged capacitor has no + or - plate, so no marks. Endpoint-1's plate is
+    // on the -plateGap/2 side, endpoint-2's on the +plateGap/2 side; the sign of
+    // _solvedV (= V at endpoint1 - V at endpoint2) picks which is positive.
+    if (T2DISP.polarity && it._solvedQ != null && !isNaN(it._solvedQ) &&
+        Math.abs(it._solvedQ) >= 5e-9 && it._solvedV != null && !isNaN(it._solvedV)) {
+        var e1Positive = (it._solvedV >= 0);   // endpoint-1 plate at higher potential?
+        var posX = e1Positive ? (-plateGap / 2 - 12) : (plateGap / 2 + 12);
+        var negX = e1Positive ? (plateGap / 2 + 12) : (-plateGap / 2 - 12);
+        // Placed near the top of the plates (plates span y = -18..18 in this rotated
+        // frame); the connecting wires run through the middle (y = 0), so centring
+        // the signs there hid them. -12 sits them by the plate tops, clear of wires.
+        var signY = -12;
+        ctx2.font = 'bold 17px Arial';
+        ctx2.textAlign = 'center';
+        ctx2.textBaseline = 'middle';
+        ctx2.fillStyle = '#ff6b6b'; ctx2.fillText('+', posX, signY);
+        ctx2.fillStyle = '#5dade2'; ctx2.fillText('\u2212', negX, signY);
+    }
     ctx2.restore();
     if (it.type === 'varCapacitor') T2drawWiperArrow(it, midX, midY, angle);
 }
@@ -5988,9 +6452,86 @@ function T2drawSwitch(it, midX, midY, angle) {
     ctx2.stroke();
 }
 
+/* SPDT (single-pole double-throw). Three terminals: common at {x1,y1}, throw A
+   at {x2,y2}, throw B at {x3,y3}. The pivot sits at the body centre; the lever
+   swings from the pivot to whichever throw is live (green), or points midway
+   between the throws when centre-off (grey). Own draw code so the two-terminal
+   drawSwitch and its handlers stay exactly as they are. Increment 1 renders the
+   geometry and the three endpoint dots; throw routing arrives in a later step. */
+function T2drawSpdt(it) {
+    var px = it.bodyX, py = it.bodyY;                 // pivot
+    var selected = (it.id === T2.selectedId);
+    if (selected) { ctx2.shadowColor = it.color; ctx2.shadowBlur = 15; }
+    ctx2.lineWidth = 3; ctx2.lineCap = 'round';
+    ctx2.strokeStyle = it.color;
+
+    // Leads: common lead to pivot; throw leads from each throw contact inward a
+    // little so the lever meets a contact dot, not the raw endpoint.
+    var cax = px + (it.x2 - px) * 0.55, cay = py + (it.y2 - py) * 0.55;  // A contact dot
+    var cbx = px + (it.x3 - px) * 0.55, cby = py + (it.y3 - py) * 0.55;  // B contact dot
+
+    ctx2.beginPath(); ctx2.moveTo(it.x1, it.y1); ctx2.lineTo(px, py); ctx2.stroke();      // common lead
+    ctx2.beginPath(); ctx2.moveTo(cax, cay); ctx2.lineTo(it.x2, it.y2); ctx2.stroke();    // throw A lead
+    ctx2.beginPath(); ctx2.moveTo(cbx, cby); ctx2.lineTo(it.x3, it.y3); ctx2.stroke();    // throw B lead
+
+    // Contact dots (A and B) and the pivot dot.
+    ctx2.fillStyle = it.color;
+    ctx2.beginPath(); ctx2.arc(cax, cay, 5, 0, Math.PI * 2); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(cbx, cby, 5, 0, Math.PI * 2); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(px, py, 4, 0, Math.PI * 2); ctx2.fill();
+
+    // Lever: to the live throw (green), or midway between throws when off (grey).
+    var lx, ly, lever;
+    if (it.throw === 'A') { lx = cax; ly = cay; lever = '#2ecc71'; }
+    else if (it.throw === 'B') { lx = cbx; ly = cby; lever = '#2ecc71'; }
+    else {
+        // centre-off: point between the two contacts but not touching either.
+        var mx = (cax + cbx) / 2, my = (cay + cby) / 2;
+        var dxo = mx - px, dyo = my - py, dlo = Math.hypot(dxo, dyo) || 1;
+        lx = px + dxo / dlo * 30; ly = py + dyo / dlo * 30; lever = '#8a94a6';
+    }
+    ctx2.strokeStyle = lever; ctx2.lineWidth = 4;
+    ctx2.beginPath(); ctx2.moveTo(px, py); ctx2.lineTo(lx, ly); ctx2.stroke();
+
+    ctx2.shadowBlur = 0;
+
+    // Three endpoint dots (6px, white ring when selected) - mirrors the shared
+    // two-terminal block, extended to the third terminal.
+    ctx2.fillStyle = it.color;
+    ctx2.beginPath(); ctx2.arc(it.x1, it.y1, 6, 0, Math.PI * 2); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(it.x2, it.y2, 6, 0, Math.PI * 2); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(it.x3, it.y3, 6, 0, Math.PI * 2); ctx2.fill();
+    if (selected) {
+        ctx2.strokeStyle = '#fff'; ctx2.lineWidth = 2;
+        ctx2.beginPath(); ctx2.arc(it.x1, it.y1, 10, 0, Math.PI * 2); ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(it.x2, it.y2, 10, 0, Math.PI * 2); ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(it.x3, it.y3, 10, 0, Math.PI * 2); ctx2.stroke();
+    }
+
+    // Terminal letters (redundant non-colour encoding, projector/colour-blind
+    // legibility) - C at common, A and B at the throws.
+    ctx2.fillStyle = '#e0e6f0'; ctx2.font = 'bold 11px Arial';
+    ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
+    ctx2.fillText('C', it.x1 - 10, it.y1 - 10);
+    ctx2.fillText('A', it.x2 + 10, it.y2 - 10);
+    ctx2.fillText('B', it.x3 + 10, it.y3 + 10);
+    ctx2.textBaseline = 'alphabetic';
+
+    // 'SPDT' label below the body (draggable), matching the label conventions.
+    var loX = (it.labelOffsetX != null) ? it.labelOffsetX : 0;
+    var loY = (it.labelOffsetY != null) ? it.labelOffsetY : 40;
+    var slx = px + loX, sly = py + loY;
+    ctx2.fillStyle = it.color; ctx2.font = 'bold 12px Arial'; ctx2.textAlign = 'center';
+    var stateTxt = it.throw === 'A' ? 'SPDT (A)' : it.throw === 'B' ? 'SPDT (B)' : 'SPDT (off)';
+    ctx2.fillText(stateTxt, slx, sly);
+    var sw = ctx2.measureText(stateTxt).width;
+    it._spdtLabel = { x: slx, y: sly - 12 * 0.35, bx: slx, by: sly, w: Math.max(sw, 20), h: 16 };
+}
+
 /* Instruments drawn exactly like tab 1's meters (duplicated to draw on ctx2). */
 function T2drawInstrument(it) {
     if (it.type === 'energy') T2drawEnergyMeter(it);
+    else if (it.type === 'probe') T2drawPotentialProbe(it);
     else T2drawVoltmeter(it);
 }
 
@@ -6065,6 +6606,41 @@ function T2drawEnergyMeter(m) {
     T2probeHandle(m.x1, m.y1, '#1a8f48', '#3fe07f', a1);
 }
 
+/* Potential probe: pink-faced, single probe (DC-kit probe colour #ff6b9d). Reads
+   the absolute potential at the node its tip touches, against the 0 V reference.
+   Built as a sibling of the energy meter (body + one cable + one handle). */
+function T2drawPotentialProbe(m) {
+    var bodyX = m.bodyX, bodyY = m.bodyY;
+    var bodyWidth = 56, bodyHeight = 64;
+    var connX = bodyX, connY = bodyY + bodyHeight / 2 + 5;
+    var probeHandleHeight = 50, a1 = (m.angle1 != null) ? m.angle1 : 0;
+    var p1TopX = m.x1 + Math.sin(a1) * probeHandleHeight, p1TopY = m.y1 - Math.cos(a1) * probeHandleHeight;
+
+    T2cableLead(p1TopX, p1TopY, connX, connY, '#7a1436', '#c0286a', '#ff6b9d', false);
+
+    ctx2.save();
+    ctx2.fillStyle = '#1a1a1a'; ctx2.strokeStyle = '#000'; ctx2.lineWidth = 2;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - bodyWidth / 2 - 5, bodyY - bodyHeight / 2 - 5, bodyWidth + 10, bodyHeight + 15, 12); ctx2.fill(); ctx2.stroke();
+    var fg = ctx2.createLinearGradient(bodyX, bodyY - bodyHeight / 2, bodyX, bodyY + bodyHeight / 2);
+    fg.addColorStop(0, '#ff8fb6'); fg.addColorStop(0.5, '#ff6b9d'); fg.addColorStop(1, '#e04b80');
+    ctx2.fillStyle = fg;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - bodyWidth / 2, bodyY - bodyHeight / 2, bodyWidth, bodyHeight, 8); ctx2.fill();
+    ctx2.fillStyle = '#3a0c20'; ctx2.font = 'bold 11px Arial'; ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
+    ctx2.fillText('Potential', bodyX, bodyY - 20);
+    ctx2.font = 'bold 9px Arial'; ctx2.fillText((m.node != null) ? 'at node' : '--', bodyX, bodyY - 8);
+    ctx2.fillStyle = '#f8f8f8'; ctx2.strokeStyle = '#999'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.roundRect(bodyX - 26, bodyY + 2, 52, 20, 3); ctx2.fill(); ctx2.stroke();
+    var v = m.potential;
+    var disp = (isNaN(v) || m.node == null) ? '--' : (v.toFixed(2) + ' V');
+    ctx2.fillStyle = '#111'; ctx2.font = 'bold 12px monospace'; ctx2.fillText(disp, bodyX, bodyY + 12);
+    ctx2.restore();
+
+    ctx2.fillStyle = '#ff6b9d'; ctx2.strokeStyle = '#7a1436'; ctx2.lineWidth = 2;
+    ctx2.beginPath(); ctx2.arc(connX, connY, 6, 0, Math.PI * 2); ctx2.fill(); ctx2.stroke();
+
+    T2probeHandle(m.x1, m.y1, '#a01450', '#ff6b9d', a1);
+}
+
 function T2cableLead(probeX, probeY, meterX, meterY, darkColor, midColor, lightColor, isRed) {
     var dx = meterX - probeX, dy = meterY - probeY;
     var dist = Math.hypot(dx, dy);
@@ -6121,23 +6697,45 @@ function T2fmtC(uF) {
        solved as a small linear system (C in place of conductance).
    Returns { ok, potentials } (potentials indexed by node id).
    ============================================================ */
+/* Gaussian elimination matching the DC Circuit Builder's gaussianElimination
+   exactly: partial pivoting, and on a zero pivot it does NOT fail - it skips the
+   column in forward elimination and assigns 0 to that free variable in back-
+   substitution. This is essential for a general capacitor topology: a node that
+   no capacitor connects to (a dangling switch end, or a node reachable only
+   through open switches) is a floating/disconnected node with an indeterminate
+   potential. The DC kit assigns it 0 (a reference) and solves the rest of the
+   circuit normally. Previously T2solveLinear returned null on such a node, which
+   aborted the whole settle and left every capacitor stuck at its old charge -
+   the intermittent "cap won't charge after a switch sequence" bug. Assigning 0
+   to a floating node cannot affect any real charge, since by definition no
+   capacitor sits across it. */
 function T2solveLinear(A, b) {
     var n = b.length;
+    // augmented matrix
+    var aug = [];
+    for (var i = 0; i < n; i++) { var row = A[i].slice(); row.push(b[i]); aug.push(row); }
+    // forward elimination with partial pivoting
     for (var col = 0; col < n; col++) {
-        var piv = col;
-        for (var r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
-        if (Math.abs(A[piv][col]) < 1e-12) return null;
-        var tA = A[col]; A[col] = A[piv]; A[piv] = tA;
-        var tb = b[col]; b[col] = b[piv]; b[piv] = tb;
-        for (var r2 = 0; r2 < n; r2++) {
-            if (r2 === col) continue;
-            var f = A[r2][col] / A[col][col];
-            for (var c = col; c < n; c++) A[r2][c] -= f * A[col][c];
-            b[r2] -= f * b[col];
+        var maxVal = Math.abs(aug[col][col]), maxRow = col;
+        for (var r = col + 1; r < n; r++) {
+            if (Math.abs(aug[r][col]) > maxVal) { maxVal = Math.abs(aug[r][col]); maxRow = r; }
+        }
+        var tmp = aug[col]; aug[col] = aug[maxRow]; aug[maxRow] = tmp;
+        if (Math.abs(aug[col][col]) < 1e-12) continue;   // singular column: skip, don't fail
+        for (var r2 = col + 1; r2 < n; r2++) {
+            var f = aug[r2][col] / aug[col][col];
+            for (var j = col; j <= n; j++) aug[r2][j] -= f * aug[col][j];
         }
     }
+    // back substitution; free/disconnected node -> 0
     var x = [];
-    for (var i = 0; i < n; i++) x[i] = b[i] / A[i][i];
+    for (var k = 0; k < n; k++) x[k] = 0;
+    for (var i2 = n - 1; i2 >= 0; i2--) {
+        if (Math.abs(aug[i2][i2]) < 1e-12) { x[i2] = 0; continue; }
+        var sum = aug[i2][n];
+        for (var j2 = i2 + 1; j2 < n; j2++) sum -= aug[i2][j2] * x[j2];
+        x[i2] = sum / aug[i2][i2];
+    }
     return x;
 }
 
@@ -6214,6 +6812,7 @@ function T2solve() {
    cell-EMF change, Reset) - never on ordinary redraws.
    ============================================================ */
 function T2settle() {
+    T2._shortReason = null;   // cleared unless a bail sets it below
     var N = T2.nodes.length;
     if (N === 0) { T2._lastOk = false; T2._lastPots = null; return; }
     var cells = [], caps = [];
@@ -6222,12 +6821,16 @@ function T2settle() {
         if (t === 'cell') cells.push(T2.items[i]);
         else if (t === 'capacitor' || t === 'varCapacitor') caps.push(T2.items[i]);
     }
-    if (cells.length > 1) { T2._lastOk = false; T2._lastPots = null; return; }
+    if (cells.length > 1) { T2._lastOk = false; T2._lastPots = null; T2._shortReason = 'twocells'; return; }
 
     var fixed = {};
     if (cells.length === 1) {
         var cn = T2nodesOf(cells[0]);
-        if (cn[0] < 0 || cn[1] < 0 || cn[0] === cn[1]) { T2._lastOk = false; T2._lastPots = null; return; }
+        // Both terminals collapsed to one node = a dead short across the ideal
+        // cell. An ideal EMF with no internal resistance has no defined steady
+        // state when short-circuited (infinite current), so we cannot solve.
+        if (cn[0] >= 0 && cn[1] >= 0 && cn[0] === cn[1]) { T2._lastOk = false; T2._lastPots = null; T2._shortReason = 'shorted'; return; }
+        if (cn[0] < 0 || cn[1] < 0) { T2._lastOk = false; T2._lastPots = null; return; }
         fixed[cn[1]] = 0; fixed[cn[0]] = cells[0].value;
     }
     var unknown = [];
@@ -6264,12 +6867,10 @@ function T2settle() {
     // Energy delivered by the cell = EMF x the cell's NET EMITTED CHARGE, tracked
     // persistently. Each event, the charge that flows THROUGH the cell equals the
     // change in charge on the capacitors currently connected to the cell (old
-    // stored charge -> new settled charge). Charge to an empty cap adds; charge
-    // returning (decrease C) subtracts; a cap isolated by an open switch is not
-    // connected so its stranded charge neither adds nor subtracts (it stays
-    // counted from when it was charged); charge-sharing between isolated caps
-    // never touches the cell. This is correct real-circuit behaviour and is
-    // path-independent for the final state.
+    // stored charge -> new settled charge), EXCEPT charge that merely redistributes
+    // through a newly-closed internal short, which never crosses the cell. Charge
+    // to an empty cap adds; charge returning (decrease C) subtracts; a cap isolated
+    // by an open switch keeps its charge counted from when it was charged.
     if (cells.length === 1) {
         var cnodes2 = T2nodesOf(cells[0]);
         var plus = cnodes2[0];
@@ -6277,6 +6878,10 @@ function T2settle() {
         for (var c2 = 0; c2 < caps.length; c2++) {
             var cn2 = T2nodesOf(caps[c2]);
             if (cn2[0] < 0 || cn2[1] < 0) continue;
+            // A cap now shorted (both plates one node) holds no charge; its old
+            // charge drained through the short, NOT through the cell, so it must
+            // not be counted as returning to the cell.
+            if (cn2[0] === cn2[1]) continue;
             // Only caps sitting across the cell's nodes carry current through it.
             var connectedToCell = (cn2[0] === plus || cn2[1] === plus);
             if (!connectedToCell) continue;
@@ -6284,20 +6889,13 @@ function T2settle() {
             var newQplus = (cn2[0] === plus) ? C2 * (pots[cn2[0]] - pots[cn2[1]])
                                              : C2 * (pots[cn2[1]] - pots[cn2[0]]);
             var oldQ = caps[c2].storedQ || 0;
-            // old charge on the plate facing the cell + node (sign matched)
+            // old charge on the plate facing the cell + node (sign matched to the
+            // cap's CURRENT orientation relative to +).
             var oldQplus = (cn2[0] === plus) ? oldQ : -oldQ;
             dQ += (newQplus - oldQplus);
         }
         T2._netEmitted = (T2._netEmitted || 0) + dQ;
         T2._netDelivered = T2._netEmitted * cells[0].value;   // EMF x net emitted charge
-    } else {
-        // No single cell this event: leave the emitted charge as-is (a stranded
-        // network still represents charge the cell previously delivered). Recompute
-        // the displayed energy from the stored emitted charge against no cell -> 0
-        // only if there is genuinely no cell in the circuit at all.
-        var anyCell = false;
-        for (var ci0 = 0; ci0 < T2.items.length; ci0++) if (T2.items[ci0].type === 'cell') { anyCell = true; break; }
-        if (!anyCell) { /* cell deleted: keep stranded charge value as delivered */ }
     }
 
     // Write back each capacitor's new stored charge (endpoint-1 plate).
@@ -6636,6 +7234,58 @@ function T2preset5() {
 /* Load a preset: replace the circuit with an exact copy of the given item array,
    preserving all geometry and label positions. Charge starts from each
    capacitor's stored/initial charge as given; then the network settles. */
+function T2preset6() {
+    // Capacitor Wheatstone bridge. Two arms from the + rail to each midpoint, two
+    // arms from the midpoints to the - rail, and a bridge capacitor (id 22) linking
+    // the midpoints. With the arm ratios unbalanced (200 uF vs 100 uF), the two
+    // midpoints settle to different potentials, so the bridge capacitor carries the
+    // imbalance charge - the capacitor analogue of an unbalanced Wheatstone bridge.
+    // Probe the two midpoints to see the potential difference across the bridge cap.
+    T2loadPreset([
+        { "id": 1, "type": "cell", "x1": 60, "y1": 420, "x2": 60, "y2": 160,
+          "value": 6, "unit": "V", "color": "#2ecc71", "isOn": true,
+          "labelOffsetX": -28, "labelOffsetY": -20,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "cqLabelOffX": 56, "cqLabelOffY": -148,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 18, "type": "switch", "x1": 60, "y1": 160, "x2": 380, "y2": 160,
+          "value": 0, "unit": "", "color": "#9b59b6", "isOn": false,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 20, "type": "wire", "x1": 380, "y1": 420, "x2": 60, "y2": 420,
+          "value": 0, "unit": "", "color": "#5a7fb0", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 6, "type": "capacitor", "x1": 220, "y1": 280, "x2": 380, "y2": 160,
+          "value": 200, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 13, "type": "capacitor", "x1": 380, "y1": 160, "x2": 520, "y2": 280,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 22, "type": "capacitor", "x1": 220, "y1": 280, "x2": 520, "y2": 280,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 32, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 23, "type": "capacitor", "x1": 520, "y1": 280, "x2": 380, "y2": 420,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": -2, "cLabelOffY": 36, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 },
+        { "id": 24, "type": "capacitor", "x1": 380, "y1": 420, "x2": 220, "y2": 280,
+          "value": 100, "unit": "\u00B5F", "color": "#4fc3f7", "isOn": true,
+          "labelOffsetX": 0, "labelOffsetY": 26,
+          "cLabelOffX": 0, "cLabelOffY": 37, "qLabelOffX": 0, "qLabelOffY": -34,
+          "initialQ": 0, "storedQ": 0 }
+    ]);
+}
+
 function T2loadPreset(items) {
     T2.items = [];
     var maxId = 0;
@@ -6688,6 +7338,11 @@ function T2updateMeters() {
                     m.energy = (C > 0) ? (q * q) / (2 * C) : NaN;   // 1/2 Q^2 / C from stored charge
                 } else { m.energy = NaN; }
             } else { m.energy = NaN; }
+        } else if (m.type === 'probe') {
+            // Potential at the probed node, against the circuit's 0 V reference.
+            var pn = T2findNodeAtPoint(m.x1, m.y1);
+            m.node = pn;
+            m.potential = (ok && pn != null && pn < pots.length) ? pots[pn] : NaN;
         }
     }
 
