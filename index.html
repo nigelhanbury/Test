@@ -8531,9 +8531,14 @@ function T2saveFileText(code) {
     head += 'CIRCUIT CODE\n------------\n';
     return head + code + '\n';
 }
-/* Fallback for browsers without showSaveFilePicker (Safari, and therefore the
-   iPad): generate the file in memory and let the browser put it in Downloads.
-   No location choice is possible by this route - the browser decides. */
+/* Fallback for browsers without showSaveFilePicker: generate the file in memory
+   and let the browser put it in Downloads. No location choice is possible by
+   this route - the browser decides.
+
+   In practice this is Safari on a Mac. Safari on an iPad hands off to the Files
+   app's own save sheet, which DOES let the user pick a folder (including iCloud,
+   OneDrive or Google Drive), so the iPad gets a proper location chooser either
+   way. Confirmed by testing on both. */
 function T2downloadFallback(text, name, st) {
     try {
         var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -8565,7 +8570,7 @@ function T2downloadFallback(text, name, st) {
    file the user chose, and nothing else. The tool cannot browse, cannot read
    other files, and retains no access once the write completes.
 
-   Safari has no such API, so the iPad falls back to a plain download. */
+   Where the API is absent the fallback below is used instead. */
 function T2downloadSave() {
     var st = document.getElementById('t2saveStatus');
     var code = document.getElementById('t2saveText').value;
@@ -8692,7 +8697,7 @@ function T2initFileDrop() {
         <p>Or use the <strong>Save .txt file</strong> button instead.</p>
         <textarea id="t2saveText" readonly onclick="this.select()"></textarea>
         <div class="t2sl-info" id="t2saveInfo"></div>
-        <div class="t2sl-note">On an <strong>iPad</strong>, copying the code is the easier route &mdash; saving and reopening a file means going through the Files app. On a computer or Chromebook, <strong>Save .txt file</strong> lets you choose the folder and filename.</div>
+        <div class="t2sl-note"><strong>Save .txt file</strong> lets you choose the folder and filename, including a cloud drive. In Safari on a Mac the file goes straight to Downloads.</div>
         <div class="t2sl-btns">
             <button class="t2sl-btn-cancel" onclick="T2closeSave()">Close</button>
             <button class="t2sl-btn-primary" onclick="T2downloadSave()" style="background:linear-gradient(135deg,#2ecc71,#27ae60);">Save .txt file</button>
@@ -8710,7 +8715,7 @@ function T2initFileDrop() {
         <p>Or you can open a saved <strong>.txt</strong> file, or drag one straight onto the canvas.</p>
         <textarea id="t2loadText" placeholder="Paste circuit code here, or drop a saved .txt file onto the canvas."></textarea>
         <input type="file" id="t2loadFile" accept=".txt,.rtf,.text,text/plain,text/rtf,application/rtf" style="display:none" onchange="T2loadFromFileInput(event)">
-        <div class="t2sl-note">On an <strong>iPad</strong>, pasting the code is the easier route. On a computer you can also open a saved <strong>.txt</strong> file, or drag one straight onto the canvas.</div>
+        <div class="t2sl-note">Use whichever route suits you &mdash; a pasted code, a saved <strong>.txt</strong> file, or a file dragged onto the canvas all restore the circuit identically.</div>
         <div class="t2sl-btns">
             <button class="t2sl-btn-cancel" onclick="T2closeLoad()">Cancel</button>
             <button class="t2sl-btn-cancel" onclick="document.getElementById('t2loadFile').click()" style="margin-right:auto; background:rgba(46,204,113,0.15); color:#2ecc71; border:1px solid rgba(46,204,113,0.35);">Open .txt file&hellip;</button>
@@ -8732,7 +8737,7 @@ function T2initFileDrop() {
                 <strong>1.</strong> Click <span class="t2sl-c">Save circuit</span> to generate a text code representing your entire circuit.<br>
                 <strong>2.</strong> The code captures everything on the canvas &mdash; components, stored charge, switch positions, display settings, revealed labels and label positions.<br>
                 <strong>3.</strong> Click <strong>Copy to clipboard</strong>, then <strong>paste the code</strong> anywhere you like &mdash; a document, email, message, or note &mdash; to keep it for later.<br>
-                <strong>4.</strong> Or click <strong>Save .txt file</strong> to keep it as a file instead. On a computer or Chromebook you choose the folder and the filename.
+                <strong>4.</strong> Or click <strong>Save .txt file</strong> to keep it as a file instead, choosing the folder and filename &mdash; including a cloud drive. In Safari on a Mac the file goes straight to Downloads.
             </div>
         </div>
 
@@ -8753,8 +8758,7 @@ function T2initFileDrop() {
                 &bull; You can share codes with other people &mdash; they just paste it into their Load dialog.<br>
                 &bull; The code is built to survive word processors: extra spaces, line breaks and capitalisation changes are repaired automatically on loading.<br>
                 &bull; A damaged or incomplete code is <strong>refused</strong> with a message &mdash; a wrong circuit is never loaded silently.<br>
-                &bull; If a circuit was saved holding charge, it loads holding that same charge.<br>
-                &bull; On an <strong>iPad</strong>, copying and pasting the code is easier than using files, because saving and reopening a file means going through the Files app.
+                &bull; If a circuit was saved holding charge, it loads holding that same charge.
             </div>
         </div>
 
