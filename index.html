@@ -8688,7 +8688,8 @@ function T2initFileDrop() {
 <div id="t2saveOverlay" class="t2sl-overlay" onclick="if(event.target===this)T2closeSave()">
     <div class="t2sl-modal">
         <h3>Save Circuit</h3>
-        <p>Copy this code and keep it anywhere &mdash; Word, a document, an email, a note. To restore the circuit exactly as it is now, use <strong>Load circuit</strong> and paste it back. The code is designed to survive word processors: spaces, line breaks and capitalisation changes are all repaired on loading, and a damaged code is refused rather than loaded wrongly.</p>
+        <p>Copy this code and keep it anywhere &mdash; Word, a document, an email, a note. To restore the circuit exactly as it is now, use <strong>Load circuit</strong> and paste it back.</p>
+        <p>Or use the <strong>Save .txt file</strong> button instead.</p>
         <textarea id="t2saveText" readonly onclick="this.select()"></textarea>
         <div class="t2sl-info" id="t2saveInfo"></div>
         <div class="t2sl-note">On an <strong>iPad</strong>, copying the code is the easier route &mdash; saving and reopening a file means going through the Files app. On a computer or Chromebook, <strong>Save .txt file</strong> lets you choose the folder and filename.</div>
@@ -8706,6 +8707,7 @@ function T2initFileDrop() {
     <div class="t2sl-modal">
         <h3>Load Circuit</h3>
         <p>Paste a saved circuit code below. This replaces everything on the canvas &mdash; components, stored charge, display settings and revealed labels &mdash; with the saved circuit.</p>
+        <p>Or you can open a saved <strong>.txt</strong> file, or drag one straight onto the canvas.</p>
         <textarea id="t2loadText" placeholder="Paste circuit code here, or drop a saved .txt file onto the canvas."></textarea>
         <input type="file" id="t2loadFile" accept=".txt,.rtf,.text,text/plain,text/rtf,application/rtf" style="display:none" onchange="T2loadFromFileInput(event)">
         <div class="t2sl-note">On an <strong>iPad</strong>, pasting the code is the easier route. On a computer you can also open a saved <strong>.txt</strong> file, or drag one straight onto the canvas.</div>
@@ -8729,8 +8731,8 @@ function T2initFileDrop() {
             <div class="t2ah-text">
                 <strong>1.</strong> Click <span class="t2sl-c">Save circuit</span> to generate a text code representing your entire circuit.<br>
                 <strong>2.</strong> The code captures everything on the canvas &mdash; components, stored charge, switch positions, display settings, revealed labels and label positions.<br>
-                <strong>3.</strong> Click <strong>Copy to clipboard</strong> to copy the code.<br>
-                <strong>4.</strong> <strong>Paste the code</strong> anywhere you like &mdash; a document, email, message, or note &mdash; to keep it for later.
+                <strong>3.</strong> Click <strong>Copy to clipboard</strong>, then <strong>paste the code</strong> anywhere you like &mdash; a document, email, message, or note &mdash; to keep it for later.<br>
+                <strong>4.</strong> Or click <strong>Save .txt file</strong> to keep it as a file instead. On a computer or Chromebook you choose the folder and the filename.
             </div>
         </div>
 
@@ -8738,9 +8740,9 @@ function T2initFileDrop() {
             <div class="t2ah-title" style="color:#ffcc33">Loading a Circuit</div>
             <div class="t2ah-text">
                 <strong>1.</strong> Click <span class="t2ld-c">Load circuit</span>.<br>
-                <strong>2.</strong> <strong>Paste</strong> a previously saved circuit code into the text box.<br>
-                <strong>3.</strong> Click <strong>Load circuit</strong> to restore it.<br>
-                <strong>4.</strong> This <strong>replaces</strong> whatever is currently on the canvas with the saved circuit, exactly as it was when saved.
+                <strong>2.</strong> <strong>Paste</strong> a previously saved circuit code into the text box, then click <strong>Load circuit</strong>.<br>
+                <strong>3.</strong> Or click <strong>Open .txt file</strong> to load a saved file, or simply <strong>drag the file straight onto the canvas</strong>.<br>
+                <strong>4.</strong> Whichever route you use, this <strong>replaces</strong> whatever is currently on the canvas with the saved circuit, exactly as it was when saved.
             </div>
         </div>
 
@@ -8752,7 +8754,6 @@ function T2initFileDrop() {
                 &bull; The code is built to survive word processors: extra spaces, line breaks and capitalisation changes are repaired automatically on loading.<br>
                 &bull; A damaged or incomplete code is <strong>refused</strong> with a message &mdash; a wrong circuit is never loaded silently.<br>
                 &bull; If a circuit was saved holding charge, it loads holding that same charge.<br>
-                &bull; On a computer or Chromebook you can also <strong>save a .txt file</strong> (choosing the folder and filename), reopen it from the Load dialog, or drag it straight onto the canvas.<br>
                 &bull; On an <strong>iPad</strong>, copying and pasting the code is easier than using files, because saving and reopening a file means going through the Files app.
             </div>
         </div>
